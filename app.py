@@ -277,34 +277,39 @@ def show_login_page():
             else:
                 st.error("Invalid credentials")
 
-def style_comparison_df(df, date1, date2):
+def style_comparison_df(df, dates):
     """
     Style the comparison DataFrame with Excel-like conditional formatting
+    Highlighting only pending amounts compared to previous dates
     """
-    def highlight_changes(row):
+    def highlight_pending_changes(row):
         styles = [''] * len(row)
         
-        # Get column indices for relevant columns
-        balance1_idx = df.columns.get_loc(f'Balance_{date1}')
-        balance2_idx = df.columns.get_loc(f'Balance_{date2}')
-        pending1_idx = df.columns.get_loc(f'Pending_{date1}')
-        pending2_idx = df.columns.get_loc(f'Pending_{date2}')
+        # Get all pending columns
+        pending_cols = [col for col in df.columns if 'Pending_' in col]
         
-        # Style Balance changes
-        if row[f'Balance_{date2}'] > row[f'Balance_{date1}']:
-            styles[balance2_idx] = 'background-color: #92D050'  # Green for increase
-        elif row[f'Balance_{date2}'] < row[f'Balance_{date1}']:
-            styles[balance2_idx] = 'background-color: #FF7575'  # Red for decrease
+        # Sort pending columns by date to ensure correct order
+        pending_cols.sort(reverse=True)  # Most recent first
+        
+        # Compare each pending amount with the next (previous date) pending amount
+        for i in range(len(pending_cols)-1):
+            current_pending = row[pending_cols[i]]
+            previous_pending = row[pending_cols[i+1]]
             
-        # Style Pending changes
-        if row[f'Pending_{date2}'] > row[f'Pending_{date1}']:
-            styles[pending2_idx] = 'background-color: #FF7575'  # Red for increase
-        elif row[f'Pending_{date2}'] < row[f'Pending_{date1}']:
-            styles[pending2_idx] = 'background-color: #92D050'  # Green for decrease
+            # Get column index for styling
+            col_idx = df.columns.get_loc(pending_cols[i])
             
+            # Style based on comparison with previous period
+            if pd.notna(current_pending) and pd.notna(previous_pending):
+                if current_pending < previous_pending:
+                    styles[col_idx] = 'background-color: #92D050'  # Green for decrease
+                elif current_pending > previous_pending:
+                    styles[col_idx] = 'background-color: #FF7575'  # Red for increase
+        
         return styles
     
-    return df.style.apply(highlight_changes, axis=1)\
+    # Format numbers and apply highlighting
+    return df.style.apply(highlight_pending_changes, axis=1)\
                   .format({col: '₹{:,.2f}' for col in df.columns if col != 'Branch Name'})
 
 def show_dashboard():
@@ -476,84 +481,53 @@ def show_dashboard():
     with tab3:
         st.subheader("Comparative Analysis")
         try:
-            col1, col2 = st.columns(2)
-            with col1:
-                date1 = st.selectbox("First Date", dates, index=0)
-            with col2:
-                date2 = st.selectbox("Second Date", dates, index=len(dates)-1)
+            # Get all dates for comparison
+            dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
             
             # Create comparison DataFrame
             comparison_df = pd.DataFrame()
             comparison_df['Branch Name'] = selected_branches
             
-            # Get balances and pending amounts for both dates
-            balance_cols = [f'Balance_{date1}', f'Balance_{date2}']
-            pending_cols = [f'Pending_{date1}', f'Pending_{date2}']
-            
-            for branch in selected_branches:
-                branch_data = filtered_df[filtered_df['Branch Name'] == branch]
-                if not branch_data.empty:
-                    for col in balance_cols + pending_cols:
-                        comparison_df.loc[
-                            comparison_df['Branch Name'] == branch, 
-                            col
-                        ] = branch_data[col].iloc[0]
-            
-            # Calculate changes
-            comparison_df['Balance_Change'] = comparison_df[f'Balance_{date2}'] - comparison_df[f'Balance_{date1}']
-            comparison_df['Pending_Change'] = comparison_df[f'Pending_{date2}'] - comparison_df[f'Pending_{date1}']
+            # Add data for all dates
+            for date in dates:
+                comparison_df[f'Balance_{date}'] = [
+                    filtered_df[filtered_df['Branch Name'] == branch][f'Balance_{date}'].iloc[0]
+                    for branch in selected_branches
+                ]
+                comparison_df[f'Pending_{date}'] = [
+                    filtered_df[filtered_df['Branch Name'] == branch][f'Pending_{date}'].iloc[0]
+                    for branch in selected_branches
+                ]
             
             # Display styled comparison table
-            st.markdown(f"### Comparison between {date1} and {date2}")
-            
-            # Apply styling and display
-            styled_df = style_comparison_df(comparison_df, date1, date2)
+            st.markdown("### Weekly Pending Amount Comparison")
+            styled_df = style_comparison_df(comparison_df, dates)
             st.dataframe(
                 styled_df,
                 height=400,
                 use_container_width=True
             )
             
-            # Summary statistics
-            st.markdown("### Summary")
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.metric(
-                    "Total Balance Change",
-                    f"₹{comparison_df['Balance_Change'].sum():,.2f}",
-                    delta=f"₹{comparison_df['Balance_Change'].sum():,.2f}"
-                )
-            with col2:
-                st.metric(
-                    "Total Pending Change",
-                    f"₹{comparison_df['Pending_Change'].sum():,.2f}",
-                    delta=f"₹{comparison_df['Pending_Change'].sum():,.2f}"
-                )
-            
-            # Insights
-            st.markdown("### Key Changes")
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("**Balance:**")
-                increased_balance = comparison_df[comparison_df['Balance_Change'] > 0]['Branch Name'].tolist()
-                decreased_balance = comparison_df[comparison_df['Balance_Change'] < 0]['Branch Name'].tolist()
+            # Add insights about pending amount trends
+            st.markdown("### Pending Amount Trends")
+            for branch in selected_branches:
+                branch_data = comparison_df[comparison_df['Branch Name'] == branch]
+                pending_trend = []
                 
-                if increased_balance:
-                    st.success(f"Increased in: {', '.join(increased_balance)}")
-                if decreased_balance:
-                    st.error(f"Decreased in: {', '.join(decreased_balance)}")
-                    
-            with col2:
-                st.markdown("**Pending Amount:**")
-                increased_pending = comparison_df[comparison_df['Pending_Change'] > 0]['Branch Name'].tolist()
-                decreased_pending = comparison_df[comparison_df['Pending_Change'] < 0]['Branch Name'].tolist()
+                # Compare pending amounts across dates
+                for i in range(len(dates)-1):
+                    current = branch_data[f'Pending_{dates[i]}'].iloc[0]
+                    previous = branch_data[f'Pending_{dates[i+1]}'].iloc[0]
+                    if current < previous:
+                        pending_trend.append(f"Decreased from ₹{previous:,.2f} to ₹{current:,.2f}")
+                    elif current > previous:
+                        pending_trend.append(f"Increased from ₹{previous:,.2f} to ₹{current:,.2f}")
                 
-                if increased_pending:
-                    st.error(f"Increased in: {', '.join(increased_pending)}")
-                if decreased_pending:
-                    st.success(f"Decreased in: {', '.join(decreased_pending)}")
+                if pending_trend:
+                    st.markdown(f"**{branch}**:")
+                    for trend in pending_trend[:3]:  # Show last 3 changes
+                        st.markdown(f"- {trend}")
+                    st.markdown("---")
             
         except Exception as e:
             st.error(f"Error in comparative analysis: {str(e)}")
