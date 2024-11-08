@@ -1029,54 +1029,95 @@ def show_dashboard():
         show_sdr_dashboard()
 
 def load_itss_data():
-    """Load ITSS Tender data with account-wise aging"""
+    """Load ITSS Tender data handling multi-row headers"""
     try:
-        df = pd.read_excel("itss_tender.xlsx")
+        # Read the first row to get dates
+        dates_df = pd.read_excel("itss_tender.xlsx", nrows=1, header=None)
+        dates = [col for col in dates_df.iloc[0] if isinstance(col, str) and 'Ageing as on' in col]
         
-        # Debug information
-        st.sidebar.write("Available columns:", list(df.columns))
+        # Read the actual data with the second row as headers
+        df = pd.read_excel("itss_tender.xlsx", header=1)
         
-        # Convert amount columns to numeric, handling the exact column names
+        # Create new column names combining date and aging category
+        new_columns = []
+        current_date = None
+        
+        for col in df.columns:
+            if 'Unnamed' in str(col):
+                new_columns.append(f"{current_date}_{prev_col}")
+            elif '61-90' in str(col) or '91-120' in str(col) or '121-180' in str(col) or \
+                 '181-360' in str(col) or '361-720' in str(col) or 'More than 2 Yr' in str(col):
+                prev_col = col
+                new_columns.append(f"{current_date}_{col}")
+            else:
+                current_date = dates.pop(0) if dates else current_date
+                if col == 'Account Name':
+                    new_columns.append(col)
+                else:
+                    prev_col = col
+                    new_columns.append(f"{current_date}_{col}")
+        
+        # Rename columns
+        df.columns = new_columns
+        
+        # Convert numeric columns
         for col in df.columns:
             if col != 'Account Name':
                 df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
         
-        # Display first few rows for verification
-        st.sidebar.write("Data preview:")
-        st.sidebar.dataframe(df.head(2))
-        
         return df
+        
     except Exception as e:
         st.error(f"Error loading ITSS data: {str(e)}")
         st.write("Error details:", str(e))
         return None
 
-def style_itss_trend(df):
-    """
-    Style the ITSS tender dataframe with color coding
-    """
-    def color_changes(val):
+def style_itss_trend(df, selected_date):
+    """Style the ITSS tender dataframe with color coding comparing to previous date"""
+    def get_comparison_value(row, col):
         try:
-            if pd.isna(val) or val == 0:
-                return ''
-            elif val < 0:
-                return 'background-color: #92D050'  # Green
-            elif val > 0:
-                return 'background-color: #FF7575'  # Red
-            return ''
+            current_value = row[f"{selected_date}_{col}"]
+            dates = sorted([c.split('_')[0] for c in df.columns if '_' in c and col in c], reverse=True)
+            current_date_idx = dates.index(selected_date)
+            if current_date_idx < len(dates) - 1:
+                next_date = dates[current_date_idx + 1]
+                previous_value = row[f"{next_date}_{col}"]
+                if pd.notna(current_value) and pd.notna(previous_value):
+                    return current_value - previous_value
+            return None
         except:
+            return None
+    
+    def color_changes(val, comparison_val):
+        if pd.isna(val) or val == 0:
             return ''
+        if comparison_val is not None:
+            if comparison_val < 0:
+                return 'background-color: #92D050'  # Green for decrease
+            elif comparison_val > 0:
+                return 'background-color: #FF7575'  # Red for increase
+        return ''
     
-    # Format numbers and apply highlighting
-    styled = df.style.applymap(
-        color_changes,
-        subset=[col for col in df.columns if col != 'Account Name']
-    )
+    # Get aging categories
+    aging_categories = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
     
-    # Format numbers with 2 decimal places
-    return styled.format(
-        lambda x: '{:.2f}'.format(x) if isinstance(x, (int, float)) and pd.notna(x) else x
-    )
+    # Create StyleFrame
+    comparison_styles = pd.DataFrame(index=df.index, columns=df.columns)
+    
+    for category in aging_categories:
+        col_name = f"{selected_date}_{category}"
+        if col_name in df.columns:
+            comparison_values = df.apply(
+                lambda row: get_comparison_value(row, category),
+                axis=1
+            )
+            comparison_styles[col_name] = comparison_values.apply(
+                lambda x: color_changes(x, x)
+            )
+    
+    # Apply styling
+    return df.style.apply(lambda _: comparison_styles, axis=None)\
+                  .format(lambda x: '{:.2f}'.format(x) if isinstance(x, (int, float)) and pd.notna(x) else '-')
 
 def show_itss_dashboard():
     """Display ITSS Tender Analysis Dashboard"""
@@ -1088,19 +1129,26 @@ def show_itss_dashboard():
         return
         
     try:
-        # Get dates for filtering
-        dates = ['02-11-2024', '26-10-2024', '19-10-2024']
+        # Get available dates from column names
+        dates = sorted(list(set([col.split('_')[0] for col in df.columns if 'Ageing as on' in col])), reverse=True)
         selected_date = st.selectbox("Select Date for Analysis", dates)
         
-        # Define aging buckets with exact column names as in Excel
-        aging_buckets = {
-            '61-90': '61-90',
-            '91-120': '91-120',
-            '121-180': '121 -180',  # Note the space after 121
-            '181-360': '181-360',
-            '361-720': '361-720',
-            'More than 2 Yr': 'More than 2 Yr'
-        }
+        # Get aging categories
+        aging_categories = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
+        
+        # Filter and display data for selected date
+        display_cols = ['Account Name'] + [f"{selected_date}_{cat}" for cat in aging_categories]
+        display_df = df[display_cols].copy()
+        
+        # Rename columns for display
+        display_df.columns = ['Account Name'] + aging_categories
+        
+        # Show styled dataframe
+        st.dataframe(
+            style_itts_trend(display_df, selected_date),
+            height=400,
+            use_container_width=True
+        )
         
         # Calculate totals for metrics
         total_by_bucket = {}
