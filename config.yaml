@@ -1,0 +1,14 @@
+credentials:
+  usernames:
+    admin:
+      email: "admin@rvsolutions.in"
+      name: "Admin User"
+      password: "$2b$12$YOUR_HASHED_PASSWORD"  # You'll need to generate this
+    ceo:
+      email: "vandana@rvsolutions.in"
+      name: "CEO"
+      password: "$2b$12$YOUR_HASHED_PASSWORD"  # You'll need to generate this
+cookie:
+  expiry_days: 30
+  key: "your_secret_key" # Must be string
+  name: "dashboard_cookie"
