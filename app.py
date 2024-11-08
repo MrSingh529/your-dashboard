@@ -316,7 +316,13 @@ def show_dashboard():
             max_val,
             (min_val, max_val)
         )
-
+    
+    except Exception as e:
+        st.error(f"Error in dashboard: {str(e)}")
+        st.write("Error details:", str(e))
+        st.write("Please check the data structure")
+        return
+    
     # Filter Data
     filtered_df = df.copy()
     if selected_branches:
