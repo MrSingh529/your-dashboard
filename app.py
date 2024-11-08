@@ -103,18 +103,31 @@ def load_data():
     Load and structure data with specific date columns
     """
     try:
-        df = pd.read_excel("collections_data.xlsx")
+        # Read Excel file with specific header row
+        df = pd.read_excel("collections_data.xlsx", header=0)
+        
+        # Display columns for debugging
+        st.sidebar.write("Available columns:", list(df.columns))
+        
+        # Check if the first row contains the actual column names
+        if 'Branch Name' not in df.columns:
+            # Get the first row as column names
+            df.columns = df.iloc[0]
+            # Remove the first row
+            df = df.iloc[1:].reset_index(drop=True)
         
         # Convert amount columns to numeric
         for col in df.columns:
             if col != 'Branch Name':
                 df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
         
-        # Display loaded columns for verification
-        st.sidebar.write("Data loaded successfully!")
+        # Display loaded data info
+        st.sidebar.write("Data shape:", df.shape)
         return df
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
+        st.write("Error details:", str(e))
+        st.write("Please check your Excel file structure")
         return None
         
 def clean_dataframe(df):
@@ -263,27 +276,33 @@ def show_dashboard():
     df = load_data()
     
     if df is None:
+        st.error("Unable to load data. Please check your Excel file.")
         return
 
+    # Display raw data for verification
+    st.write("Data Preview:")
+    st.dataframe(df.head())
+    
     # Sidebar Controls
     st.sidebar.title("Analysis Controls")
     
-    # Advanced Filtering
-    filter_container = st.sidebar.container()
-    with filter_container:
-        st.subheader("Filters")
-        
-        # Branch Selection with Search
-        all_branches = sorted(df['Branch Name'].unique().tolist())
-        selected_branches = st.multiselect(
-            "Select Branches (Search/Select)",
-            options=all_branches,
-            default=all_branches[:5]
-        )
-        
-        # Date Selection
-        dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
-        selected_date = st.selectbox("Select Analysis Date", dates)
+    try:
+        # Advanced Filtering
+        filter_container = st.sidebar.container()
+        with filter_container:
+            st.subheader("Filters")
+            
+            # Branch Selection with Search
+            all_branches = sorted(df['Branch Name'].unique().tolist())
+            selected_branches = st.multiselect(
+                "Select Branches (Search/Select)",
+                options=all_branches,
+                default=all_branches[:5] if len(all_branches) >= 5 else all_branches
+            )
+            
+            # Date Selection
+            dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
+            selected_date = st.selectbox("Select Analysis Date", dates)
         
         # Amount Range Filter
         st.subheader("Amount Filters")
