@@ -167,28 +167,6 @@ def create_sample_data():
     })
     return branch_data
 
-```python
-# ... (keep existing imports and CSS) ...
-
-def load_data():
-    """
-    Load and structure data with specific date columns
-    """
-    try:
-        df = pd.read_excel("collections_data.xlsx")
-        
-        # Convert amount columns to numeric
-        for col in df.columns:
-            if col != 'Branch Name':
-                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
-        
-        # Display loaded columns for verification
-        st.sidebar.write("Data loaded successfully!")
-        return df
-    except Exception as e:
-        st.error(f"Error loading data: {str(e)}")
-        return None
-
 def calculate_branch_metrics(df, selected_date):
     """Calculate advanced branch performance metrics"""
     metrics = {}
