@@ -100,23 +100,64 @@ def check_password():
 
 def load_data():
     """
-    Load data from your Excel files or database
+    Load data from Excel file with specific column structure
     """
     try:
         df = pd.read_excel("collections_data.xlsx")
         
-        # Display available columns for debugging
-        st.sidebar.write("Available columns:", list(df.columns))
+        # Rename columns to match exact structure
+        columns = {
+            'Branch Name': 'Branch',
+            'Reduced Pending Amount': 'Reduced_Pending',
+            'Balance As On': 'Balance',
+            'Pending Amount': 'Pending'
+        }
         
-        # Display data sample for verification
-        st.sidebar.write("Data sample:")
-        st.sidebar.dataframe(df.head(2))
+        # Clean the dataframe
+        df = clean_dataframe(df)
         
         return df
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
-        return create_sample_data()
+        return None
         
+def clean_dataframe(df):
+    """
+    Clean and structure the dataframe for branch-wise analysis
+    """
+    try:
+        # Keep only the required columns
+        required_cols = ['Branch Name', 'Reduced Pending Amount']
+        date_cols = []
+        
+        # Group columns by date
+        for i in range(len(df.columns)):
+            if 'Balance As On' in str(df.columns[i]):
+                date = df.columns[i-1]
+                balance_col = df.columns[i]
+                pending_col = df.columns[i+1]
+                
+                date_cols.append({
+                    'date': date,
+                    'balance': balance_col,
+                    'pending': pending_col
+                })
+        
+        # Restructure the data
+        clean_df = pd.DataFrame()
+        clean_df['Branch'] = df['Branch Name']
+        clean_df['Reduced_Pending'] = df['Reduced Pending Amount']
+        
+        for date_group in date_cols:
+            date = pd.to_datetime(date_group['date']).strftime('%Y-%m-%d')
+            clean_df[f'Balance_{date}'] = df[date_group['balance']]
+            clean_df[f'Pending_{date}'] = df[date_group['pending']]
+        
+        return clean_df
+    except Exception as e:
+        st.error(f"Error cleaning data: {str(e)}")
+        return df
+ 
 def create_sample_data():
     """Create sample data when actual data isn't available"""
     dates = pd.date_range(start='2024-01-01', end='2024-03-31', freq='D')
@@ -197,81 +238,127 @@ def show_login_page():
 
 def show_dashboard():
     """Display the main dashboard"""
-    # Load data first
+    # Load data
     df = load_data()
+    
+    if df is None:
+        st.error("Unable to load data. Please check your data file.")
+        return
     
     # Sidebar filters
     st.sidebar.title("Filters")
     
-    # Dynamic branch filter based on actual data
-    branch_col = [col for col in df.columns if any(x in col.lower() for x in ['branch', 'branch name'])]
-    if branch_col:
-        branches = ["All"] + sorted(df[branch_col[0]].unique().tolist())
-        selected_branches = st.sidebar.multiselect("Select Branches", branches, default="All")
+    # Branch filter
+    branches = sorted(df['Branch'].unique().tolist())
+    selected_branches = st.sidebar.multiselect(
+        "Select Branches",
+        options=branches,
+        default=branches[:5]  # Default to first 5 branches
+    )
     
-    # Dynamic amount range filter
-    st.sidebar.subheader("Amount Range")
-    amount_col = [col for col in df.columns if any(x in col.lower() for x in ['outstanding', 'amount', 'balance'])]
-    if amount_col:
-        min_val = float(df[amount_col[0]].min())
-        max_val = float(df[amount_col[0]].max())
-        min_amount = st.sidebar.number_input("Minimum Amount", value=min_val)
-        max_amount = st.sidebar.number_input("Maximum Amount", value=max_val)
+    # Filter data
+    if selected_branches:
+        filtered_df = df[df['Branch'].isin(selected_branches)]
+    else:
+        filtered_df = df
     
-    # Apply filters
-    filtered_df = df.copy()
-    if branch_col and selected_branches != ["All"]:
-        filtered_df = filtered_df[filtered_df[branch_col[0]].isin(selected_branches)]
-    if amount_col:
-        filtered_df = filtered_df[
-            (filtered_df[amount_col[0]] >= min_amount) & 
-            (filtered_df[amount_col[0]] <= max_amount)
-        ]
+    # Main dashboard
+    st.title("Branch-wise Collection Analysis")
     
-    # Main dashboard content
-    st.title("Collections & Outstanding Analysis Dashboard")
+    # Summary metrics
+    col1, col2, col3 = st.columns(3)
     
-    # Display data preview
-    st.subheader("Data Preview")
-    st.dataframe(filtered_df.head(), height=200)
+    # Get latest date columns
+    balance_cols = [col for col in df.columns if 'Balance_' in col]
+    pending_cols = [col for col in df.columns if 'Pending_' in col]
     
-    # Key Metrics
-    metrics = calculate_metrics(filtered_df)
-    col1, col2, col3, col4 = st.columns(4)
+    latest_balance_col = balance_cols[-1]
+    latest_pending_col = pending_cols[-1]
     
     with col1:
+        total_balance = filtered_df[latest_balance_col].sum()
         st.metric(
-            "Total Collections",
-            f"₹{metrics['total_collection']:,.2f}"
-        )
-    with col2:
-        st.metric(
-            "Total Outstanding",
-            f"₹{metrics['total_outstanding']:,.2f}"
-        )
-    with col3:
-        st.metric(
-            "Collection Efficiency",
-            f"{metrics['collection_efficiency']:.1f}%"
-        )
-    with col4:
-        st.metric(
-            "Top Performing Branch",
-            metrics['top_branch']
+            "Total Current Balance",
+            f"₹{total_balance:,.2f}"
         )
     
-    # Allow user to download data
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("Export Options")
-    if st.sidebar.button("Export to Excel"):
+    with col2:
+        total_pending = filtered_df[latest_pending_col].sum()
+        st.metric(
+            "Total Pending Amount",
+            f"₹{total_pending:,.2f}"
+        )
+    
+    with col3:
+        total_reduced = filtered_df['Reduced_Pending'].sum()
+        st.metric(
+            "Total Reduced Amount",
+            f"₹{total_reduced:,.2f}"
+        )
+    
+    # Trend Analysis
+    st.subheader("Balance Trend Analysis")
+    
+    # Prepare data for trend analysis
+    trend_data = pd.melt(
+        filtered_df,
+        id_vars=['Branch'],
+        value_vars=balance_cols,
+        var_name='Date',
+        value_name='Balance'
+    )
+    trend_data['Date'] = trend_data['Date'].str.replace('Balance_', '')
+    trend_data['Date'] = pd.to_datetime(trend_data['Date'])
+    
+    fig = px.line(
+        trend_data,
+        x='Date',
+        y='Balance',
+        color='Branch',
+        title="Balance Trend by Branch"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Pending Amount Analysis
+    st.subheader("Pending Amount Analysis")
+    pending_data = pd.melt(
+        filtered_df,
+        id_vars=['Branch'],
+        value_vars=pending_cols,
+        var_name='Date',
+        value_name='Pending'
+    )
+    pending_data['Date'] = pending_data['Date'].str.replace('Pending_', '')
+    pending_data['Date'] = pd.to_datetime(pending_data['Date'])
+    
+    fig_pending = px.bar(
+        pending_data,
+        x='Branch',
+        y='Pending',
+        color='Date',
+        title="Pending Amount by Branch",
+        barmode='group'
+    )
+    st.plotly_chart(fig_pending, use_container_width=True)
+    
+    # Detailed Data View
+    st.subheader("Detailed Data View")
+    st.dataframe(
+        filtered_df.style.highlight_positive(color='lightgreen')
+                       .highlight_negative(color='lightcoral'),
+        height=400
+    )
+    
+    # Export Option
+    if st.sidebar.button("Export Data"):
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            filtered_df.to_excel(writer, sheet_name='Detailed Data', index=False)
+            filtered_df.to_excel(writer, sheet_name='Branch Analysis', index=False)
         
         st.sidebar.download_button(
             label="Download Excel File",
             data=output.getvalue(),
-            file_name=f"collection_report_{datetime.now().strftime('%Y%m%d')}.xlsx",
+            file_name=f"branch_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
             mime="application/vnd.ms-excel"
         )
 
