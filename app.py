@@ -446,7 +446,7 @@ def show_collections_dashboard():
     pending_col = f'Pending_{selected_date}'
     
     # Main Dashboard
-    st.title("Collections & Outstanding Analysis")
+    st.title("Branch Reco Trend")
     
     # Key Metrics Dashboard
     metrics = calculate_branch_metrics(filtered_df, selected_date)
