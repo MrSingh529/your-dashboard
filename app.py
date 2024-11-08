@@ -1029,40 +1029,51 @@ def show_dashboard():
         show_sdr_dashboard()
 
 def load_itss_data():
-    """Load ITSS Tender data from recommended format"""
+    """Load ITSS Tender data"""
     try:
         # Read the Excel file
         df = pd.read_excel(
             "itss_tender.xlsx",
-            sheet_name="ITSS_Data",
             parse_dates=['Date']
         )
         
-        # Verify required columns
-        required_columns = [
-            'Account Name', 'Date', '61-90', '91-120', '121-180',
-            '181-360', '361-720', 'More than 2 Yr'
-        ]
-        
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        if missing_columns:
-            st.error(f"Missing columns: {missing_columns}")
-            return None
-            
-        # Convert amount columns to numeric
-        amount_columns = [
+        # Define aging categories
+        aging_categories = [
             '61-90', '91-120', '121-180', '181-360',
             '361-720', 'More than 2 Yr'
         ]
-        for col in amount_columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce')
-            
-        return df
         
+        # Convert amount columns to numeric
+        for col in aging_categories:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        
+        return df
     except Exception as e:
         st.error(f"Error loading ITSS data: {str(e)}")
         st.write("Error details:", str(e))
         return None
+
+def style_itss_data(df, aging_categories):
+    """Style the ITSS dataframe"""
+    def highlight_values(val):
+        try:
+            if pd.isna(val) or val == 0:
+                return ''
+            elif val > 0:
+                return 'background-color: #FF7575'  # Red
+            else:
+                return 'background-color: #92D050'  # Green
+        except:
+            return ''
+    
+    # Apply styling
+    return df.style.applymap(
+        highlight_values,
+        subset=aging_categories
+    ).format(
+        {col: '{:.2f}' for col in aging_categories}
+    )
 
 def style_itss_trend(df, selected_date):
     """Style the ITSS tender dataframe with color coding comparing to previous date"""
@@ -1119,9 +1130,15 @@ def show_itss_dashboard():
     df = load_itss_data()
     if df is None:
         return
-        
+    
     try:
-        # Get available dates
+        # Define aging categories
+        aging_categories = [
+            '61-90', '91-120', '121-180', '181-360',
+            '361-720', 'More than 2 Yr'
+        ]
+        
+        # Date selection
         dates = sorted(df['Date'].unique(), reverse=True)
         selected_date = st.selectbox(
             "Select Date for Analysis",
@@ -1130,102 +1147,86 @@ def show_itss_dashboard():
         )
         
         # Filter data for selected date
-        display_df = df[df['Date'] == selected_date].copy()
-        
-        # Get aging categories
-        aging_categories = ['61-90', '91-120', '121 -180', '181-360', '361-720', 'More than 2 Yr']
-        
-        # Create display dataframe
-        display_cols = ['Account Name'] + [f"{selected_date}_{cat}" for cat in aging_categories]
-        display_df = df[display_cols].copy()
-        
-        # Rename columns for display
-        display_df.columns = ['Account Name'] + aging_categories
+        current_data = df[df['Date'] == selected_date].copy()
         
         # Summary metrics
         st.markdown("### Summary Metrics")
-        total_outstanding = display_df[aging_categories].sum().sum()
-        high_risk = display_df[['361-720', 'More than 2 Yr']].sum().sum()
         
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("Total Outstanding", f"₹{total_outstanding:.2f} Cr")
+            total_outstanding = current_data[aging_categories].sum().sum()
+            st.metric(
+                "Total Outstanding",
+                f"₹{total_outstanding:.2f} Cr"
+            )
+        
         with col2:
-            st.metric("High Risk Amount", f"₹{high_risk:.2f} Cr",
-                     f"{(high_risk/total_outstanding*100 if total_outstanding else 0):.1f}%")
+            high_risk = current_data[['361-720', 'More than 2 Yr']].sum().sum()
+            st.metric(
+                "High Risk Amount",
+                f"₹{high_risk:.2f} Cr",
+                f"{(high_risk/total_outstanding*100 if total_outstanding else 0):.1f}%"
+            )
+        
         with col3:
-            active_accounts = len(display_df[display_df[aging_categories].sum(axis=1) > 0])
-            st.metric("Active Accounts", f"{active_accounts}")
+            active_accounts = len(current_data[current_data[aging_categories].sum(axis=1) > 0])
+            st.metric(
+                "Active Accounts",
+                str(active_accounts)
+            )
         
-        # Display styled data
+        # Main data display
         st.markdown("### Account-wise Aging Analysis")
-        
-        def style_dataframe(df):
-            def highlight_changes(val):
-                if pd.isna(val) or val == 0:
-                    return ''
-                elif val > 0:
-                    return 'background-color: #FF7575'
-                else:
-                    return 'background-color: #92D050'
-            
-            # Apply styling
-            styled = df.style.applymap(
-                highlight_changes,
-                subset=aging_categories
-            )
-            
-            # Format numbers
-            return styled.format(
-                {col: '{:.2f}' for col in aging_categories}
-            )
-        
+        display_cols = ['Account Name'] + aging_categories
         st.dataframe(
-            style_dataframe(display_df),
+            style_itss_data(current_data[display_cols], aging_categories),
             height=400,
             use_container_width=True
         )
         
-        # Add visualization
+        # Visualizations
         st.markdown("### Analysis")
-        
         col1, col2 = st.columns(2)
+        
         with col1:
             # Distribution pie chart
+            dist_data = current_data[aging_categories].sum()
             fig_pie = px.pie(
-                values=display_df[aging_categories].sum(),
-                names=aging_categories,
+                values=dist_data.values,
+                names=dist_data.index,
                 title="Distribution by Aging Category"
             )
-            st.plotly_chart(fig_pie)
-            
+            st.plotly_chart(fig_pie, use_container_width=True)
+        
         with col2:
-            # Top accounts bar chart
-            top_df = display_df.copy()
-            top_df['Total'] = top_df[aging_categories].sum(axis=1)
-            top_accounts = top_df.nlargest(5, 'Total')
-            
+            # Top accounts
+            current_data['Total'] = current_data[aging_categories].sum(axis=1)
+            top_accounts = current_data.nlargest(5, 'Total')
             fig_bar = px.bar(
                 top_accounts,
                 x='Account Name',
                 y='Total',
                 title="Top 5 Accounts by Outstanding"
             )
-            st.plotly_chart(fig_bar)
+            st.plotly_chart(fig_bar, use_container_width=True)
         
         # Export option
         if st.sidebar.button("Export Analysis"):
             buffer = io.BytesIO()
             with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-                display_df.to_excel(writer, sheet_name='ITSS Analysis', index=False)
+                current_data[display_cols].to_excel(
+                    writer, 
+                    sheet_name='ITSS Analysis',
+                    index=False
+                )
             
             st.sidebar.download_button(
                 label="📥 Download Report",
                 data=buffer.getvalue(),
-                file_name=f"itss_analysis_{selected_date}.xlsx",
+                file_name=f"itss_analysis_{selected_date.strftime('%Y-%m-%d')}.xlsx",
                 mime="application/vnd.ms-excel"
             )
-            
+        
     except Exception as e:
         st.error(f"Error in ITSS analysis: {str(e)}")
         st.write("Error details:", str(e))
