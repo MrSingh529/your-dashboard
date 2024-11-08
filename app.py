@@ -1028,19 +1028,187 @@ def show_dashboard():
     else:
         show_sdr_dashboard()
 
+def load_itss_data():
+    """Load ITSS Tender data with account-wise aging"""
+    try:
+        df = pd.read_excel("itss_tender.xlsx")
+        # Convert amount columns to numeric
+        for col in df.columns:
+            if col != 'Account Name':
+                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
+        return df
+    except Exception as e:
+        st.error(f"Error loading ITSS data: {str(e)}")
+        return None
+
+def style_itss_trend(df):
+    """
+    Style the ITSS tender dataframe with color coding:
+    - Green when amount decreases compared to previous date
+    - Red when amount increases
+    """
+    def highlight_changes(val):
+        try:
+            if pd.isna(val) or val == 0:
+                return ''
+            elif val < 0:
+                return 'background-color: #92D050'  # Green
+            elif val > 0:
+                return 'background-color: #FF7575'  # Red
+            return ''
+        except:
+            return ''
+    
+    # Format numbers and apply highlighting
+    return df.style.applymap(highlight_changes)\
+                  .format(lambda x: '{:.2f}'.format(x) if pd.notna(x) and x != 0 else '-')
+
+def show_itss_dashboard():
+    """Display ITSS Tender Analysis Dashboard"""
+    st.title("ITSS Tender Aging Analysis")
+    
+    # Load data
+    df = load_itss_data()
+    if df is None:
+        return
+        
+    try:
+        # Get dates for filtering
+        dates = ['02-11-2024', '26-10-2024', '19-10-2024']
+        selected_date = st.selectbox("Select Date for Analysis", dates)
+        
+        # Get aging buckets
+        aging_buckets = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
+        
+        # Calculate totals for metrics
+        total_by_bucket = {}
+        for bucket in aging_buckets:
+            col_name = f"{bucket}"
+            total_by_bucket[bucket] = df[col_name].sum()
+        
+        # Summary metrics
+        st.markdown("### Summary Metrics")
+        
+        # Display metrics in columns
+        cols = st.columns(3)
+        total_outstanding = sum(total_by_bucket.values())
+        with cols[0]:
+            st.metric(
+                "Total Outstanding",
+                f"₹{total_outstanding:.2f} Cr"
+            )
+        
+        with cols[1]:
+            high_risk = total_by_bucket.get('361-720', 0) + total_by_bucket.get('More than 2 Yr', 0)
+            st.metric(
+                "High Risk Amount (>360 days)",
+                f"₹{high_risk:.2f} Cr",
+                f"{(high_risk/total_outstanding*100):.1f}% of total"
+            )
+            
+        with cols[2]:
+            active_accounts = len(df[df.iloc[:, 1:].sum(axis=1) > 0])
+            st.metric(
+                "Active Accounts",
+                f"{active_accounts}"
+            )
+        
+        # Main aging analysis
+        st.markdown("### Account-wise Aging Analysis")
+        
+        # Filter options
+        aging_filter = st.multiselect(
+            "Filter by Aging Bucket",
+            aging_buckets,
+            default=aging_buckets
+        )
+        
+        # Filter data
+        filtered_cols = ['Account Name'] + [col for col in df.columns if any(bucket in col for bucket in aging_filter)]
+        filtered_df = df[filtered_cols]
+        
+        # Show styled dataframe
+        st.dataframe(
+            style_itss_trend(filtered_df),
+            height=400,
+            use_container_width=True
+        )
+        
+        # Visualizations
+        st.markdown("### Analysis")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Aging bucket distribution
+            fig_pie = px.pie(
+                values=list(total_by_bucket.values()),
+                names=list(total_by_bucket.keys()),
+                title="Distribution by Aging Bucket"
+            )
+            st.plotly_chart(fig_pie)
+            
+        with col2:
+            # Top accounts by outstanding
+            top_accounts = df.copy()
+            top_accounts['Total'] = top_accounts[aging_buckets].sum(axis=1)
+            top_accounts = top_accounts.nlargest(5, 'Total')
+            
+            fig_bar = px.bar(
+                top_accounts,
+                x='Account Name',
+                y='Total',
+                title="Top 5 Accounts by Outstanding Amount"
+            )
+            st.plotly_chart(fig_bar)
+        
+        # Detailed Analysis
+        st.markdown("### Detailed Insights")
+        
+        # Show accounts with high-risk amounts
+        high_risk_accounts = df[
+            (df['361-720'] > 0) | (df['More than 2 Yr'] > 0)
+        ].sort_values('More than 2 Yr', ascending=False)
+        
+        if not high_risk_accounts.empty:
+            st.markdown("**High Risk Accounts (>360 days):**")
+            st.dataframe(
+                style_itss_trend(high_risk_accounts),
+                height=200
+            )
+        
+        # Export Option
+        if st.sidebar.button("Export ITSS Analysis"):
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                df.to_excel(writer, sheet_name='ITSS Aging', index=False)
+                
+            st.sidebar.download_button(
+                label="📥 Download ITSS Report",
+                data=buffer.getvalue(),
+                file_name=f"itss_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                mime="application/vnd.ms-excel"
+            )
+            
+    except Exception as e:
+        st.error(f"Error in ITSS analysis: {str(e)}")
+        st.write("Error details:", str(e))
+
 def show_dashboard():
     """Main dashboard selector"""
     report_type = st.sidebar.radio(
         "Select Report Type",
-        ["Collections Dashboard", "CSD SDR Trend", "TSG Payment Receivables"]
+        ["Collections Dashboard", "CSD SDR Trend", "TSG Payment Receivables", "ITSS SDR Analysis"]
     )
     
     if report_type == "Collections Dashboard":
         show_collections_dashboard()
     elif report_type == "CSD SDR Trend":
         show_sdr_dashboard()
-    else:
+    elif report_type == "TSG Payment Receivables":
         show_tsg_dashboard()
+    else:
+        show_itss_dashboard()
 
 def main():
     if not check_password():
