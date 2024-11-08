@@ -1157,14 +1157,14 @@ def show_itss_dashboard():
             total_outstanding = current_data[aging_categories].sum().sum()
             st.metric(
                 "Total Outstanding",
-                f"₹{total_outstanding:.2f} Cr"
+                f"₹{total_outstanding:.2f} Lakhs"
             )
         
         with col2:
             high_risk = current_data[['361-720', 'More than 2 Yr']].sum().sum()
             st.metric(
                 "High Risk Amount",
-                f"₹{high_risk:.2f} Cr",
+                f"₹{high_risk:.2f} Lakhs",
                 f"{(high_risk/total_outstanding*100 if total_outstanding else 0):.1f}%"
             )
         
