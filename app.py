@@ -100,34 +100,41 @@ def check_password():
 
 def load_data():
     """
-    Load and structure data with specific date columns
+    Load and structure data with custom headers
     """
     try:
-        # Read Excel file with specific header row
-        df = pd.read_excel("collections_data.xlsx", header=0)
+        # Read Excel file without headers first
+        df = pd.read_excel("collections_data.xlsx", header=None)
         
-        # Display columns for debugging
-        st.sidebar.write("Available columns:", list(df.columns))
+        # Create proper column names
+        columns = [
+            'Branch Name',
+            'Reduced Pending Amount'
+        ]
         
-        # Check if the first row contains the actual column names
-        if 'Branch Name' not in df.columns:
-            # Get the first row as column names
-            df.columns = df.iloc[0]
-            # Remove the first row
-            df = df.iloc[1:].reset_index(drop=True)
+        # Add date-based column names
+        dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
+        for date in dates:
+            columns.extend([f'Balance_{date}', f'Pending_{date}'])
+        
+        # Assign columns to dataframe
+        df.columns = columns[:len(df.columns)]
+        
+        # Skip the header row
+        df = df.iloc[1:].reset_index(drop=True)
         
         # Convert amount columns to numeric
         for col in df.columns:
             if col != 'Branch Name':
                 df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
         
-        # Display loaded data info
-        st.sidebar.write("Data shape:", df.shape)
         return df
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
-        st.write("Error details:", str(e))
-        st.write("Please check your Excel file structure")
+        # Debug information
+        st.write("Available columns:", list(df.columns))
+        st.write("Data sample:")
+        st.write(df.head())
         return None
         
 def clean_dataframe(df):
@@ -278,10 +285,10 @@ def show_dashboard():
     if df is None:
         st.error("Unable to load data. Please check your Excel file.")
         return
-
-    # Display raw data for verification
-    st.write("Data Preview:")
-    st.dataframe(df.head())
+    
+    # Display data info for verification
+    st.sidebar.write("Data loaded successfully")
+    st.sidebar.write("Number of branches:", len(df['Branch Name'].unique()))
     
     # Sidebar Controls
     st.sidebar.title("Analysis Controls")
