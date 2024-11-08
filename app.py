@@ -1020,10 +1020,10 @@ def show_dashboard():
     # Report Selection
     report_type = st.sidebar.radio(
         "Select Report Type",
-        ["Collections Dashboard", "CSD SDR Trend"]
+        ["Branch Reco Trend", "CSD SDR Trend"]
     )
     
-    if report_type == "Collections Dashboard":
+    if report_type == "Branch Reco Trend":
         show_collections_dashboard()  # Your existing dashboard function
     else:
         show_sdr_dashboard()
@@ -1236,10 +1236,10 @@ def show_dashboard():
     """Main dashboard selector"""
     report_type = st.sidebar.radio(
         "Select Report Type",
-        ["Collections Dashboard", "CSD SDR Trend", "TSG Payment Receivables", "ITSS SDR Analysis"]
+        ["Branch Reco Trend", "CSD SDR Trend", "TSG Payment Receivables", "ITSS SDR Analysis"]
     )
     
-    if report_type == "Collections Dashboard":
+    if report_type == "Branch Reco Trend":
         show_collections_dashboard()
     elif report_type == "CSD SDR Trend":
         show_sdr_dashboard()
