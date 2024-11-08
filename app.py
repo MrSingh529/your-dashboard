@@ -1124,7 +1124,7 @@ def style_itss_trend(df, selected_date):
 
 def show_itss_dashboard():
     """Display ITSS Tender Analysis Dashboard"""
-    st.title("ITSS Tender Aging Analysis")
+    st.title("ITSS SDR Aging Analysis")
     
     # Load data
     df = load_itss_data()
