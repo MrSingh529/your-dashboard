@@ -1031,41 +1031,36 @@ def show_dashboard():
 def load_itss_data():
     """Load ITSS Tender data handling multi-row headers"""
     try:
-        # Read the first row to get dates
-        dates_df = pd.read_excel("itss_tender.xlsx", nrows=1, header=None)
-        dates = [col for col in dates_df.iloc[0] if isinstance(col, str) and 'Ageing as on' in col]
-        
-        # Read the actual data with the second row as headers
+        # Read the Excel file
         df = pd.read_excel("itss_tender.xlsx", header=1)
         
-        # Create new column names combining date and aging category
-        new_columns = []
-        current_date = None
+        # Clean up column names and structure data
+        clean_df = pd.DataFrame()
+        clean_df['Account Name'] = df['Account Name']
         
-        for col in df.columns:
-            if 'Unnamed' in str(col):
-                new_columns.append(f"{current_date}_{prev_col}")
-            elif '61-90' in str(col) or '91-120' in str(col) or '121-180' in str(col) or \
-                 '181-360' in str(col) or '361-720' in str(col) or 'More than 2 Yr' in str(col):
-                prev_col = col
-                new_columns.append(f"{current_date}_{col}")
-            else:
-                current_date = dates.pop(0) if dates else current_date
-                if col == 'Account Name':
-                    new_columns.append(col)
-                else:
-                    prev_col = col
-                    new_columns.append(f"{current_date}_{col}")
+        # Get unique dates and aging categories
+        dates = sorted(list(set([col.split('_')[0] for col in df.columns 
+                               if isinstance(col, str) and 'Ageing as on' in col])))
+        categories = ['61-90', '91-120', '121 -180', '181-360', '361-720', 'More than 2 Yr']
         
-        # Rename columns
-        df.columns = new_columns
+        # Reorganize columns
+        for date in dates:
+            for category in categories:
+                # Find matching column (handling .1, .2 suffixes)
+                matching_cols = [col for col in df.columns 
+                               if isinstance(col, str) and 
+                               date in col and 
+                               category in col.split('.')[0]]
+                if matching_cols:
+                    clean_df[f"{date}_{category}"] = df[matching_cols[0]]
         
-        # Convert numeric columns
-        for col in df.columns:
+        # Convert to numeric
+        for col in clean_df.columns:
             if col != 'Account Name':
-                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
+                clean_df[col] = pd.to_numeric(clean_df[col].astype(str).str.replace(',', ''), 
+                                            errors='coerce')
         
-        return df
+        return clean_df
         
     except Exception as e:
         st.error(f"Error loading ITSS data: {str(e)}")
@@ -1130,90 +1125,108 @@ def show_itss_dashboard():
         
     try:
         # Get available dates from column names
-        dates = sorted(list(set([col.split('_')[0] for col in df.columns if 'Ageing as on' in col])), reverse=True)
+        dates = sorted(list(set([col.split('_')[0] for col in df.columns 
+                               if 'Ageing as on' in col])), reverse=True)
         selected_date = st.selectbox("Select Date for Analysis", dates)
         
         # Get aging categories
-        aging_categories = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
+        aging_categories = ['61-90', '91-120', '121 -180', '181-360', '361-720', 'More than 2 Yr']
         
-        # Filter and display data for selected date
+        # Create display dataframe
         display_cols = ['Account Name'] + [f"{selected_date}_{cat}" for cat in aging_categories]
         display_df = df[display_cols].copy()
         
         # Rename columns for display
         display_df.columns = ['Account Name'] + aging_categories
         
-        # Show styled dataframe
-        st.dataframe(
-            style_itts_trend(display_df, selected_date),
-            height=400,
-            use_container_width=True
-        )
-        
-        # Calculate totals for metrics
-        total_by_bucket = {}
-        for display_name, col_name in aging_buckets.items():
-            if col_name in df.columns:
-                total_by_bucket[display_name] = df[col_name].sum()
-            else:
-                st.error(f"Column not found: {col_name}")
-                st.write("Available columns:", list(df.columns))
-        
         # Summary metrics
         st.markdown("### Summary Metrics")
+        total_outstanding = display_df[aging_categories].sum().sum()
+        high_risk = display_df[['361-720', 'More than 2 Yr']].sum().sum()
         
-        # Display metrics in columns
-        cols = st.columns(3)
-        total_outstanding = sum(total_by_bucket.values())
-        with cols[0]:
-            st.metric(
-                "Total Outstanding",
-                f"₹{total_outstanding:.2f} Cr"
-            )
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Outstanding", f"₹{total_outstanding:.2f} Cr")
+        with col2:
+            st.metric("High Risk Amount", f"₹{high_risk:.2f} Cr",
+                     f"{(high_risk/total_outstanding*100 if total_outstanding else 0):.1f}%")
+        with col3:
+            active_accounts = len(display_df[display_df[aging_categories].sum(axis=1) > 0])
+            st.metric("Active Accounts", f"{active_accounts}")
         
-        with cols[1]:
-            high_risk = (total_by_bucket.get('361-720', 0) + 
-                        total_by_bucket.get('More than 2 Yr', 0))
-            st.metric(
-                "High Risk Amount (>360 days)",
-                f"₹{high_risk:.2f} Cr",
-                f"{(high_risk/total_outstanding*100 if total_outstanding else 0):.1f}% of total"
-            )
-            
-        with cols[2]:
-            active_accounts = len(df[df[list(aging_buckets.values())].sum(axis=1) > 0])
-            st.metric(
-                "Active Accounts",
-                f"{active_accounts}"
-            )
-        
-        # Main aging analysis
+        # Display styled data
         st.markdown("### Account-wise Aging Analysis")
         
-        # Filter options
-        selected_buckets = st.multiselect(
-            "Filter by Aging Bucket",
-            list(aging_buckets.keys()),
-            default=list(aging_buckets.keys())
-        )
+        def style_dataframe(df):
+            def highlight_changes(val):
+                if pd.isna(val) or val == 0:
+                    return ''
+                elif val > 0:
+                    return 'background-color: #FF7575'
+                else:
+                    return 'background-color: #92D050'
+            
+            # Apply styling
+            styled = df.style.applymap(
+                highlight_changes,
+                subset=aging_categories
+            )
+            
+            # Format numbers
+            return styled.format(
+                {col: '{:.2f}' for col in aging_categories}
+            )
         
-        # Filter data
-        filtered_cols = ['Account Name'] + [aging_buckets[bucket] for bucket in selected_buckets]
-        filtered_df = df[filtered_cols]
-        
-        # Show styled dataframe
         st.dataframe(
-            style_itts_trend(filtered_df),
+            style_dataframe(display_df),
             height=400,
             use_container_width=True
         )
         
-        # Rest of your dashboard code...
+        # Add visualization
+        st.markdown("### Analysis")
         
+        col1, col2 = st.columns(2)
+        with col1:
+            # Distribution pie chart
+            fig_pie = px.pie(
+                values=display_df[aging_categories].sum(),
+                names=aging_categories,
+                title="Distribution by Aging Category"
+            )
+            st.plotly_chart(fig_pie)
+            
+        with col2:
+            # Top accounts bar chart
+            top_df = display_df.copy()
+            top_df['Total'] = top_df[aging_categories].sum(axis=1)
+            top_accounts = top_df.nlargest(5, 'Total')
+            
+            fig_bar = px.bar(
+                top_accounts,
+                x='Account Name',
+                y='Total',
+                title="Top 5 Accounts by Outstanding"
+            )
+            st.plotly_chart(fig_bar)
+        
+        # Export option
+        if st.sidebar.button("Export Analysis"):
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                display_df.to_excel(writer, sheet_name='ITSS Analysis', index=False)
+            
+            st.sidebar.download_button(
+                label="📥 Download Report",
+                data=buffer.getvalue(),
+                file_name=f"itss_analysis_{selected_date}.xlsx",
+                mime="application/vnd.ms-excel"
+            )
+            
     except Exception as e:
         st.error(f"Error in ITSS analysis: {str(e)}")
         st.write("Error details:", str(e))
-        st.write("DataFrame columns:", list(df.columns if df is not None else []))
+        st.write("Available columns:", list(df.columns))
 
 def show_dashboard():
     """Main dashboard selector"""
