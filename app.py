@@ -308,10 +308,8 @@ def show_dashboard():
             'Collection': 'sum',
             'Outstanding': 'sum'
         }).round(2)
-        st.dataframe(
-            summary_df.style.background_gradient(cmap='RdYlGn'),
-            height=400
-        )
+        # Display without styling
+        st.dataframe(summary_df, height=400)
         
     elif view_type == "Detailed View":
         st.dataframe(df, height=400)
@@ -325,10 +323,7 @@ def show_dashboard():
             values=pivot_values,
             aggfunc='sum'
         )
-        st.dataframe(
-            pivot_df.style.background_gradient(cmap='RdYlGn'),
-            height=400
-        )
+        st.dataframe(pivot_df, height=400)
     
     # Export Options
     st.sidebar.markdown("---")
