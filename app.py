@@ -102,24 +102,23 @@ def load_data():
     """
     Load data from your Excel files or database
     """
-    # List of possible data file locations
-    data_locations = [
-        "collections_data.xlsx",  # Same directory
-        "data/collections_data.xlsx",  # Data subfolder
-        "assets/collections_data.xlsx"  # Assets subfolder
-    ]
-    
-    # Try to load from any available location
-    for file_path in data_locations:
-        try:
-            df = pd.read_excel(file_path)
-            st.success(f"Data loaded successfully from {file_path}")
-            return df
-        except Exception as e:
-            continue
-    
-    # If no data file found, use sample data
-    st.warning("No data file found. Using sample data.")
+    try:
+        df = pd.read_excel("collections_data.xlsx")
+        
+        # Display available columns for debugging
+        st.sidebar.write("Available columns:", list(df.columns))
+        
+        # Display data sample for verification
+        st.sidebar.write("Data sample:")
+        st.sidebar.dataframe(df.head(2))
+        
+        return df
+    except Exception as e:
+        st.error(f"Error loading data: {str(e)}")
+        return create_sample_data()
+        
+def create_sample_data():
+    """Create sample data when actual data isn't available"""
     dates = pd.date_range(start='2024-01-01', end='2024-03-31', freq='D')
     branch_data = pd.DataFrame({
         'Date': dates.repeat(5),
@@ -132,15 +131,47 @@ def load_data():
     return branch_data
 
 def calculate_metrics(df):
-    """Calculate key performance metrics"""
-    metrics = {
-        'total_collection': df['Collection'].sum(),
-        'total_outstanding': df['Outstanding'].sum(),
-        'collection_efficiency': (df['Collection'].sum() / df['Invoice'].sum() * 100),
-        'top_branch': df.groupby('Branch Name')['Collection'].sum().idxmax(),
-        'most_improved': df.groupby('Branch Name')['Outstanding'].pct_change().idxmax()
-    }
-    return metrics
+    """Calculate key performance metrics with error handling"""
+    try:
+        metrics = {}
+        
+        # Total Collection (assuming column name might be different)
+        collection_col = [col for col in df.columns if 'collection' in col.lower()]
+        if collection_col:
+            metrics['total_collection'] = df[collection_col[0]].sum()
+        else:
+            metrics['total_collection'] = 0
+            
+        # Total Outstanding
+        outstanding_col = [col for col in df.columns if 'outstanding' in col.lower()]
+        if outstanding_col:
+            metrics['total_outstanding'] = df[outstanding_col[0]].sum()
+        else:
+            metrics['total_outstanding'] = 0
+            
+        # Collection Efficiency
+        invoice_col = [col for col in df.columns if 'invoice' in col.lower()]
+        if collection_col and invoice_col:
+            metrics['collection_efficiency'] = (df[collection_col[0]].sum() / df[invoice_col[0]].sum() * 100)
+        else:
+            metrics['collection_efficiency'] = 0
+            
+        # Top Branch
+        branch_col = [col for col in df.columns if any(x in col.lower() for x in ['branch', 'branch name'])]
+        if branch_col and collection_col:
+            metrics['top_branch'] = df.groupby(branch_col[0])[collection_col[0]].sum().idxmax()
+        else:
+            metrics['top_branch'] = "N/A"
+            
+        return metrics
+    except Exception as e:
+        st.error(f"Error calculating metrics: {str(e)}")
+        return {
+            'total_collection': 0,
+            'total_outstanding': 0,
+            'collection_efficiency': 0,
+            'top_branch': "N/A"
+        }
 
 def show_login_page():
     """Display the login page"""
@@ -166,63 +197,57 @@ def show_login_page():
 
 def show_dashboard():
     """Display the main dashboard"""
+    # Load data first
+    df = load_data()
+    
     # Sidebar filters
     st.sidebar.title("Filters")
     
-    # Date range filter
-    date_filter = st.sidebar.selectbox(
-        "Select Date Range",
-        ["Last 7 Days", "Last 30 Days", "Last 90 Days", "Custom Range"]
-    )
+    # Dynamic branch filter based on actual data
+    branch_col = [col for col in df.columns if any(x in col.lower() for x in ['branch', 'branch name'])]
+    if branch_col:
+        branches = ["All"] + sorted(df[branch_col[0]].unique().tolist())
+        selected_branches = st.sidebar.multiselect("Select Branches", branches, default="All")
     
-    if date_filter == "Custom Range":
-        start_date = st.sidebar.date_input("Start Date")
-        end_date = st.sidebar.date_input("End Date")
-    
-    # Region filter
-    regions = ["All", "North", "South", "East", "West"]
-    selected_region = st.sidebar.multiselect("Select Region", regions, default="All")
-    
-    # Branch filter
-    branches = ["All", "Kota", "Guwahati", "Kolkata", "Faridabad", "Rajkot"]
-    selected_branches = st.sidebar.multiselect("Select Branches", branches, default="All")
-    
-    # Amount range filter
+    # Dynamic amount range filter
     st.sidebar.subheader("Amount Range")
-    min_amount = st.sidebar.number_input("Minimum Amount", value=0)
-    max_amount = st.sidebar.number_input("Maximum Amount", value=1000000)
-    
-    # Load and filter data
-    df = load_data()
+    amount_col = [col for col in df.columns if any(x in col.lower() for x in ['outstanding', 'amount', 'balance'])]
+    if amount_col:
+        min_val = float(df[amount_col[0]].min())
+        max_val = float(df[amount_col[0]].max())
+        min_amount = st.sidebar.number_input("Minimum Amount", value=min_val)
+        max_amount = st.sidebar.number_input("Maximum Amount", value=max_val)
     
     # Apply filters
-    if selected_region != ["All"]:
-        df = df[df['Region'].isin(selected_region)]
-    if selected_branches != ["All"]:
-        df = df[df['Branch Name'].isin(selected_branches)]
-    df = df[
-        (df['Outstanding'] >= min_amount) & 
-        (df['Outstanding'] <= max_amount)
-    ]
+    filtered_df = df.copy()
+    if branch_col and selected_branches != ["All"]:
+        filtered_df = filtered_df[filtered_df[branch_col[0]].isin(selected_branches)]
+    if amount_col:
+        filtered_df = filtered_df[
+            (filtered_df[amount_col[0]] >= min_amount) & 
+            (filtered_df[amount_col[0]] <= max_amount)
+        ]
     
     # Main dashboard content
     st.title("Collections & Outstanding Analysis Dashboard")
     
-    # Key Metrics Row
-    metrics = calculate_metrics(df)
+    # Display data preview
+    st.subheader("Data Preview")
+    st.dataframe(filtered_df.head(), height=200)
+    
+    # Key Metrics
+    metrics = calculate_metrics(filtered_df)
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         st.metric(
             "Total Collections",
-            f"₹{metrics['total_collection']:,.2f}",
-            f"{df['Collection'].pct_change().mean()*100:+.1f}%"
+            f"₹{metrics['total_collection']:,.2f}"
         )
     with col2:
         st.metric(
             "Total Outstanding",
-            f"₹{metrics['total_outstanding']:,.2f}",
-            f"{df['Outstanding'].pct_change().mean()*100:+.1f}%"
+            f"₹{metrics['total_outstanding']:,.2f}"
         )
     with col3:
         st.metric(
@@ -235,115 +260,14 @@ def show_dashboard():
             metrics['top_branch']
         )
     
-    # Trend Analysis
-    st.subheader("Trend Analysis")
-    tab1, tab2, tab3 = st.tabs(["Collections", "Outstanding", "Comparison"])
-    
-    with tab1:
-        # Collections trend
-        fig_collections = px.line(
-            df.groupby('Date')['Collection'].sum().reset_index(),
-            x='Date',
-            y='Collection',
-            title="Daily Collections Trend"
-        )
-        st.plotly_chart(fig_collections, use_container_width=True)
-        
-    with tab2:
-        # Outstanding trend
-        fig_outstanding = px.line(
-            df.groupby('Date')['Outstanding'].sum().reset_index(),
-            x='Date',
-            y='Outstanding',
-            title="Daily Outstanding Trend"
-        )
-        st.plotly_chart(fig_outstanding, use_container_width=True)
-        
-    with tab3:
-        # Comparison chart
-        fig_comparison = go.Figure()
-        fig_comparison.add_trace(go.Scatter(
-            x=df.groupby('Date')['Collection'].sum().index,
-            y=df.groupby('Date')['Collection'].sum().values,
-            name="Collections"
-        ))
-        fig_comparison.add_trace(go.Scatter(
-            x=df.groupby('Date')['Outstanding'].sum().index,
-            y=df.groupby('Date')['Outstanding'].sum().values,
-            name="Outstanding"
-        ))
-        fig_comparison.update_layout(title="Collections vs Outstanding Trend")
-        st.plotly_chart(fig_comparison, use_container_width=True)
-    
-    # Branch Performance Analysis
-    st.subheader("Branch Performance Analysis")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Branch-wise collections
-        fig_branch = px.bar(
-            df.groupby('Branch Name')['Collection'].sum().reset_index(),
-            x='Branch Name',
-            y='Collection',
-            title="Branch-wise Collections"
-        )
-        st.plotly_chart(fig_branch, use_container_width=True)
-        
-    with col2:
-        # Collection efficiency by branch
-        branch_efficiency = (df.groupby('Branch Name').agg({
-            'Collection': 'sum',
-            'Invoice': 'sum'
-        }).reset_index())
-        branch_efficiency['Efficiency'] = (
-            branch_efficiency['Collection'] / branch_efficiency['Invoice'] * 100
-        )
-        fig_efficiency = px.bar(
-            branch_efficiency,
-            x='Branch Name',
-            y='Efficiency',
-            title="Collection Efficiency by Branch (%)"
-        )
-        st.plotly_chart(fig_efficiency, use_container_width=True)
-    
-    # Detailed Data View
-    st.subheader("Detailed Data View")
-    view_type = st.selectbox(
-        "Select View",
-        ["Summary View", "Detailed View", "Pivot Analysis"]
-    )
-    
-    if view_type == "Summary View":
-        summary_df = df.groupby('Branch Name').agg({
-            'Invoice': 'sum',
-            'Collection': 'sum',
-            'Outstanding': 'sum'
-        }).round(2)
-        # Display without styling
-        st.dataframe(summary_df, height=400)
-        
-    elif view_type == "Detailed View":
-        st.dataframe(df, height=400)
-        
-    else:  # Pivot Analysis
-        pivot_index = st.selectbox("Select Row", ["Branch Name", "Region"])
-        pivot_values = st.selectbox("Select Values", ["Collection", "Outstanding"])
-        pivot_df = pd.pivot_table(
-            df,
-            index=pivot_index,
-            values=pivot_values,
-            aggfunc='sum'
-        )
-        st.dataframe(pivot_df, height=400)
-    
-    # Export Options
+    # Allow user to download data
     st.sidebar.markdown("---")
     st.sidebar.subheader("Export Options")
     if st.sidebar.button("Export to Excel"):
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            df.to_excel(writer, sheet_name='Detailed Data', index=False)
-            summary_df.to_excel(writer, sheet_name='Summary')
+            filtered_df.to_excel(writer, sheet_name='Detailed Data', index=False)
+        
         st.sidebar.download_button(
             label="Download Excel File",
             data=output.getvalue(),
