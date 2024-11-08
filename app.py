@@ -18,49 +18,48 @@ st.set_page_config(
 # Custom CSS (keeping your existing CSS)
 st.markdown("""
     <style>
-    /* Department Selection Styling */
-    .stSelectbox {
+    .main {
+        padding: 20px;
+    }
+    .metric-card {
         background-color: white;
-        border-radius: 5px;
-        margin-bottom: 10px;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin: 10px 0;
     }
-    
-    /* Sidebar Styling */
-    .css-1d391kg {
-        padding: 2rem 1rem;
+    .filter-container {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
     }
-    
-    /* Department Buttons */
+    .comparison-card {
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin: 10px 0;
+    }
+    .trend-positive {
+        color: #2ecc71;
+        font-weight: bold;
+    }
+    .trend-negative {
+        color: #e74c3c;
+        font-weight: bold;
+    }
+    .login-container {
+        max-width: 400px;
+        margin: auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
     .stButton>button {
         width: 100%;
-        text-align: left;
-        background-color: #f0f2f6;
-        border: none;
-        padding: 15px;
-        margin: 5px 0;
-        border-radius: 5px;
-        font-weight: 500;
-    }
-    
-    .stButton>button:hover {
-        background-color: #e0e2e6;
-    }
-    
-    /* Report Selection Styling */
-    .stRadio>div {
-        padding-left: 20px;
-    }
-    
-    /* Logout Button */
-    .stButton>button[data-testid="baseButton-secondary"] {
-        background-color: #ff4b4b;
-        color: white;
-        text-align: center;
-    }
-    
-    /* Dividers */
-    .css-9cu3kj {
-        margin: 1rem 0;
+        margin-top: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -98,89 +97,6 @@ def check_password():
                     st.error("Invalid credentials")
         return False
     return True
-
-# Define menu structure
-DEPARTMENT_REPORTS = {
-    "CSD": {
-        "Branch Reco Trend": show_collections_dashboard,
-        "CSD SDR Trend": show_sdr_dashboard
-    },
-    "TSG": {
-        "TSG Payment Receivables": show_tsg_dashboard
-    },
-    "ITSS": {
-        "ITSS SDR Analysis": show_itss_dashboard
-    },
-    "Finance": {
-        # Add Finance reports here
-    }
-}
-
-def show_department_menu():
-    """Display hierarchical department menu"""
-    # Department selection
-    st.sidebar.title("Select Department")
-    
-    # Add some spacing and styling
-    st.sidebar.markdown("""
-        <style>
-        .department-button {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 5px;
-            background-color: #f0f2f6;
-            border: none;
-            text-align: left;
-            cursor: pointer;
-        }
-        .department-button:hover {
-            background-color: #e0e2e6;
-        }
-        .report-option {
-            margin-left: 20px;
-            padding: 5px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-    
-    # Initialize session state for menu
-    if 'selected_department' not in st.session_state:
-        st.session_state.selected_department = None
-    if 'selected_report' not in st.session_state:
-        st.session_state.selected_report = None
-    
-    # Department selection with custom styling
-    for dept in DEPARTMENT_REPORTS.keys():
-        col1, col2 = st.sidebar.columns([8, 2])
-        with col1:
-            if st.sidebar.button(
-                dept,
-                key=f"dept_{dept}",
-                help=f"View {dept} department reports",
-                use_container_width=True
-            ):
-                st.session_state.selected_department = dept
-                st.session_state.selected_report = None
-    
-    # Show reports for selected department
-    if st.session_state.selected_department:
-        st.sidebar.markdown("---")
-        st.sidebar.subheader(f"{st.session_state.selected_department} Reports")
-        
-        for report_name, report_func in DEPARTMENT_REPORTS[st.session_state.selected_department].items():
-            if st.sidebar.radio(
-                "",
-                [report_name],
-                key=f"report_{report_name}",
-                index=0 if st.session_state.selected_report == report_name else None
-            ):
-                st.session_state.selected_report = report_name
-    
-    # Return selected report function
-    if st.session_state.selected_report:
-        return DEPARTMENT_REPORTS[st.session_state.selected_department][st.session_state.selected_report]
-    return None
 
 def load_data():
     """
@@ -1316,6 +1232,89 @@ def show_itss_dashboard():
         st.write("Error details:", str(e))
         st.write("Available columns:", list(df.columns))
 
+# Define menu structure
+DEPARTMENT_REPORTS = {
+    "CSD": {
+        "Branch Reco Trend": show_collections_dashboard,
+        "CSD SDR Trend": show_sdr_dashboard
+    },
+    "TSG": {
+        "TSG Payment Receivables": show_tsg_dashboard
+    },
+    "ITSS": {
+        "ITSS SDR Analysis": show_itss_dashboard
+    },
+    "Finance": {
+        # Add Finance reports here
+    }
+}
+
+def define_department_structure():
+    """Define the department and report structure"""
+    return {
+        "CSD": {
+            "Branch Reco Trend": show_collections_dashboard,
+            "CSD SDR Trend": show_sdr_dashboard
+        },
+        "TSG": {
+            "TSG Payment Receivables": show_tsg_dashboard
+        },
+        "ITSS": {
+            "ITSS SDR Analysis": show_itss_dashboard
+        },
+        "Finance": {
+            # Add Finance reports here
+        }
+    }
+
+def show_department_menu():
+    """Display hierarchical department menu"""
+    # Department selection
+    st.sidebar.title("Select Department")
+    
+    # Get department structure
+    DEPARTMENT_REPORTS = define_department_structure()
+    
+    # Initialize session state for menu
+    if 'selected_department' not in st.session_state:
+        st.session_state.selected_department = None
+    if 'selected_report' not in st.session_state:
+        st.session_state.selected_report = None
+    
+    # Department selection
+    departments = list(DEPARTMENT_REPORTS.keys())
+    
+    # Create department buttons
+    for dept in departments:
+        if st.sidebar.button(
+            dept,
+            key=f"dept_{dept}",
+            help=f"View {dept} department reports"
+        ):
+            st.session_state.selected_department = dept
+            st.session_state.selected_report = None
+            st.rerun()
+    
+    # Show reports for selected department
+    if st.session_state.selected_department:
+        st.sidebar.markdown("---")
+        st.sidebar.subheader(f"{st.session_state.selected_department} Reports")
+        
+        reports = list(DEPARTMENT_REPORTS[st.session_state.selected_department].keys())
+        
+        for report in reports:
+            if st.sidebar.radio(
+                "",
+                [report],
+                key=f"report_{report}",
+                index=0 if st.session_state.selected_report == report else None,
+                label_visibility="collapsed"
+            ):
+                st.session_state.selected_report = report
+                return DEPARTMENT_REPORTS[st.session_state.selected_department][report]
+    
+    return None
+
 def show_dashboard():
     """Main dashboard selector"""
     report_type = st.sidebar.radio(
@@ -1333,46 +1332,35 @@ def show_dashboard():
         show_itss_dashboard()
 
 def main():
-    """Main application with department-wise navigation"""
-    if 'authenticated' not in st.session_state:
-        st.session_state.authenticated = False
+    if not check_password():
+        return
+        
+    # Show department menu and selected report
+    selected_report_func = show_department_menu()
     
-    if not st.session_state.authenticated:
-        # Show login page
-        if check_password():
-            st.rerun()
+    if selected_report_func:
+        selected_report_func()
     else:
-        # Show department menu and selected report
-        selected_report_func = show_department_menu()
-        
-        if selected_report_func:
-            # Show selected report
-            selected_report_func()
-        else:
-            # Show welcome message or dashboard overview
-            st.title("Welcome to Department Reports Dashboard")
-            st.markdown("""
-                ### Please select a department and report from the sidebar menu
-                
-                Available Departments:
-                - **CSD**: Branch Reconciliation and SDR Trends
-                - **TSG**: Payment Receivables Analysis
-                - **ITSS**: SDR Analysis
-                - **Finance**: Financial Reports
-                
-                Select a department from the sidebar to view available reports.
-            """)
-        
-        # Logout button
-        st.sidebar.markdown("---")
-        if st.sidebar.button("Logout", type="secondary"):
-            st.session_state.authenticated = False
-            st.session_state.selected_department = None
-            st.session_state.selected_report = None
-            st.rerun()
+        st.title("Welcome to Department Reports Dashboard")
+        st.markdown("""
+            ### Please select a department from the sidebar
+            
+            Available Departments:
+            - **CSD**: Branch Reconciliation and SDR Trends
+            - **TSG**: Payment Receivables Analysis
+            - **ITSS**: SDR Analysis
+            - **Finance**: Financial Reports
+            
+            Click on a department to view available reports.
+        """)
+    
+    # Logout button
+    st.sidebar.markdown("---")
+    if st.sidebar.button("Logout", type="secondary"):
+        st.session_state.authenticated = False
+        st.session_state.selected_department = None
+        st.session_state.selected_report = None
+        st.rerun()
 
 if __name__ == "__main__":
     main()
-
-if __name__ == "__main__":
-    main() 
