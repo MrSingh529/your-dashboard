@@ -312,7 +312,7 @@ def style_comparison_df(df, dates):
     return df.style.apply(highlight_pending_changes, axis=1)\
                   .format({col: '₹{:,.2f}' for col in df.columns if col != 'Branch Name'})
 
-def show_dashboard():
+def show_collections_dashboard():
     """Display enhanced dashboard with advanced analytics"""
     # Load data
     df = load_data()
@@ -558,13 +558,148 @@ def show_dashboard():
         except Exception as e:
             st.sidebar.error(f"Error exporting data: {str(e)}")
 
+def load_sdr_data():
+    """Load CSD SDR Trend data"""
+    try:
+        df = pd.read_excel("sdr_trend.xlsx")
+        # Convert amount columns to numeric
+        for col in df.columns:
+            if col not in ['Ageing Category']:
+                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
+        return df
+    except Exception as e:
+        st.error(f"Error loading SDR data: {str(e)}")
+        return None
+
+def style_sdr_data(df):
+    """Style the SDR trend data with color coding"""
+    def highlight_values(val):
+        try:
+            val = float(val)
+            if pd.isna(val):
+                return ''
+            elif val > 0:
+                return 'background-color: #FF7575'  # Red for increase
+            elif val < 0:
+                return 'background-color: #92D050'  # Green for decrease
+            else:
+                return 'background-color: #FFFF00'  # Yellow for no change
+        except:
+            return ''
+    
+    # Format numbers and apply highlighting
+    return df.style.applymap(highlight_values, subset=df.columns[1:])\
+                  .format("{:.2f}", subset=df.columns[1:])
+
+def show_sdr_dashboard():
+    """Display the SDR Trend Analysis Dashboard"""
+    st.title("CSD SDR Trend Analysis")
+    
+    # Load data
+    df = load_sdr_data()
+    if df is None:
+        return
+    
+    # Display summary metrics
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric(
+            "Total Reduced OS",
+            f"{df['Reduced OS'].sum():.2f}",
+            delta=df['Reduced OS'].sum()
+        )
+    with col2:
+        latest_date = df.columns[2]  # First date column
+        st.metric(
+            f"Latest Total ({latest_date})",
+            f"{df[latest_date].sum():.2f}"
+        )
+    with col3:
+        prev_date = df.columns[3]  # Second date column
+        change = df[latest_date].sum() - df[prev_date].sum()
+        st.metric(
+            "Week-on-Week Change",
+            f"{change:.2f}",
+            delta=change
+        )
+    
+    # Display styled data
+    st.markdown("### SDR Ageing Analysis")
+    st.dataframe(
+        style_sdr_data(df),
+        height=400,
+        use_container_width=True
+    )
+    
+    # Trend Analysis
+    st.markdown("### Trend Analysis")
+    
+    # Prepare data for trend chart
+    trend_data = df.melt(
+        id_vars=['Ageing Category'],
+        value_vars=[col for col in df.columns if 'Oct' in col or 'Sep' in col],
+        var_name='Date',
+        value_name='Amount'
+    )
+    
+    # Create trend chart
+    fig = px.line(
+        trend_data,
+        x='Date',
+        y='Amount',
+        color='Ageing Category',
+        title="SDR Trend by Ageing Category"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Category-wise Analysis
+    st.markdown("### Category-wise Analysis")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Latest distribution
+        fig_pie = px.pie(
+            df,
+            values=latest_date,
+            names='Ageing Category',
+            title=f"Distribution as of {latest_date}"
+        )
+        st.plotly_chart(fig_pie)
+    
+    with col2:
+        # Category-wise changes
+        df['Change'] = df[latest_date] - df[prev_date]
+        fig_bar = px.bar(
+            df,
+            x='Ageing Category',
+            y='Change',
+            title="Week-on-Week Changes by Category",
+            color='Change',
+            color_continuous_scale=['green', 'yellow', 'red']
+        )
+        st.plotly_chart(fig_bar)
+
+def show_dashboard():
+    """Main dashboard function"""
+    
+    # Report Selection
+    report_type = st.sidebar.radio(
+        "Select Report Type",
+        ["Collections Dashboard", "CSD SDR Trend"]
+    )
+    
+    if report_type == "Collections Dashboard":
+        show_collections_dashboard()  # Your existing dashboard function
+    else:
+        show_sdr_dashboard()
+
 def main():
     if not check_password():
         return
-        
+    
     show_dashboard()
     
-    # Logout button in sidebar
+    # Logout button
     st.sidebar.markdown("---")
     if st.sidebar.button("Logout"):
         st.session_state.authenticated = False
