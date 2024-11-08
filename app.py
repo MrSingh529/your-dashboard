@@ -100,22 +100,11 @@ def check_password():
 
 def load_data():
     """
-    Load data from Excel file with specific column structure
+    Load data from Excel file with exact column names
     """
     try:
         df = pd.read_excel("collections_data.xlsx")
-        
-        # Rename columns to match exact structure
-        columns = {
-            'Branch Name': 'Branch',
-            'Reduced Pending Amount': 'Reduced_Pending',
-            'Balance As On': 'Balance',
-            'Pending Amount': 'Pending'
-        }
-        
-        # Clean the dataframe
-        df = clean_dataframe(df)
-        
+        st.sidebar.write("Available columns:", list(df.columns))
         return df
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
@@ -248,8 +237,8 @@ def show_dashboard():
     # Sidebar filters
     st.sidebar.title("Filters")
     
-    # Branch filter
-    branches = sorted(df['Branch'].unique().tolist())
+    # Branch filter using exact column name
+    branches = sorted(df['Branch Name'].unique().tolist())
     selected_branches = st.sidebar.multiselect(
         "Select Branches",
         options=branches,
@@ -258,7 +247,7 @@ def show_dashboard():
     
     # Filter data
     if selected_branches:
-        filtered_df = df[df['Branch'].isin(selected_branches)]
+        filtered_df = df[df['Branch Name'].isin(selected_branches)]
     else:
         filtered_df = df
     
@@ -268,50 +257,50 @@ def show_dashboard():
     # Summary metrics
     col1, col2, col3 = st.columns(3)
     
-    # Get latest date columns
-    balance_cols = [col for col in df.columns if 'Balance_' in col]
-    pending_cols = [col for col in df.columns if 'Pending_' in col]
-    
-    latest_balance_col = balance_cols[-1]
-    latest_pending_col = pending_cols[-1]
-    
     with col1:
-        total_balance = filtered_df[latest_balance_col].sum()
+        total_reduced = filtered_df['Reduced Pending Amount'].sum()
         st.metric(
-            "Total Current Balance",
-            f"₹{total_balance:,.2f}"
+            "Total Reduced Pending",
+            f"₹{total_reduced:,.2f}"
         )
     
     with col2:
-        total_pending = filtered_df[latest_pending_col].sum()
+        # Get the latest date's balance
+        balance_cols = [col for col in df.columns if 'Balance As On' in str(col)]
+        latest_balance = filtered_df[balance_cols[-1]].sum() if balance_cols else 0
         st.metric(
-            "Total Pending Amount",
-            f"₹{total_pending:,.2f}"
+            "Latest Balance",
+            f"₹{latest_balance:,.2f}"
         )
     
     with col3:
-        total_reduced = filtered_df['Reduced_Pending'].sum()
+        # Get the latest pending amount
+        pending_cols = [col for col in df.columns if 'Pending Amount' in str(col)]
+        latest_pending = filtered_df[pending_cols[-1]].sum() if pending_cols else 0
         st.metric(
-            "Total Reduced Amount",
-            f"₹{total_reduced:,.2f}"
+            "Latest Pending Amount",
+            f"₹{latest_pending:,.2f}"
         )
     
     # Trend Analysis
     st.subheader("Balance Trend Analysis")
     
-    # Prepare data for trend analysis
-    trend_data = pd.melt(
-        filtered_df,
-        id_vars=['Branch'],
-        value_vars=balance_cols,
-        var_name='Date',
-        value_name='Balance'
-    )
-    trend_data['Date'] = trend_data['Date'].str.replace('Balance_', '')
-    trend_data['Date'] = pd.to_datetime(trend_data['Date'])
+    # Create trend data
+    trend_data = []
+    for date_col in [col for col in df.columns if 'Balance As On' in str(col)]:
+        date_idx = list(df.columns).index(date_col)
+        date = list(df.columns)[date_idx-1]  # Date is in previous column
+        for branch in selected_branches:
+            trend_data.append({
+                'Branch': branch,
+                'Date': date,
+                'Balance': filtered_df[filtered_df['Branch Name'] == branch][date_col].iloc[0]
+            })
+    
+    trend_df = pd.DataFrame(trend_data)
     
     fig = px.line(
-        trend_data,
+        trend_df,
         x='Date',
         y='Balance',
         color='Branch',
@@ -321,18 +310,21 @@ def show_dashboard():
     
     # Pending Amount Analysis
     st.subheader("Pending Amount Analysis")
-    pending_data = pd.melt(
-        filtered_df,
-        id_vars=['Branch'],
-        value_vars=pending_cols,
-        var_name='Date',
-        value_name='Pending'
-    )
-    pending_data['Date'] = pending_data['Date'].str.replace('Pending_', '')
-    pending_data['Date'] = pd.to_datetime(pending_data['Date'])
+    pending_data = []
+    for date_col in [col for col in df.columns if 'Pending Amount' in str(col)]:
+        date_idx = list(df.columns).index(date_col)
+        date = list(df.columns)[date_idx-2]  # Date is two columns before
+        for branch in selected_branches:
+            pending_data.append({
+                'Branch': branch,
+                'Date': date,
+                'Pending': filtered_df[filtered_df['Branch Name'] == branch][date_col].iloc[0]
+            })
+    
+    pending_df = pd.DataFrame(pending_data)
     
     fig_pending = px.bar(
-        pending_data,
+        pending_df,
         x='Branch',
         y='Pending',
         color='Date',
@@ -343,11 +335,7 @@ def show_dashboard():
     
     # Detailed Data View
     st.subheader("Detailed Data View")
-    st.dataframe(
-        filtered_df.style.highlight_positive(color='lightgreen')
-                       .highlight_negative(color='lightcoral'),
-        height=400
-    )
+    st.dataframe(filtered_df, height=400)
     
     # Export Option
     if st.sidebar.button("Export Data"):
