@@ -1029,38 +1029,35 @@ def show_dashboard():
         show_sdr_dashboard()
 
 def load_itss_data():
-    """Load ITSS Tender data handling multi-row headers"""
+    """Load ITSS Tender data from recommended format"""
     try:
         # Read the Excel file
-        df = pd.read_excel("itss_tender.xlsx", header=1)
+        df = pd.read_excel(
+            "itss_tender.xlsx",
+            sheet_name="ITSS_Data",
+            parse_dates=['Date']
+        )
         
-        # Clean up column names and structure data
-        clean_df = pd.DataFrame()
-        clean_df['Account Name'] = df['Account Name']
+        # Verify required columns
+        required_columns = [
+            'Account Name', 'Date', '61-90', '91-120', '121-180',
+            '181-360', '361-720', 'More than 2 Yr'
+        ]
         
-        # Get unique dates and aging categories
-        dates = sorted(list(set([col.split('_')[0] for col in df.columns 
-                               if isinstance(col, str) and 'Ageing as on' in col])))
-        categories = ['61-90', '91-120', '121 -180', '181-360', '361-720', 'More than 2 Yr']
-        
-        # Reorganize columns
-        for date in dates:
-            for category in categories:
-                # Find matching column (handling .1, .2 suffixes)
-                matching_cols = [col for col in df.columns 
-                               if isinstance(col, str) and 
-                               date in col and 
-                               category in col.split('.')[0]]
-                if matching_cols:
-                    clean_df[f"{date}_{category}"] = df[matching_cols[0]]
-        
-        # Convert to numeric
-        for col in clean_df.columns:
-            if col != 'Account Name':
-                clean_df[col] = pd.to_numeric(clean_df[col].astype(str).str.replace(',', ''), 
-                                            errors='coerce')
-        
-        return clean_df
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            st.error(f"Missing columns: {missing_columns}")
+            return None
+            
+        # Convert amount columns to numeric
+        amount_columns = [
+            '61-90', '91-120', '121-180', '181-360',
+            '361-720', 'More than 2 Yr'
+        ]
+        for col in amount_columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+            
+        return df
         
     except Exception as e:
         st.error(f"Error loading ITSS data: {str(e)}")
@@ -1124,10 +1121,16 @@ def show_itss_dashboard():
         return
         
     try:
-        # Get available dates from column names
-        dates = sorted(list(set([col.split('_')[0] for col in df.columns 
-                               if 'Ageing as on' in col])), reverse=True)
-        selected_date = st.selectbox("Select Date for Analysis", dates)
+        # Get available dates
+        dates = sorted(df['Date'].unique(), reverse=True)
+        selected_date = st.selectbox(
+            "Select Date for Analysis",
+            dates,
+            format_func=lambda x: x.strftime('%Y-%m-%d')
+        )
+        
+        # Filter data for selected date
+        display_df = df[df['Date'] == selected_date].copy()
         
         # Get aging categories
         aging_categories = ['61-90', '91-120', '121 -180', '181-360', '361-720', 'More than 2 Yr']
