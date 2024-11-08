@@ -100,44 +100,19 @@ def check_password():
 
 def load_data():
     """
-    Load and structure data with specific date columns and merged cells
+    Load and structure data with specific date columns
     """
     try:
-        # Read the Excel file
-        df = pd.read_excel("collections_data.xlsx", header=None)
+        df = pd.read_excel("collections_data.xlsx")
         
-        # Create structured DataFrame
-        dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24']
+        # Convert amount columns to numeric
+        for col in df.columns:
+            if col != 'Branch Name':
+                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
         
-        # Create empty DataFrame with proper structure
-        structured_data = []
-        
-        # Skip first row and last row (Grand Total)
-        for row in range(1, len(df) - 1):
-            branch_data = {
-                'Branch Name': df.iloc[row, 0],
-                'Reduced Pending Amount': df.iloc[row, 1]
-            }
-            
-            # For each date, get Balance and Pending columns
-            col_idx = 2  # Starting index for first date's data
-            for date in dates:
-                branch_data[f'Balance_{date}'] = df.iloc[row, col_idx]
-                branch_data[f'Pending_{date}'] = df.iloc[row, col_idx + 1]
-                col_idx += 2
-            
-            structured_data.append(branch_data)
-        
-        # Create DataFrame from structured data
-        final_df = pd.DataFrame(structured_data)
-        
-        # Convert amount columns to numeric, handling currency formatting
-        amount_columns = [col for col in final_df.columns if col != 'Branch Name']
-        for col in amount_columns:
-            final_df[col] = pd.to_numeric(final_df[col].astype(str).str.replace(',', ''), errors='coerce')
-        
-        return final_df
-    
+        # Display loaded columns for verification
+        st.sidebar.write("Data loaded successfully!")
+        return df
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
         return None
@@ -191,6 +166,53 @@ def create_sample_data():
         'Region': ['North', 'East', 'East', 'North', 'West'] * len(dates)
     })
     return branch_data
+
+```python
+# ... (keep existing imports and CSS) ...
+
+def load_data():
+    """
+    Load and structure data with specific date columns
+    """
+    try:
+        df = pd.read_excel("collections_data.xlsx")
+        
+        # Convert amount columns to numeric
+        for col in df.columns:
+            if col != 'Branch Name':
+                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
+        
+        # Display loaded columns for verification
+        st.sidebar.write("Data loaded successfully!")
+        return df
+    except Exception as e:
+        st.error(f"Error loading data: {str(e)}")
+        return None
+
+def calculate_branch_metrics(df, selected_date):
+    """Calculate advanced branch performance metrics"""
+    metrics = {}
+    
+    balance_col = f'Balance_{selected_date}'
+    pending_col = f'Pending_{selected_date}'
+    
+    # Basic metrics
+    metrics['total_balance'] = df[balance_col].sum()
+    metrics['total_pending'] = df[pending_col].sum()
+    metrics['total_reduced'] = df['Reduced Pending Amount'].sum()
+    
+    # Performance metrics
+    metrics['top_balance_branch'] = df.nlargest(1, balance_col)['Branch Name'].iloc[0]
+    metrics['lowest_pending_branch'] = df.nsmallest(1, pending_col)['Branch Name'].iloc[0]
+    metrics['most_improved'] = df.nlargest(1, 'Reduced Pending Amount')['Branch Name'].iloc[0]
+    
+    # Efficiency metrics
+    metrics['collection_ratio'] = (
+        (df[balance_col].sum() / (df[balance_col].sum() + df[pending_col].sum())) * 100
+        if (df[balance_col].sum() + df[pending_col].sum()) != 0 else 0
+    )
+    
+    return metrics
 
 def calculate_metrics(df):
     """Calculate key performance metrics with error handling"""
@@ -258,122 +280,228 @@ def show_login_page():
                 st.error("Invalid credentials")
 
 def show_dashboard():
-    """Display the main dashboard"""
+    """Display enhanced dashboard with advanced analytics"""
     # Load data
     df = load_data()
     
     if df is None:
-        st.error("Unable to load data. Please check your data file.")
         return
+
+    # Sidebar Controls
+    st.sidebar.title("Analysis Controls")
     
-    # Sidebar filters
-    st.sidebar.title("Filters")
-    
-    # Branch filter
-    branches = sorted(df['Branch Name'].unique().tolist())
-    selected_branches = st.sidebar.multiselect(
-        "Select Branches",
-        options=branches,
-        default=branches[:5]
-    )
-    
-    # Date filter
-    dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24']
-    selected_date = st.sidebar.selectbox("Select Date", dates)
-    
-    # Filter data
-    filtered_df = df[df['Branch Name'].isin(selected_branches)] if selected_branches else df
-    
-    # Main dashboard
-    st.title("Branch-wise Collection Analysis")
-    
-    # Summary metrics
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        total_reduced = filtered_df['Reduced Pending Amount'].sum()
-        st.metric(
-            "Total Reduced Pending",
-            f"₹{total_reduced:,.2f}"
-        )
-    
-    with col2:
-        current_balance = filtered_df[f'Balance_{selected_date}'].sum()
-        st.metric(
-            f"Current Balance ({selected_date})",
-            f"₹{current_balance:,.2f}"
-        )
-    
-    with col3:
-        current_pending = filtered_df[f'Pending_{selected_date}'].sum()
-        st.metric(
-            f"Current Pending ({selected_date})",
-            f"₹{current_pending:,.2f}"
-        )
-    
-    # Trend Analysis
-    st.subheader("Balance Trend Analysis")
-    
-    # Prepare trend data
-    trend_data = []
-    for branch in selected_branches:
-        branch_df = filtered_df[filtered_df['Branch Name'] == branch]
-        for date in dates:
-            trend_data.append({
-                'Branch': branch,
-                'Date': date,
-                'Balance': branch_df[f'Balance_{date}'].iloc[0],
-                'Pending': branch_df[f'Pending_{date}'].iloc[0]
-            })
-    
-    trend_df = pd.DataFrame(trend_data)
-    
-    # Balance Trend
-    fig_balance = px.line(
-        trend_df,
-        x='Date',
-        y='Balance',
-        color='Branch',
-        title="Balance Trend by Branch"
-    )
-    st.plotly_chart(fig_balance, use_container_width=True)
-    
-    # Pending Amount Trend
-    st.subheader("Pending Amount Analysis")
-    fig_pending = px.bar(
-        trend_df,
-        x='Branch',
-        y='Pending',
-        color='Date',
-        title="Pending Amount by Branch",
-        barmode='group'
-    )
-    st.plotly_chart(fig_pending, use_container_width=True)
-    
-    # Branch Performance Table
-    st.subheader("Branch Performance Summary")
-    performance_df = filtered_df.copy()
-    performance_df['Current Balance'] = performance_df[f'Balance_{selected_date}']
-    performance_df['Current Pending'] = performance_df[f'Pending_{selected_date}']
-    performance_df['Reduced Amount'] = performance_df['Reduced Pending Amount']
-    
-    summary_cols = ['Branch Name', 'Current Balance', 'Current Pending', 'Reduced Amount']
-    st.dataframe(
-        performance_df[summary_cols].sort_values('Current Balance', ascending=False),
-        height=400
-    )
-    
-    # Export Option
-    if st.sidebar.button("Export Analysis"):
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            filtered_df.to_excel(writer, sheet_name='Detailed Analysis', index=False)
-            trend_df.to_excel(writer, sheet_name='Trends', index=False)
+    # Advanced Filtering
+    filter_container = st.sidebar.container()
+    with filter_container:
+        st.subheader("Filters")
         
+        # Branch Selection with Search
+        all_branches = sorted(df['Branch Name'].unique().tolist())
+        selected_branches = st.multiselect(
+            "Select Branches (Search/Select)",
+            options=all_branches,
+            default=all_branches[:5]
+        )
+        
+        # Date Selection
+        dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
+        selected_date = st.selectbox("Select Analysis Date", dates)
+        
+        # Amount Range Filter
+        st.subheader("Amount Filters")
+        balance_col = f'Balance_{selected_date}'
+        min_val = float(df[balance_col].min())
+        max_val = float(df[balance_col].max())
+        
+        amount_range = st.slider(
+            "Balance Range (₹)",
+            min_val,
+            max_val,
+            (min_val, max_val)
+        )
+
+    # Filter Data
+    filtered_df = df.copy()
+    if selected_branches:
+        filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
+    filtered_df = filtered_df[
+        (filtered_df[balance_col] >= amount_range[0]) &
+        (filtered_df[balance_col] <= amount_range[1])
+    ]
+
+    # Main Dashboard
+    st.title("Collections & Outstanding Analysis")
+    
+    # Key Metrics Dashboard
+    metrics = calculate_branch_metrics(filtered_df, selected_date)
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric(
+            "Total Balance",
+            f"₹{metrics['total_balance']:,.2f}",
+            delta=metrics['total_reduced']
+        )
+    with col2:
+        st.metric(
+            "Total Pending",
+            f"₹{metrics['total_pending']:,.2f}"
+        )
+    with col3:
+        st.metric(
+            "Collection Ratio",
+            f"{metrics['collection_ratio']:.1f}%"
+        )
+    with col4:
+        st.metric(
+            "Best Performing Branch",
+            metrics['top_balance_branch']
+        )
+
+    # Analysis Tabs
+    tab1, tab2, tab3 = st.tabs(["Trend Analysis", "Branch Performance", "Comparative Analysis"])
+    
+    with tab1:
+        # Enhanced Trend Analysis
+        st.subheader("Balance & Pending Trends")
+        
+        # Prepare trend data
+        trend_data = []
+        for branch in selected_branches:
+            branch_df = filtered_df[filtered_df['Branch Name'] == branch]
+            for date in dates:
+                trend_data.append({
+                    'Branch': branch,
+                    'Date': date,
+                    'Balance': branch_df[f'Balance_{date}'].iloc[0],
+                    'Pending': branch_df[f'Pending_{date}'].iloc[0],
+                    'Net Position': branch_df[f'Balance_{date}'].iloc[0] - branch_df[f'Pending_{date}'].iloc[0]
+                })
+        
+        trend_df = pd.DataFrame(trend_data)
+        
+        # Interactive Trend Chart
+        fig = go.Figure()
+        
+        # Add traces for each metric
+        for branch in selected_branches:
+            branch_data = trend_df[trend_df['Branch'] == branch]
+            
+            fig.add_trace(go.Scatter(
+                x=branch_data['Date'],
+                y=branch_data['Balance'],
+                name=f"{branch} - Balance",
+                mode='lines+markers'
+            ))
+            
+            fig.add_trace(go.Scatter(
+                x=branch_data['Date'],
+                y=branch_data['Net Position'],
+                name=f"{branch} - Net Position",
+                line=dict(dash='dot')
+            ))
+        
+        fig.update_layout(
+            title="Comprehensive Balance Trends",
+            xaxis_title="Date",
+            yaxis_title="Amount (₹)",
+            hovermode='x unified'
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with tab2:
+        # Enhanced Branch Performance Analysis
+        st.subheader("Branch-wise Analysis")
+        
+        # Calculate performance metrics
+        performance_df = filtered_df.copy()
+        performance_df['Current Balance'] = performance_df[f'Balance_{selected_date}']
+        performance_df['Current Pending'] = performance_df[f'Pending_{selected_date}']
+        performance_df['Net Position'] = performance_df['Current Balance'] - performance_df['Current Pending']
+        performance_df['Improvement'] = performance_df['Reduced Pending Amount']
+        
+        # Performance Chart
+        fig_performance = px.bar(
+            performance_df,
+            x='Branch Name',
+            y=['Current Balance', 'Current Pending', 'Net Position'],
+            title="Branch Performance Comparison",
+            barmode='group'
+        )
+        st.plotly_chart(fig_performance, use_container_width=True)
+        
+        # Detailed Metrics Table
+        st.dataframe(
+            performance_df[[
+                'Branch Name', 'Current Balance', 'Current Pending',
+                'Net Position', 'Improvement'
+            ]].sort_values('Net Position', ascending=False),
+            height=400
+        )
+    
+    with tab3:
+        # Comparative Analysis
+        st.subheader("Period Comparison")
+        
+        # Select dates for comparison
+        col1, col2 = st.columns(2)
+        with col1:
+            date1 = st.selectbox("First Date", dates, index=0)
+        with col2:
+            date2 = st.selectbox("Second Date", dates, index=len(dates)-1)
+        
+        # Calculate changes
+        comparison_df = pd.DataFrame()
+        comparison_df['Branch'] = selected_branches
+        comparison_df[f'Balance_{date1}'] = [
+            filtered_df[filtered_df['Branch Name'] == branch][f'Balance_{date1}'].iloc[0]
+            for branch in selected_branches
+        ]
+        comparison_df[f'Balance_{date2}'] = [
+            filtered_df[filtered_df['Branch Name'] == branch][f'Balance_{date2}'].iloc[0]
+            for branch in selected_branches
+        ]
+        comparison_df['Change'] = comparison_df[f'Balance_{date2}'] - comparison_df[f'Balance_{date1}']
+        comparison_df['Change%'] = (
+            (comparison_df['Change'] / comparison_df[f'Balance_{date1}'] * 100)
+            .round(2)
+            .fillna(0)
+        )
+        
+        # Comparison Chart
+        fig_comparison = go.Figure()
+        fig_comparison.add_trace(go.Bar(
+            x=comparison_df['Branch'],
+            y=comparison_df['Change'],
+            name='Change in Balance',
+            marker_color=np.where(comparison_df['Change'] >= 0, 'green', 'red')
+        ))
+        fig_comparison.update_layout(title=f"Balance Change ({date1} vs {date2})")
+        st.plotly_chart(fig_comparison, use_container_width=True)
+        
+        # Comparison Table
+        st.dataframe(
+            comparison_df.sort_values('Change', ascending=False),
+            height=400
+        )
+
+    # Export Options
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Export Options")
+    
+    if st.sidebar.button("Export Complete Analysis"):
+        output = io.BytesIO()
+        
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            filtered_df.to_excel(writer, sheet_name='Raw Data', index=False)
+            trend_df.to_excel(writer, sheet_name='Trends', index=False)
+            performance_df.to_excel(writer, sheet_name='Performance', index=False)
+            comparison_df.to_excel(writer, sheet_name='Comparison', index=False)
+            
         st.sidebar.download_button(
-            label="Download Excel Report",
+            label="📥 Download Full Report",
             data=output.getvalue(),
-            file_name=f"branch_analysis_{selected_date}.xlsx",
+            file_name=f"collection_analysis_{selected_date}.xlsx",
             mime="application/vnd.ms-excel"
         )
 
