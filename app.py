@@ -843,6 +843,178 @@ def show_sdr_dashboard():
         st.error(f"Error in SDR analysis: {str(e)}")
         st.write("Error details:", str(e))
 
+def load_tsg_data():
+    """Load TSG Payment Receivables Trend data"""
+    try:
+        df = pd.read_excel("tsg_trend.xlsx")
+        
+        # Convert amounts from string (with commas) to numeric
+        for col in df.columns:
+            if col != 'Ageing Category':
+                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
+        
+        return df
+    except Exception as e:
+        st.error(f"Error loading TSG data: {str(e)}")
+        return None
+
+def style_tsg_trend(df):
+    """
+    Style the TSG trend dataframe with color coding:
+    - Green when amount decreases (improvement)
+    - Red when amount increases (deterioration)
+    """
+    def color_changes(row):
+        styles = [''] * len(df.columns)
+        
+        # Get date columns (exclude 'Ageing Category' and any other non-date columns)
+        date_cols = [col for col in df.columns if col != 'Ageing Category']
+        date_cols.sort(reverse=True)  # Most recent first
+        
+        for i in range(len(date_cols)-1):
+            current_col = date_cols[i]
+            next_col = date_cols[i+1]
+            current_val = row[current_col]
+            next_val = row[next_col]
+            
+            col_idx = df.columns.get_loc(current_col)
+            
+            try:
+                if pd.notna(current_val) and pd.notna(next_val):
+                    if current_val < next_val:  # Amount decreased (improved)
+                        styles[col_idx] = 'background-color: #92D050'  # Green
+                    elif current_val > next_val:  # Amount increased (deteriorated)
+                        styles[col_idx] = 'background-color: #FF7575'  # Red
+            except:
+                pass
+                
+        return styles
+    
+    # Format numbers and apply highlighting
+    styled = df.style.apply(color_changes, axis=1)
+    
+    # Format large numbers with commas and proper decimal places
+    return styled.format(lambda x: '{:,.0f}'.format(x) if pd.notna(x) and isinstance(x, (int, float)) else x)
+
+def show_tsg_dashboard():
+    """Display TSG Payment Receivables Trend Analysis"""
+    st.title("TSG Payment Receivables Trend Analysis")
+    
+    # Load data
+    df = load_tsg_data()
+    if df is None:
+        return
+        
+    try:
+        # Get date columns in correct order
+        date_cols = [col for col in df.columns if col != 'Ageing Category']
+        date_cols.sort(reverse=True)  # Most recent first
+        
+        # Summary metrics
+        st.markdown("### Summary Metrics")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            latest_total = df[date_cols[0]].sum()
+            prev_total = df[date_cols[1]].sum()
+            change = latest_total - prev_total
+            st.metric(
+                f"Total Receivables ({date_cols[0]})",
+                f"₹{latest_total:,.0f}",
+                delta=f"₹{-change:,.0f}"
+            )
+        
+        with col2:
+            week_change_pct = ((prev_total - latest_total) / prev_total * 100)
+            st.metric(
+                "Week-on-Week Change",
+                f"{week_change_pct:.2f}%",
+                delta=week_change_pct
+            )
+            
+        with col3:
+            month_start = df[date_cols[-1]].sum()
+            month_change = ((month_start - latest_total) / month_start * 100)
+            st.metric(
+                "Month-to-Date Change",
+                f"{month_change:.2f}%",
+                delta=month_change
+            )
+        
+        # Main trend table
+        st.markdown("### Ageing-wise Trend Analysis")
+        styled_df = style_tsg_trend(df)
+        st.dataframe(styled_df, height=400, use_container_width=True)
+        
+        # Trend Analysis
+        st.markdown("### Trend Visualization")
+        
+        # Prepare data for plotting
+        trend_data = df.melt(
+            id_vars=['Ageing Category'],
+            value_vars=date_cols,
+            var_name='Date',
+            value_name='Amount'
+        )
+        
+        # Line chart
+        fig_line = px.line(
+            trend_data,
+            x='Date',
+            y='Amount',
+            color='Ageing Category',
+            title="Receivables Trend by Ageing Category"
+        )
+        fig_line.update_layout(yaxis_title="Amount (₹)")
+        st.plotly_chart(fig_line, use_container_width=True)
+        
+        # Category Analysis
+        st.markdown("### Category-wise Analysis")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Latest distribution pie chart
+            fig_pie = px.pie(
+                df,
+                values=date_cols[0],
+                names='Ageing Category',
+                title=f"Distribution as of {date_cols[0]}"
+            )
+            st.plotly_chart(fig_pie)
+        
+        with col2:
+            # Week-on-week changes
+            changes_df = pd.DataFrame({
+                'Category': df['Ageing Category'],
+                'Change': df[date_cols[0]] - df[date_cols[1]]
+            })
+            fig_changes = px.bar(
+                changes_df,
+                x='Category',
+                y='Change',
+                title="Week-on-Week Changes by Category",
+                color='Change',
+                color_continuous_scale=['green', 'yellow', 'red']
+            )
+            st.plotly_chart(fig_changes)
+        
+        # Export Option
+        if st.sidebar.button("Export TSG Analysis"):
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                df.to_excel(writer, sheet_name='TSG Trend', index=False)
+            
+            st.sidebar.download_button(
+                label="📥 Download TSG Report",
+                data=buffer.getvalue(),
+                file_name=f"tsg_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                mime="application/vnd.ms-excel"
+            )
+            
+    except Exception as e:
+        st.error(f"Error in TSG analysis: {str(e)}")
+        st.write("Error details:", str(e))
+
 def show_dashboard():
     """Main dashboard selector"""
     # Report Selection
@@ -857,18 +1029,18 @@ def show_dashboard():
         show_sdr_dashboard()
 
 def show_dashboard():
-    """Main dashboard function"""
-    
-    # Report Selection
+    """Main dashboard selector"""
     report_type = st.sidebar.radio(
         "Select Report Type",
-        ["Collections Dashboard", "CSD SDR Trend"]
+        ["Collections Dashboard", "CSD SDR Trend", "TSG Payment Receivables"]
     )
     
     if report_type == "Collections Dashboard":
-        show_collections_dashboard()  # Your existing dashboard function
-    else:
+        show_collections_dashboard()
+    elif report_type == "CSD SDR Trend":
         show_sdr_dashboard()
+    else:
+        show_tsg_dashboard()
 
 def main():
     if not check_password():
