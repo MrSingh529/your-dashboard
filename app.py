@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for enhanced UI
+# Custom CSS (keeping your existing CSS)
 st.markdown("""
     <style>
     .main {
@@ -64,38 +64,61 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Authentication credentials (replace with secure database in production)
+# Simplified credentials
 CREDENTIALS = {
-    "admin": {
-        "password": "admin123",
-        "role": "admin"
-    },
-    "ceo": {
-        "password": "ceo123",
-        "role": "executive"
-    },
-    "manager": {
-        "password": "manager123",
-        "role": "manager"
-    }
+    "admin": "admin123",
+    "ceo": "ceo123",
+    "manager": "manager123"
 }
+
+def check_password():
+    """Returns `True` if the user had a correct password."""
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+    
+    if not st.session_state.authenticated:
+        # Center the login form
+        col1, col2, col3 = st.columns([1,2,1])
+        with col2:
+            st.markdown("""
+                <div class="login-container">
+                    <h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>
+                </div>
+            """, unsafe_allow_html=True)
+            username = st.text_input("Username").lower()
+            password = st.text_input("Password", type="password")
+            
+            if st.button("Login"):
+                if username in CREDENTIALS and CREDENTIALS[username] == password:
+                    st.session_state.authenticated = True
+                    st.session_state.username = username
+                    st.rerun()
+                else:
+                    st.error("Invalid credentials")
+        return False
+    return True
 
 def load_data():
     """
     Load data from your Excel files or database
     Replace this with your actual data loading logic
     """
-    # Example data structure
-    dates = pd.date_range(start='2024-01-01', end='2024-03-31', freq='D')
-    branch_data = pd.DataFrame({
-        'Date': dates.repeat(5),
-        'Branch Name': ['Kota', 'Guwahati', 'Kolkata', 'Faridabad', 'Rajkot'] * len(dates),
-        'Invoice': np.random.uniform(1000, 10000, len(dates) * 5),
-        'Collection': np.random.uniform(800, 9000, len(dates) * 5),
-        'Outstanding': np.random.uniform(100, 2000, len(dates) * 5),
-        'Region': ['North', 'East', 'East', 'North', 'West'] * len(dates)
-    })
-    return branch_data
+    try:
+        # Try to load actual data file if it exists
+        df = pd.read_excel("collections_data.xlsx")
+        return df
+    except:
+        # Fall back to sample data if file doesn't exist
+        dates = pd.date_range(start='2024-01-01', end='2024-03-31', freq='D')
+        branch_data = pd.DataFrame({
+            'Date': dates.repeat(5),
+            'Branch Name': ['Kota', 'Guwahati', 'Kolkata', 'Faridabad', 'Rajkot'] * len(dates),
+            'Invoice': np.random.uniform(1000, 10000, len(dates) * 5),
+            'Collection': np.random.uniform(800, 9000, len(dates) * 5),
+            'Outstanding': np.random.uniform(100, 2000, len(dates) * 5),
+            'Region': ['North', 'East', 'East', 'North', 'West'] * len(dates)
+        })
+        return branch_data
 
 def calculate_metrics(df):
     """Calculate key performance metrics"""
@@ -323,19 +346,16 @@ def show_dashboard():
         )
 
 def main():
-    if 'authenticated' not in st.session_state:
+    if not check_password():
+        return
+        
+    show_dashboard()
+    
+    # Logout button in sidebar
+    st.sidebar.markdown("---")
+    if st.sidebar.button("Logout"):
         st.session_state.authenticated = False
-        
-    if not st.session_state.authenticated:
-        show_login_page()
-    else:
-        show_dashboard()
-        
-        # Logout button in sidebar
-        st.sidebar.markdown("---")
-        if st.sidebar.button("Logout"):
-            st.session_state.authenticated = False
-            st.rerun()
+        st.rerun()
 
 if __name__ == "__main__":
     main()
