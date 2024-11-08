@@ -101,24 +101,35 @@ def check_password():
 def load_data():
     """
     Load data from your Excel files or database
-    Replace this with your actual data loading logic
     """
-    try:
-        # Try to load actual data file if it exists
-        df = pd.read_excel("collections_data.xlsx")
-        return df
-    except:
-        # Fall back to sample data if file doesn't exist
-        dates = pd.date_range(start='2024-01-01', end='2024-03-31', freq='D')
-        branch_data = pd.DataFrame({
-            'Date': dates.repeat(5),
-            'Branch Name': ['Kota', 'Guwahati', 'Kolkata', 'Faridabad', 'Rajkot'] * len(dates),
-            'Invoice': np.random.uniform(1000, 10000, len(dates) * 5),
-            'Collection': np.random.uniform(800, 9000, len(dates) * 5),
-            'Outstanding': np.random.uniform(100, 2000, len(dates) * 5),
-            'Region': ['North', 'East', 'East', 'North', 'West'] * len(dates)
-        })
-        return branch_data
+    # List of possible data file locations
+    data_locations = [
+        "collections_data.xlsx",  # Same directory
+        "data/collections_data.xlsx",  # Data subfolder
+        "assets/collections_data.xlsx"  # Assets subfolder
+    ]
+    
+    # Try to load from any available location
+    for file_path in data_locations:
+        try:
+            df = pd.read_excel(file_path)
+            st.success(f"Data loaded successfully from {file_path}")
+            return df
+        except Exception as e:
+            continue
+    
+    # If no data file found, use sample data
+    st.warning("No data file found. Using sample data.")
+    dates = pd.date_range(start='2024-01-01', end='2024-03-31', freq='D')
+    branch_data = pd.DataFrame({
+        'Date': dates.repeat(5),
+        'Branch Name': ['Kota', 'Guwahati', 'Kolkata', 'Faridabad', 'Rajkot'] * len(dates),
+        'Invoice': np.random.uniform(1000, 10000, len(dates) * 5),
+        'Collection': np.random.uniform(800, 9000, len(dates) * 5),
+        'Outstanding': np.random.uniform(100, 2000, len(dates) * 5),
+        'Region': ['North', 'East', 'East', 'North', 'West'] * len(dates)
+    })
+    return branch_data
 
 def calculate_metrics(df):
     """Calculate key performance metrics"""
