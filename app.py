@@ -279,38 +279,130 @@ def show_login_page():
 
 def style_comparison_df(df, dates):
     """
-    Style the comparison DataFrame with Excel-like conditional formatting
-    Highlighting only pending amounts compared to previous dates
+    Style the comparison DataFrame with corrected color coding:
+    - Green when pending amount decreases (improvement)
+    - Red when pending amount increases (deterioration)
     """
     def highlight_pending_changes(row):
-        styles = [''] * len(row)
+        styles = [''] * len(df.columns)
         
-        # Get all pending columns
-        pending_cols = [col for col in df.columns if 'Pending_' in col]
-        
-        # Sort pending columns by date to ensure correct order
-        pending_cols.sort(reverse=True)  # Most recent first
-        
-        # Compare each pending amount with the next (previous date) pending amount
-        for i in range(len(pending_cols)-1):
-            current_pending = row[pending_cols[i]]
-            previous_pending = row[pending_cols[i+1]]
-            
-            # Get column index for styling
-            col_idx = df.columns.get_loc(pending_cols[i])
-            
-            # Style based on comparison with previous period
-            if pd.notna(current_pending) and pd.notna(previous_pending):
-                if current_pending < previous_pending:
-                    styles[col_idx] = 'background-color: #92D050'  # Green for decrease
-                elif current_pending > previous_pending:
-                    styles[col_idx] = 'background-color: #FF7575'  # Red for increase
-        
+        for i, date in enumerate(dates):
+            if i < len(dates) - 1:  # Skip the last date as it has no next date to compare
+                current_pending_col = f'Pending_{date}'
+                next_pending_col = f'Pending_{dates[i+1]}'
+                
+                if current_pending_col in df.columns and next_pending_col in df.columns:
+                    current_pending = row[current_pending_col]
+                    next_pending = row[next_pending_col]
+                    
+                    # Get column index for current pending column
+                    col_idx = df.columns.get_loc(current_pending_col)
+                    
+                    try:
+                        current_pending = float(current_pending)
+                        next_pending = float(next_pending)
+                        
+                        if pd.notna(current_pending) and pd.notna(next_pending):
+                            if current_pending < next_pending:  # Pending amount decreased
+                                styles[col_idx] = 'background-color: #92D050'  # Green
+                            elif current_pending > next_pending:  # Pending amount increased
+                                styles[col_idx] = 'background-color: #FF7575'  # Red
+                    except:
+                        pass
+                        
         return styles
     
     # Format numbers and apply highlighting
     return df.style.apply(highlight_pending_changes, axis=1)\
                   .format({col: '₹{:,.2f}' for col in df.columns if col != 'Branch Name'})
+
+def show_comparative_analysis(filtered_df, dates, selected_branches):
+    """Enhanced comparative analysis with corrected highlighting"""
+    st.subheader("Weekly Pending Amount Comparison")
+    
+    try:
+        # Create comparison DataFrame
+        comparison_df = pd.DataFrame()
+        comparison_df['Branch Name'] = selected_branches
+        
+        # Add data for selected dates
+        for date in dates:
+            balance_col = f'Balance_{date}'
+            pending_col = f'Pending_{date}'
+            
+            comparison_df[balance_col] = [
+                filtered_df[filtered_df['Branch Name'] == branch][balance_col].iloc[0]
+                for branch in selected_branches
+            ]
+            comparison_df[pending_col] = [
+                filtered_df[filtered_df['Branch Name'] == branch][pending_col].iloc[0]
+                for branch in selected_branches
+            ]
+        
+        # Display styled table
+        styled_df = style_comparison_df(comparison_df, dates)
+        st.dataframe(
+            styled_df,
+            height=400,
+            use_container_width=True
+        )
+        
+        # Add summary analytics
+        st.markdown("### Summary of Changes")
+        for branch in selected_branches:
+            branch_data = comparison_df[comparison_df['Branch Name'] == branch]
+            changes = []
+            
+            for i in range(len(dates)-1):
+                current_pending = branch_data[f'Pending_{dates[i]}'].iloc[0]
+                prev_pending = branch_data[f'Pending_{dates[i+1]}'].iloc[0]
+                
+                if current_pending < prev_pending:
+                    changes.append({
+                        'date': dates[i],
+                        'change': prev_pending - current_pending,
+                        'type': 'decrease'
+                    })
+                elif current_pending > prev_pending:
+                    changes.append({
+                        'date': dates[i],
+                        'change': current_pending - prev_pending,
+                        'type': 'increase'
+                    })
+            
+            if changes:
+                st.markdown(f"**{branch}**")
+                for change in changes:
+                    if change['type'] == 'decrease':
+                        st.markdown(f"- 🟢 Reduced by ₹{abs(change['change']):,.2f} on {change['date']}")
+                    else:
+                        st.markdown(f"- 🔴 Increased by ₹{abs(change['change']):,.2f} on {change['date']}")
+        
+        # Summary metrics
+        st.markdown("### Overall Metrics")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            latest_total = comparison_df[f'Pending_{dates[0]}'].sum()
+            prev_total = comparison_df[f'Pending_{dates[1]}'].sum()
+            change = latest_total - prev_total
+            st.metric(
+                "Total Pending Change",
+                f"₹{change:,.2f}",
+                delta=-change  # Negative is good for pending
+            )
+        
+        with col2:
+            improvement = ((prev_total - latest_total) / prev_total * 100)
+            st.metric(
+                "Improvement Percentage",
+                f"{improvement:.2f}%",
+                delta=improvement
+            )
+            
+    except Exception as e:
+        st.error(f"Error in comparative analysis: {str(e)}")
+        st.write("Please check the data structure and selected filters")
 
 def show_collections_dashboard():
     """Display enhanced dashboard with advanced analytics"""
