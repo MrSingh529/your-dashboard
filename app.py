@@ -110,23 +110,22 @@ class DashboardNotifier:
             msg['Subject'] = subject
             msg.attach(MIMEText(body, 'html'))
             
-            # Send emails using SSL
+            # Send emails using SSL (as it worked in your test)
             try:
                 with smtplib.SMTP_SSL(self.smtp_config['server'], self.smtp_config['port']) as server:
-                    try:
-                        server.login(self.smtp_config['username'], self.smtp_config['password'])
-                        st.success("Successfully logged in to email server")
-                        
-                        for user_email in subscribers['users']:
-                            try:
-                                msg['To'] = user_email
-                                server.send_message(msg)
-                                st.success(f"✉️ Notification sent to {user_email}")
-                            except Exception as e:
-                                st.error(f"Failed to send email to {user_email}: {str(e)}")
-                    except Exception as e:
-                        st.error(f"Login failed: {str(e)}")
-                        return
+                    server.login(self.smtp_config['username'], self.smtp_config['password'])
+                    
+                    for user_email in subscribers['users']:
+                        try:
+                            msg['To'] = user_email
+                            server.sendmail(
+                                self.smtp_config['from_email'],
+                                user_email,
+                                msg.as_string()
+                            )
+                            st.success(f"✉️ Notification sent to {user_email}")
+                        except Exception as e:
+                            st.error(f"Failed to send email to {user_email}: {str(e)}")
             except Exception as e:
                 st.error(f"Failed to connect to SMTP server: {str(e)}")
                         
