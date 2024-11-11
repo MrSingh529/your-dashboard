@@ -172,23 +172,32 @@ class DashboardNotifier:
 
 # Functions outside the class
 def load_smtp_config():
+    """Load SMTP configuration from the TOML file"""
     try:
         # Assuming the `config.toml` file is located in the `.streamlit` directory
         config_path = os.path.join('.streamlit', 'config.toml')
         if not os.path.exists(config_path):
             raise FileNotFoundError(f"Configuration file not found: {config_path}")
         
+        # Load the configuration
         config = toml.load(config_path)
         if 'smtp' not in config:
             raise KeyError("The SMTP configuration section `[smtp]` is missing in the config.toml file.")
         
-        return config['smtp']
+        smtp_config = config['smtp']
+        required_keys = ['server', 'port', 'username', 'password', 'from_email']
+        for key in required_keys:
+            if key not in smtp_config:
+                raise KeyError(f"Missing required SMTP configuration key: {key}")
+
+        return smtp_config
+
     except Exception as e:
-        print(f"Error loading configuration: {e}")
+        print(f"Error loading SMTP configuration: {e}")
         return None
         
 def init_notification_system():
-    """Initialize the notification system"""
+    """Initialize the notification system with SMTP configuration"""
     smtp_config = load_smtp_config()
     if not smtp_config:
         raise ValueError("Failed to load SMTP configuration from config.toml")
@@ -199,42 +208,43 @@ def test_smtp_connection():
     """Test SMTP connection with detailed error handling"""
     with st.spinner('Testing SMTP connection...'):
         try:
+            # Load SMTP configuration
             smtp_config = load_smtp_config()
             if not smtp_config:
                 st.error("SMTP configuration could not be loaded. Please check your config.toml file.")
                 return False
 
-            # Attempt to connect using the loaded configuration
+            # Print connection details for debugging
             st.write("Attempting to connect to:", smtp_config['server'], "on port:", smtp_config['port'])
 
             # Create SSL context
             context = ssl.create_default_context()
 
-            # Connect using socket first to verify reachability
+            # Attempt a socket connection to verify server availability
             try:
                 socket.create_connection((smtp_config['server'], smtp_config['port']), timeout=10)
                 st.info("Socket connection successful")
 
-                # Connect to SMTP server
+                # Attempt SMTP connection
                 with smtplib.SMTP_SSL(smtp_config['server'], smtp_config['port'], context=context, timeout=10) as server:
                     st.info("SMTP connection established")
-                    
-                    # Try to log in
+
+                    # Attempt login
                     server.login(smtp_config['username'], smtp_config['password'])
                     st.success("✅ Login successful!")
                     return True
 
             except socket.timeout:
-                st.error("❌ Connection timed out - The server took too long to respond")
+                st.error("❌ Connection timed out - The server took too long to respond.")
                 return False
             except socket.gaierror:
-                st.error("❌ DNS lookup failed - Could not find the mail server")
+                st.error("❌ DNS lookup failed - Could not find the mail server.")
                 return False
             except ConnectionRefusedError:
-                st.error("❌ Connection refused - The server actively refused the connection")
+                st.error("❌ Connection refused - The server actively refused the connection.")
                 return False
             except smtplib.SMTPAuthenticationError:
-                st.error("❌ Authentication failed - Username or password incorrect")
+                st.error("❌ Authentication failed - Username or password incorrect.")
                 return False
             except Exception as e:
                 st.error(f"❌ Connection error: {str(e)}")
