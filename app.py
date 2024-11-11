@@ -1600,11 +1600,9 @@ def main():
     
     # Show department menu and selected report
     selected_report_func = show_department_menu()
-    
-    # Add email notification management for admin
     if st.session_state.username == "admin":
-        st.sidebar.markdown("---")
-        with st.sidebar.expander("Manage Email Notifications"):
+        st.sidebar.markdown("---")  # Add a divider line
+        with st.sidebar.expander("📧 Manage Email Notifications"):
             manage_subscribers()
     
     if selected_report_func:
