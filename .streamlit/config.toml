@@ -11,10 +11,3 @@ enableXsrfProtection = false
 
 [browser]
 gatherUsageStats = false
-
-[smtp]
-server = "mail.rvsolutions.in"
-port = 465
-username = "harpinder.singh@rvsolutions.in"
-password = "@BaljeetKaur529"
-from_email = "harpinder.singh@rvsolutions.in"

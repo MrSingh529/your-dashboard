@@ -201,46 +201,61 @@ def load_smtp_config():
         
 def init_notification_system():
     """Initialize the notification system with SMTP configuration"""
-    smtp_config = load_smtp_config()
-    if not smtp_config:
-        raise ValueError("Failed to load SMTP configuration from config.toml")
-    
-    return DashboardNotifier(smtp_config)
+    smtp_config = {
+        'server': 'mail.rvsolutions.in',
+        'port': 465,
+        'username': 'harpinder.singh@rvsolutions.in',
+        'password': '@BaljeetKaur529',
+        'from_email': 'harpinder.singh@rvsolutions.in',
+    }
     
 def test_smtp_connection():
-    """Test SMTP connection with detailed error handling (updated to match the successful simple script)"""
+    """Test SMTP connection with detailed error handling"""
     with st.spinner('Testing SMTP connection...'):
         try:
-            smtp_config = {
-                'server': 'mail.rvsolutions.in',  # Replace with your SMTP server
-                'port': 465,                      # SSL port (typically 465)
-                'username': 'harpinder.singh@rvsolutions.in',  # Replace with your email
-                'password': '@BaljeetKaur529',    # Replace with your email password
-            }
-
-            # Use SSL to connect, as done in the working test script
-            context = ssl.create_default_context()
-
             # Print connection details for debugging
-            st.write(f"Attempting to connect to: {smtp_config['server']} on port: {smtp_config['port']}")
-
-            # Using SMTP_SSL as it worked in the test script
-            with smtplib.SMTP_SSL(smtp_config['server'], smtp_config['port'], context=context) as server:
-                st.info("Connected to SMTP server successfully")
-
-                # Attempt login
-                server.login(smtp_config['username'], smtp_config['password'])
-                st.success("✅ Login successful!")
-                return True
-
-        except smtplib.SMTPAuthenticationError:
-            st.error("❌ SMTP Authentication failed. Check username/password.")
-        except smtplib.SMTPConnectError:
-            st.error("❌ Unable to connect to the SMTP server. Check server and port.")
+            st.write("Attempting to connect to:", 'mail.rvsolutions.in', "on port:", 465)
+            
+            # Create SSL context
+            context = ssl.create_default_context()
+            
+            try:
+                # First try to create socket connection
+                with socket.create_connection(('mail.rvsolutions.in', 465), timeout=10) as sock:
+                    st.info("Socket connection successful")
+                    
+                    # Create SMTP connection using SSL context and existing socket
+                    with smtplib.SMTP_SSL(host='mail.rvsolutions.in', port=465, context=context) as server:
+                        st.info("SMTP connection established")
+                        
+                        # Try login
+                        try:
+                            server.login('harpinder.singh@rvsolutions.in', '@BaljeetKaur529')
+                            st.success("✅ Login successful!")
+                            return True
+                        except smtplib.SMTPAuthenticationError:
+                            st.error("❌ Authentication failed - Username or password incorrect")
+                            return False
+                        except Exception as e:
+                            st.error(f"❌ Login failed: {str(e)}")
+                            return False
+                    
+            except socket.timeout:
+                st.error("❌ Connection timed out - The server took too long to respond")
+                return False
+            except socket.gaierror:
+                st.error("❌ DNS lookup failed - Could not find the mail server")
+                return False
+            except ConnectionRefusedError:
+                st.error("❌ Connection refused - The server actively refused the connection")
+                return False
+            except Exception as e:
+                st.error(f"❌ Connection error: {str(e)}")
+                return False
+                
         except Exception as e:
-            st.error(f"❌ Connection error: {str(e)}")
-    
-    return False
+            st.error(f"❌ Setup error: {str(e)}")
+            return False
 
 def check_file_updates():
     """Check if any report files have been updated"""
