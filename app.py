@@ -215,18 +215,18 @@ def test_smtp_connection():
     with st.spinner('Testing SMTP connection...'):
         try:
             # Print connection details for debugging
-            st.write("Attempting to connect to:", 'mail.rvsolutions.in', "on port:", 465)
+            st.write("Attempting to connect to:", 'mail.rvsolutions.in', "on port:", 587)
             
             # Create SSL context
             context = ssl.create_default_context()
             
             try:
                 # First try to create socket connection
-                with socket.create_connection(('mail.rvsolutions.in', 465), timeout=10) as sock:
+                with socket.create_connection(('mail.rvsolutions.in', 587), timeout=10) as sock:
                     st.info("Socket connection successful")
                     
                     # Create SMTP connection using SSL context and existing socket
-                    with smtplib.SMTP_SSL(host='mail.rvsolutions.in', port=465, context=context) as server:
+                    with smtplib.SMTP_SSL(host='mail.rvsolutions.in', port=587, context=context) as server:
                         st.info("SMTP connection established")
                         
                         # Try login
