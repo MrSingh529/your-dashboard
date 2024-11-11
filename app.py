@@ -203,11 +203,12 @@ def init_notification_system():
     """Initialize the notification system with SMTP configuration"""
     smtp_config = {
         'server': 'mail.rvsolutions.in',
-        'port': 465,
+        'port': 587,
         'username': 'harpinder.singh@rvsolutions.in',
         'password': '@BaljeetKaur529',
         'from_email': 'harpinder.singh@rvsolutions.in',
     }
+    return DashboardNotifier(smtp_config)
     
 def test_smtp_connection():
     """Test SMTP connection with detailed error handling"""
