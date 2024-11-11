@@ -217,7 +217,7 @@ def init_notification_system():
         'from_email': 'harpinder.singh@rvsolutions.in',
     }
     return DashboardNotifier(smtp_config)
-    
+
 def test_smtp_connection():
     """Test SMTP connection with detailed error handling"""
     with st.spinner('Testing SMTP connection...'):
@@ -233,9 +233,10 @@ def test_smtp_connection():
                 with socket.create_connection(('mail.rvsolutions.in', 587), timeout=10) as sock:
                     st.info("Socket connection successful")
                     
-                    # Create SMTP connection using SSL context and existing socket
-                    with smtplib.SMTP_SSL(host='mail.rvsolutions.in', port=587, context=context) as server:
-                        st.info("SMTP connection established")
+                    # Create SMTP connection using STARTTLS for port 587
+                    with smtplib.SMTP('mail.rvsolutions.in', 587) as server:
+                        server.starttls(context=context)
+                        st.info("SMTP connection established with STARTTLS")
                         
                         # Try login
                         try:
