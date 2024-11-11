@@ -110,7 +110,6 @@ class DashboardNotifier:
             
             # Send emails using SSL
             try:
-                # Use SMTP_SSL instead of SMTP for port 465
                 with smtplib.SMTP_SSL(self.smtp_config['server'], self.smtp_config['port']) as server:
                     try:
                         server.login(self.smtp_config['username'], self.smtp_config['password'])
@@ -170,31 +169,34 @@ class DashboardNotifier:
 # Functions outside the class
 def init_notification_system():
     """Initialize the notification system"""
-    # Direct SMTP configuration without using secrets
     smtp_config = {
-        'server': 'mailpro.rvsolutions.in',  # Changed to mailpro
-        'port': 465,  # SSL port
+        'server': 'mail.rvsolutions.in',  # Exact server from your screenshot
+        'port': 465,                      # SSL port from your screenshot
         'username': 'harpinder.singh@rvsolutions.in',
         'password': '@BaljeetKaur529',
-        'from_email': 'harpinder.singh@rvsolutions.in'
+        'from_email': 'harpinder.singh@rvsolutions.in',
+        'use_ssl': True                   # Since port 465 uses SSL
     }
     return DashboardNotifier(smtp_config)
     
 def test_smtp_connection():
-    """Test SMTP connection"""
+    """Test SMTP connection with SSL"""
     try:
         smtp_config = {
-            'server': 'mailpro.rvsolutions.in',
+            'server': 'mail.rvsolutions.in',
             'port': 465,
             'username': 'harpinder.singh@rvsolutions.in',
             'password': '@BaljeetKaur529',
             'from_email': 'harpinder.singh@rvsolutions.in'
         }
         
+        # Use SMTP_SSL for port 465
         with smtplib.SMTP_SSL(smtp_config['server'], smtp_config['port']) as server:
             server.login(smtp_config['username'], smtp_config['password'])
+            st.success("✅ SMTP connection successful!")
             return True, "SMTP connection successful"
     except Exception as e:
+        st.error(f"❌ SMTP connection failed: {str(e)}")
         return False, f"SMTP connection failed: {str(e)}"
 
 def check_file_updates():
