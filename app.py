@@ -170,14 +170,32 @@ class DashboardNotifier:
 # Functions outside the class
 def init_notification_system():
     """Initialize the notification system"""
+    # Direct SMTP configuration without using secrets
     smtp_config = {
-        'server': 'mail.rvsolutions.in',
-        'port': 465,  # Updated to SSL port
+        'server': 'mailpro.rvsolutions.in',  # Changed to mailpro
+        'port': 465,  # SSL port
         'username': 'harpinder.singh@rvsolutions.in',
         'password': '@BaljeetKaur529',
         'from_email': 'harpinder.singh@rvsolutions.in'
     }
     return DashboardNotifier(smtp_config)
+    
+def test_smtp_connection():
+    """Test SMTP connection"""
+    try:
+        smtp_config = {
+            'server': 'mailpro.rvsolutions.in',
+            'port': 465,
+            'username': 'harpinder.singh@rvsolutions.in',
+            'password': '@BaljeetKaur529',
+            'from_email': 'harpinder.singh@rvsolutions.in'
+        }
+        
+        with smtplib.SMTP_SSL(smtp_config['server'], smtp_config['port']) as server:
+            server.login(smtp_config['username'], smtp_config['password'])
+            return True, "SMTP connection successful"
+    except Exception as e:
+        return False, f"SMTP connection failed: {str(e)}"
 
 def check_file_updates():
     """Check if any report files have been updated"""
@@ -222,6 +240,16 @@ def manage_subscribers():
     try:
         notifier = init_notification_system()
         
+        # Test SMTP Connection
+        col1, col2 = st.columns([2,1])
+        with col1:
+            if st.button("🔄 Test SMTP Connection"):
+                success, message = test_smtp_connection()
+                if success:
+                    st.success(message)
+                else:
+                    st.error(message)
+        
         # Add subscriber
         col1, col2 = st.columns([3, 1])
         new_email = col1.text_input("Add new subscriber email")
@@ -230,7 +258,7 @@ def manage_subscribers():
                 st.success(f"Added {new_email} to subscribers")
             else:
                 st.info("Email already subscribed")
-        
+                
         # Show current subscribers
         subscribers = notifier.load_subscribers()
         if subscribers['users']:
@@ -242,8 +270,8 @@ def manage_subscribers():
                     notifier.remove_subscriber(email)
                     st.rerun()
         
-        # Add test button
-        if st.button("Test Email System"):
+        # Test email system
+        if st.button("📧 Send Test Email"):
             test_email_notification()
             
     except Exception as e:
