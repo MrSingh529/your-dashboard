@@ -95,27 +95,30 @@ class DashboardNotifier:
         return updates
 
     def send_update_notifications(self, updates):
-        """Send email notifications for updates"""
+        """Send email notifications for updates (updated to match the successful simple script)"""
         try:
             subscribers = self.load_subscribers()
             
             if not subscribers['users']:
                 st.warning("No subscribers found. Add subscribers first.")
                 return
-                
+
             # Create email content
             subject = "Dashboard Report Updates"
             body = self._create_email_body(updates)
-            
-            # Create message
+
+            # Set up the email message
             msg = MIMEMultipart()
             msg['From'] = self.smtp_config['from_email']
             msg['Subject'] = subject
             msg.attach(MIMEText(body, 'html'))
-            
-            # Send emails using SSL (as it worked in your test)
+
+            # Use SSL to connect, as done in the working test script
+            context = ssl.create_default_context()
+
+            # Send emails using SMTP_SSL
             try:
-                with smtplib.SMTP_SSL(self.smtp_config['server'], self.smtp_config['port']) as server:
+                with smtplib.SMTP_SSL(self.smtp_config['server'], self.smtp_config['port'], context=context) as server:
                     server.login(self.smtp_config['username'], self.smtp_config['password'])
                     
                     for user_email in subscribers['users']:
@@ -205,54 +208,39 @@ def init_notification_system():
     return DashboardNotifier(smtp_config)
     
 def test_smtp_connection():
-    """Test SMTP connection with detailed error handling"""
+    """Test SMTP connection with detailed error handling (updated to match the successful simple script)"""
     with st.spinner('Testing SMTP connection...'):
         try:
-            # Load SMTP configuration
-            smtp_config = load_smtp_config()
-            if not smtp_config:
-                st.error("SMTP configuration could not be loaded. Please check your config.toml file.")
-                return False
+            smtp_config = {
+                'server': 'mail.rvsolutions.in',  # Replace with your SMTP server
+                'port': 465,                      # SSL port (typically 465)
+                'username': 'harpinder.singh@rvsolutions.in',  # Replace with your email
+                'password': '@BaljeetKaur529',    # Replace with your email password
+            }
 
-            # Print connection details for debugging
-            st.write("Attempting to connect to:", smtp_config['server'], "on port:", smtp_config['port'])
-
-            # Create SSL context
+            # Use SSL to connect, as done in the working test script
             context = ssl.create_default_context()
 
-            # Attempt a socket connection to verify server availability
-            try:
-                socket.create_connection((smtp_config['server'], smtp_config['port']), timeout=10)
-                st.info("Socket connection successful")
+            # Print connection details for debugging
+            st.write(f"Attempting to connect to: {smtp_config['server']} on port: {smtp_config['port']}")
 
-                # Attempt SMTP connection
-                with smtplib.SMTP_SSL(smtp_config['server'], smtp_config['port'], context=context, timeout=10) as server:
-                    server.set_debuglevel(1)  # Enable debugging output
-                    st.info("SMTP connection established")
-                    # Try login
-                    server.login(smtp_config['username'], smtp_config['password'])
-                    st.success("✅ Login successful!")
-                    return True
+            # Using SMTP_SSL as it worked in the test script
+            with smtplib.SMTP_SSL(smtp_config['server'], smtp_config['port'], context=context) as server:
+                st.info("Connected to SMTP server successfully")
 
-            except socket.timeout:
-                st.error("❌ Connection timed out - The server took too long to respond.")
-                return False
-            except socket.gaierror:
-                st.error("❌ DNS lookup failed - Could not find the mail server.")
-                return False
-            except ConnectionRefusedError:
-                st.error("❌ Connection refused - The server actively refused the connection.")
-                return False
-            except smtplib.SMTPAuthenticationError:
-                st.error("❌ Authentication failed - Username or password incorrect.")
-                return False
-            except Exception as e:
-                st.error(f"❌ Connection error: {str(e)}")
-                return False
+                # Attempt login
+                server.login(smtp_config['username'], smtp_config['password'])
+                st.success("✅ Login successful!")
+                return True
 
+        except smtplib.SMTPAuthenticationError:
+            st.error("❌ SMTP Authentication failed. Check username/password.")
+        except smtplib.SMTPConnectError:
+            st.error("❌ Unable to connect to the SMTP server. Check server and port.")
         except Exception as e:
-            st.error(f"❌ Setup error: {str(e)}")
-            return False
+            st.error(f"❌ Connection error: {str(e)}")
+    
+    return False
 
 def check_file_updates():
     """Check if any report files have been updated"""
