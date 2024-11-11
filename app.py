@@ -227,9 +227,9 @@ def test_smtp_connection():
 
                 # Attempt SMTP connection
                 with smtplib.SMTP_SSL(smtp_config['server'], smtp_config['port'], context=context, timeout=10) as server:
+                    server.set_debuglevel(1)  # Enable debugging output
                     st.info("SMTP connection established")
-
-                    # Attempt login
+                    # Try login
                     server.login(smtp_config['username'], smtp_config['password'])
                     st.success("✅ Login successful!")
                     return True
