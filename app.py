@@ -108,23 +108,24 @@ class DashboardNotifier:
             msg['Subject'] = subject
             msg.attach(MIMEText(body, 'html'))
             
-            # Send emails
+            # Send emails using SSL
             try:
-                with smtplib.SMTP(self.smtp_config['server'], self.smtp_config['port']) as server:
-                    server.starttls()
+                # Use SMTP_SSL instead of SMTP for port 465
+                with smtplib.SMTP_SSL(self.smtp_config['server'], self.smtp_config['port']) as server:
                     try:
                         server.login(self.smtp_config['username'], self.smtp_config['password'])
+                        st.success("Successfully logged in to email server")
+                        
+                        for user_email in subscribers['users']:
+                            try:
+                                msg['To'] = user_email
+                                server.send_message(msg)
+                                st.success(f"✉️ Notification sent to {user_email}")
+                            except Exception as e:
+                                st.error(f"Failed to send email to {user_email}: {str(e)}")
                     except Exception as e:
                         st.error(f"Login failed: {str(e)}")
                         return
-                    
-                    for user_email in subscribers['users']:
-                        try:
-                            msg['To'] = user_email
-                            server.send_message(msg)
-                            st.success(f"Notification sent to {user_email}")
-                        except Exception as e:
-                            st.error(f"Failed to send email to {user_email}: {str(e)}")
             except Exception as e:
                 st.error(f"Failed to connect to SMTP server: {str(e)}")
                         
@@ -170,11 +171,11 @@ class DashboardNotifier:
 def init_notification_system():
     """Initialize the notification system"""
     smtp_config = {
-        'server': st.secrets["smtp"]["server"],
-        'port': st.secrets["smtp"]["port"],
-        'username': st.secrets["smtp"]["username"],
-        'password': st.secrets["smtp"]["password"],
-        'from_email': st.secrets["smtp"]["from_email"]
+        'server': 'mail.rvsolutions.in',
+        'port': 465,  # Updated to SSL port
+        'username': 'harpinder.singh@rvsolutions.in',
+        'password': '@BaljeetKaur529',
+        'from_email': 'harpinder.singh@rvsolutions.in'
     }
     return DashboardNotifier(smtp_config)
 
@@ -251,17 +252,38 @@ def manage_subscribers():
 def test_email_notification():
     """Test the email notification system"""
     try:
-        notifier = init_notification_system()
-        test_updates = [{
-            'report': 'Test Report',
-            'type': 'test',
-            'date': datetime.now().isoformat()
-        }]
-        with st.spinner('Sending test email...'):
-            notifier.send_update_notifications(test_updates)
-        st.success("Test email sent successfully!")
+        with st.spinner('Setting up email test...'):
+            notifier = init_notification_system()
+            
+            # Check if there are subscribers
+            subscribers = notifier.load_subscribers()
+            if not subscribers['users']:
+                st.warning("No subscribers found. Please add at least one subscriber first.")
+                return
+                
+            # Send test email
+            test_updates = [{
+                'report': 'Test Report',
+                'type': 'test',
+                'date': datetime.now().isoformat()
+            }]
+            
+            with st.spinner('Sending test email...'):
+                # Use SMTP_SSL for port 465
+                server = smtplib.SMTP_SSL(notifier.smtp_config['server'], notifier.smtp_config['port'])
+                
+                # Try to login
+                try:
+                    server.login(notifier.smtp_config['username'], notifier.smtp_config['password'])
+                    notifier.send_update_notifications(test_updates)
+                    st.success("✅ Test email sent successfully!")
+                except Exception as e:
+                    st.error(f"Login failed: {str(e)}")
+                finally:
+                    server.quit()
+                    
     except Exception as e:
-        st.error(f"Error sending test email: {str(e)}")
+        st.error(f"Error setting up email test: {str(e)}")
         st.write("Error details:", str(e))
 
 # Configure page settings
