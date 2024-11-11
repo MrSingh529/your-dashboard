@@ -21,3 +21,9 @@ ENV/
 
 # Streamlit
 .streamlit/secrets.toml
+
+.streamlit/
+report_states.json
+subscribers.json
+__pycache__/
+*.pyc
