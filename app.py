@@ -172,12 +172,11 @@ class DashboardNotifier:
 def init_notification_system():
     """Initialize the notification system"""
     smtp_config = {
-        'server': 'mail.rvsolutions.in',  # Exact server from your screenshot
-        'port': '465',                      # SSL port from your screenshot
-        'username': 'harpinder.singh@rvsolutions.in',
-        'password': '@BaljeetKaur529',
-        'from_email': 'harpinder.singh@rvsolutions.in',
-        'use_ssl': True                   # Since port 465 uses SSL
+        'server': 'mail.rvsolutions.in',  # Previously `smtp.server`
+        'port': 465,                      # Previously `smtp.port`
+        'username': 'harpinder.singh@rvsolutions.in',  # Previously `smtp.username`
+        'password': '@BaljeetKaur529',    # Previously `smtp.password`
+        'from_email': 'harpinder.singh@rvsolutions.in',  # Previously `smtp.from_email`
     }
     return DashboardNotifier(smtp_config)
     
@@ -223,20 +222,6 @@ def test_smtp_connection():
                 
         except Exception as e:
             st.error(f"❌ Setup error: {str(e)}")
-            return False
-
-def test_smtp_connection_alternate():
-    """Test SMTP connection with alternate port"""
-    with st.spinner('Testing alternate connection...'):
-        try:
-            # Try port 587 with TLS
-            with smtplib.SMTP('mail.rvsolutions.in', 587, timeout=10) as server:
-                server.starttls()
-                server.login('harpinder.singh@rvsolutions.in', '@BaljeetKaur529')
-                st.success("✅ Connection successful on port 587!")
-                return True
-        except Exception as e:
-            st.error(f"❌ Alternate connection failed: {str(e)}")
             return False
 
 def check_file_updates():
@@ -285,10 +270,8 @@ def manage_subscribers():
         # Test SMTP Connection
         col1, col2 = st.columns([3, 1])
         with col1:
-            if st.button("🔄 Test SMTP Connection (Port 465)"):
+            if st.button("🔄 Test SMTP Connection"):
                 test_smtp_connection()
-            if st.button("🔄 Test Alternate Connection (Port 587)"):
-                test_smtp_connection_alternate()
         
         # Add subscriber
         st.markdown("---")
