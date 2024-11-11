@@ -182,41 +182,61 @@ def init_notification_system():
     return DashboardNotifier(smtp_config)
     
 def test_smtp_connection():
-    """Test SMTP connection"""
+    """Test SMTP connection with detailed error handling"""
     with st.spinner('Testing SMTP connection...'):
         try:
-            # Direct configuration without using secrets
-            smtp_config = {
-                'server': 'mail.rvsolutions.in',
-                'port': 465,
-                'username': 'harpinder.singh@rvsolutions.in',
-                'password': '@BaljeetKaur529'
-            }
+            # Print connection details for debugging
+            st.write("Attempting to connect to:", 'mail.rvsolutions.in', "on port:", 465)
             
-            # Set timeout for connection
-            timeout = 10  # 10 seconds timeout
+            # Create SSL context
+            context = ssl.create_default_context()
             
             try:
-                # Create SSL connection with timeout
-                context = ssl.create_default_context()
-                with smtplib.SMTP_SSL(smtp_config['server'], smtp_config['port'], timeout=timeout, context=context) as server:
-                    # Try to login
-                    server.login(smtp_config['username'], smtp_config['password'])
-                    st.success("✅ SMTP connection and login successful!")
+                # First try to create socket connection
+                socket.create_connection(('mail.rvsolutions.in', 465), timeout=10)
+                st.info("Socket connection successful")
+                
+                # Then try SMTP connection
+                with smtplib.SMTP_SSL('mail.rvsolutions.in', 465, context=context, timeout=10) as server:
+                    st.info("SMTP connection established")
+                    
+                    # Try login
+                    server.login('harpinder.singh@rvsolutions.in', '@BaljeetKaur529')
+                    st.success("✅ Login successful!")
                     return True
                     
             except socket.timeout:
-                st.error("❌ Connection timed out. Server not responding.")
+                st.error("❌ Connection timed out - The server took too long to respond")
+                return False
+            except socket.gaierror:
+                st.error("❌ DNS lookup failed - Could not find the mail server")
+                return False
+            except ConnectionRefusedError:
+                st.error("❌ Connection refused - The server actively refused the connection")
                 return False
             except smtplib.SMTPAuthenticationError:
-                st.error("❌ Authentication failed. Please check username and password.")
+                st.error("❌ Authentication failed - Username or password incorrect")
                 return False
             except Exception as e:
-                st.error(f"❌ Connection failed: {str(e)}")
+                st.error(f"❌ Connection error: {str(e)}")
                 return False
                 
         except Exception as e:
-            st.error(f"❌ Error setting up connection: {str(e)}")
+            st.error(f"❌ Setup error: {str(e)}")
+            return False
+
+def test_smtp_connection_alternate():
+    """Test SMTP connection with alternate port"""
+    with st.spinner('Testing alternate connection...'):
+        try:
+            # Try port 587 with TLS
+            with smtplib.SMTP('mail.rvsolutions.in', 587, timeout=10) as server:
+                server.starttls()
+                server.login('harpinder.singh@rvsolutions.in', '@BaljeetKaur529')
+                st.success("✅ Connection successful on port 587!")
+                return True
+        except Exception as e:
+            st.error(f"❌ Alternate connection failed: {str(e)}")
             return False
 
 def check_file_updates():
@@ -265,8 +285,10 @@ def manage_subscribers():
         # Test SMTP Connection
         col1, col2 = st.columns([3, 1])
         with col1:
-            if st.button("🔄 Test SMTP Connection"):
+            if st.button("🔄 Test SMTP Connection (Port 465)"):
                 test_smtp_connection()
+            if st.button("🔄 Test Alternate Connection (Port 587)"):
+                test_smtp_connection_alternate()
         
         # Add subscriber
         st.markdown("---")
