@@ -12,6 +12,9 @@ enableXsrfProtection = false
 [browser]
 gatherUsageStats = false
 
-[email]
+[smtp]
+server = "mail.rvsolutions.in"
+port = 587
 username = "harpinder.singh@rvsolutions.in"
-password = "@BaljeetKaur529"  # Use an app-specific password for Gmail
+password = "@BaljeetKaur529"
+from_email = "harpinder.singh@rvsolutions.in"

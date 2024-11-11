@@ -95,6 +95,7 @@ class DashboardNotifier:
             subscribers = self.load_subscribers()
             
             if not subscribers['users']:
+                st.warning("No subscribers found. Add subscribers first.")
                 return
                 
             # Create email content
@@ -108,20 +109,27 @@ class DashboardNotifier:
             msg.attach(MIMEText(body, 'html'))
             
             # Send emails
-            with smtplib.SMTP(self.smtp_config['server'], self.smtp_config['port']) as server:
-                server.starttls()
-                server.login(self.smtp_config['username'], self.smtp_config['password'])
-                
-                for user_email in subscribers['users']:
+            try:
+                with smtplib.SMTP(self.smtp_config['server'], self.smtp_config['port']) as server:
+                    server.starttls()
                     try:
-                        msg['To'] = user_email
-                        server.send_message(msg)
-                        st.success(f"Notification sent to {user_email}")
+                        server.login(self.smtp_config['username'], self.smtp_config['password'])
                     except Exception as e:
-                        st.error(f"Failed to send email to {user_email}: {str(e)}")
+                        st.error(f"Login failed: {str(e)}")
+                        return
+                    
+                    for user_email in subscribers['users']:
+                        try:
+                            msg['To'] = user_email
+                            server.send_message(msg)
+                            st.success(f"Notification sent to {user_email}")
+                        except Exception as e:
+                            st.error(f"Failed to send email to {user_email}: {str(e)}")
+            except Exception as e:
+                st.error(f"Failed to connect to SMTP server: {str(e)}")
                         
         except Exception as e:
-            st.error(f"Error sending notifications: {str(e)}")
+            st.error(f"Error in notification system: {str(e)}")
             
     def _create_email_body(self, updates):
         """Create HTML email body for updates"""
@@ -162,11 +170,11 @@ class DashboardNotifier:
 def init_notification_system():
     """Initialize the notification system"""
     smtp_config = {
-        'server': 'mail.rvsolutions.in',
-        'port': 587,
-        'username': 'harpinder.singh@rvsolutions.in',
-        'password': '@BaljeetKaur529', 
-        'from_email': 'harpinder.singh@rvsolutions.in'
+        'server': st.secrets["smtp"]["server"],
+        'port': st.secrets["smtp"]["port"],
+        'username': st.secrets["smtp"]["username"],
+        'password': st.secrets["smtp"]["password"],
+        'from_email': st.secrets["smtp"]["from_email"]
     }
     return DashboardNotifier(smtp_config)
 
@@ -249,10 +257,12 @@ def test_email_notification():
             'type': 'test',
             'date': datetime.now().isoformat()
         }]
-        notifier.send_update_notifications(test_updates)
+        with st.spinner('Sending test email...'):
+            notifier.send_update_notifications(test_updates)
         st.success("Test email sent successfully!")
     except Exception as e:
         st.error(f"Error sending test email: {str(e)}")
+        st.write("Error details:", str(e))
 
 # Configure page settings
 st.set_page_config(
