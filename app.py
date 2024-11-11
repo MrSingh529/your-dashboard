@@ -1527,8 +1527,26 @@ def define_department_structure():
 
 def show_department_menu():
     """Display hierarchical department menu"""
+    # Initialize session state for email management if not exists
+    if 'show_email' not in st.session_state:
+        st.session_state.show_email = False
+    
     # Department selection
     st.sidebar.title("Select Department")
+    
+    # Add email management button for admin right at the top
+    if st.session_state.username == "admin":
+        col1, col2 = st.sidebar.columns([3, 1])
+        with col1:
+            email_btn = st.button("📧 Manage Email Notifications", type="primary", key="email_btn")
+            if email_btn:
+                st.session_state.show_email = not st.session_state.show_email
+        
+        # Show/hide email management section
+        if st.session_state.show_email:
+            st.sidebar.markdown("### Email Notification Settings")
+            manage_subscribers()
+            st.sidebar.markdown("---")  # Add divider after email section
     
     # Get department structure
     DEPARTMENT_REPORTS = define_department_structure()
@@ -1600,10 +1618,6 @@ def main():
     
     # Show department menu and selected report
     selected_report_func = show_department_menu()
-    if st.session_state.username == "admin":
-        st.sidebar.markdown("---")  # Add a divider line
-        with st.sidebar.expander("📧 Manage Email Notifications"):
-            manage_subscribers()
     
     if selected_report_func:
         selected_report_func()
@@ -1627,6 +1641,7 @@ def main():
         st.session_state.authenticated = False
         st.session_state.selected_department = None
         st.session_state.selected_report = None
+        st.session_state.show_email = False  # Reset email management state
         st.rerun()
 
 if __name__ == "__main__":
