@@ -171,45 +171,59 @@ class DashboardNotifier:
         return html
 
 # Functions outside the class
+def load_smtp_config():
+    try:
+        # Assuming the `config.toml` file is located in the `.streamlit` directory
+        config_path = os.path.join('.streamlit', 'config.toml')
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f"Configuration file not found: {config_path}")
+        
+        config = toml.load(config_path)
+        if 'smtp' not in config:
+            raise KeyError("The SMTP configuration section `[smtp]` is missing in the config.toml file.")
+        
+        return config['smtp']
+    except Exception as e:
+        print(f"Error loading configuration: {e}")
+        return None
+        
 def init_notification_system():
     """Initialize the notification system"""
-    # Load the config from .streamlit/config.toml file
-    try:
-        config = toml.load('.streamlit/config.toml')
-        smtp_config = config['smtp']
-        return DashboardNotifier(smtp_config)
-    except Exception as e:
-        print(f"Error loading SMTP configuration: {e}")
-        return None
+    smtp_config = load_smtp_config()
+    if not smtp_config:
+        raise ValueError("Failed to load SMTP configuration from config.toml")
+    
+    return DashboardNotifier(smtp_config)
     
 def test_smtp_connection():
     """Test SMTP connection with detailed error handling"""
     with st.spinner('Testing SMTP connection...'):
         try:
-            # Load SMTP configuration from the .toml file
-            config = toml.load('.streamlit/config.toml')
-            smtp_config = config['smtp']
-            
-            # Print connection details for debugging
+            smtp_config = load_smtp_config()
+            if not smtp_config:
+                st.error("SMTP configuration could not be loaded. Please check your config.toml file.")
+                return False
+
+            # Attempt to connect using the loaded configuration
             st.write("Attempting to connect to:", smtp_config['server'], "on port:", smtp_config['port'])
-            
+
             # Create SSL context
             context = ssl.create_default_context()
-            
+
+            # Connect using socket first to verify reachability
             try:
-                # First, try to create a socket connection to check basic network reachability
                 socket.create_connection((smtp_config['server'], smtp_config['port']), timeout=10)
                 st.info("Socket connection successful")
-                
-                # Then, try SMTP connection
+
+                # Connect to SMTP server
                 with smtplib.SMTP_SSL(smtp_config['server'], smtp_config['port'], context=context, timeout=10) as server:
                     st.info("SMTP connection established")
                     
-                    # Try to login using provided credentials
+                    # Try to log in
                     server.login(smtp_config['username'], smtp_config['password'])
                     st.success("✅ Login successful!")
                     return True
-                    
+
             except socket.timeout:
                 st.error("❌ Connection timed out - The server took too long to respond")
                 return False
@@ -225,7 +239,7 @@ def test_smtp_connection():
             except Exception as e:
                 st.error(f"❌ Connection error: {str(e)}")
                 return False
-                
+
         except Exception as e:
             st.error(f"❌ Setup error: {str(e)}")
             return False
