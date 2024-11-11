@@ -5,6 +5,8 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import numpy as np
 import io
+import socket
+import ssl
 import base64
 import smtplib
 from email.mime.text import MIMEText
@@ -180,24 +182,42 @@ def init_notification_system():
     return DashboardNotifier(smtp_config)
     
 def test_smtp_connection():
-    """Test SMTP connection with SSL"""
-    try:
-        smtp_config = {
-            'server': 'mail.rvsolutions.in',
-            'port': 465,
-            'username': 'harpinder.singh@rvsolutions.in',
-            'password': '@BaljeetKaur529',
-            'from_email': 'harpinder.singh@rvsolutions.in'
-        }
-        
-        # Use SMTP_SSL for port 465
-        with smtplib.SMTP_SSL(smtp_config['server'], smtp_config['port']) as server:
-            server.login(smtp_config['username'], smtp_config['password'])
-            st.success("✅ SMTP connection successful!")
-            return True, "SMTP connection successful"
-    except Exception as e:
-        st.error(f"❌ SMTP connection failed: {str(e)}")
-        return False, f"SMTP connection failed: {str(e)}"
+    """Test SMTP connection"""
+    with st.spinner('Testing SMTP connection...'):
+        try:
+            # Direct configuration without using secrets
+            smtp_config = {
+                'server': 'mail.rvsolutions.in',
+                'port': 465,
+                'username': 'harpinder.singh@rvsolutions.in',
+                'password': '@BaljeetKaur529'
+            }
+            
+            # Set timeout for connection
+            timeout = 10  # 10 seconds timeout
+            
+            try:
+                # Create SSL connection with timeout
+                context = ssl.create_default_context()
+                with smtplib.SMTP_SSL(smtp_config['server'], smtp_config['port'], timeout=timeout, context=context) as server:
+                    # Try to login
+                    server.login(smtp_config['username'], smtp_config['password'])
+                    st.success("✅ SMTP connection and login successful!")
+                    return True
+                    
+            except socket.timeout:
+                st.error("❌ Connection timed out. Server not responding.")
+                return False
+            except smtplib.SMTPAuthenticationError:
+                st.error("❌ Authentication failed. Please check username and password.")
+                return False
+            except Exception as e:
+                st.error(f"❌ Connection failed: {str(e)}")
+                return False
+                
+        except Exception as e:
+            st.error(f"❌ Error setting up connection: {str(e)}")
+            return False
 
 def check_file_updates():
     """Check if any report files have been updated"""
@@ -243,16 +263,13 @@ def manage_subscribers():
         notifier = init_notification_system()
         
         # Test SMTP Connection
-        col1, col2 = st.columns([2,1])
+        col1, col2 = st.columns([3, 1])
         with col1:
             if st.button("🔄 Test SMTP Connection"):
-                success, message = test_smtp_connection()
-                if success:
-                    st.success(message)
-                else:
-                    st.error(message)
+                test_smtp_connection()
         
         # Add subscriber
+        st.markdown("---")
         col1, col2 = st.columns([3, 1])
         new_email = col1.text_input("Add new subscriber email")
         if col2.button("Add") and new_email:
@@ -272,7 +289,8 @@ def manage_subscribers():
                     notifier.remove_subscriber(email)
                     st.rerun()
         
-        # Test email system
+        # Add test button
+        st.markdown("---")
         if st.button("📧 Send Test Email"):
             test_email_notification()
             
