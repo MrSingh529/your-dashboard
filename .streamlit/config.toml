@@ -11,3 +11,7 @@ enableXsrfProtection = false
 
 [browser]
 gatherUsageStats = false
+
+[email]
+username = "harpinder.singh@rvsolutions.in"
+password = "@BaljeetKaur529"  # Use an app-specific password for Gmail

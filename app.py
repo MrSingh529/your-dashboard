@@ -6,6 +6,253 @@ from datetime import datetime, timedelta
 import numpy as np
 import io
 import base64
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime
+import json
+import os
+
+class DashboardNotifier:
+    def __init__(self, smtp_config):
+        """Initialize the notifier with SMTP configuration"""
+        self.smtp_config = smtp_config
+        self.report_state_file = 'report_states.json'
+        self.subscriber_file = 'subscribers.json'
+        
+    def load_report_states(self):
+        """Load the last known state of reports"""
+        if os.path.exists(self.report_state_file):
+            with open(self.report_state_file, 'r') as f:
+                return json.load(f)
+        return {}
+        
+    def save_report_states(self, states):
+        """Save the current state of reports"""
+        with open(self.report_state_file, 'w') as f:
+            json.dump(states, f)
+            
+    def load_subscribers(self):
+        """Load the list of subscribers"""
+        if os.path.exists(self.subscriber_file):
+            with open(self.subscriber_file, 'r') as f:
+                return json.load(f)
+        return {'users': []}
+        
+    def save_subscribers(self, subscribers):
+        """Save the list of subscribers"""
+        with open(self.subscriber_file, 'w') as f:
+            json.dump(subscribers, f)
+            
+    def add_subscriber(self, email):
+        """Add a new subscriber"""
+        subscribers = self.load_subscribers()
+        if email not in subscribers['users']:
+            subscribers['users'].append(email)
+            self.save_subscribers(subscribers)
+            return True
+        return False
+        
+    def remove_subscriber(self, email):
+        """Remove a subscriber"""
+        subscribers = self.load_subscribers()
+        if email in subscribers['users']:
+            subscribers['users'].remove(email)
+            self.save_subscribers(subscribers)
+            return True
+        return False
+
+    def check_report_updates(self, current_reports):
+        """Check for updates in reports and send notifications"""
+        previous_states = self.load_report_states()
+        updates = []
+        
+        for report_name, report_info in current_reports.items():
+            if report_name not in previous_states:
+                # New report
+                updates.append({
+                    'report': report_name,
+                    'type': 'new',
+                    'date': report_info['last_updated']
+                })
+            elif report_info['last_updated'] != previous_states[report_name]['last_updated']:
+                # Updated report
+                updates.append({
+                    'report': report_name,
+                    'type': 'update',
+                    'date': report_info['last_updated']
+                })
+        
+        if updates:
+            self.send_update_notifications(updates)
+            self.save_report_states(current_reports)
+            
+        return updates
+
+    def send_update_notifications(self, updates):
+        """Send email notifications for updates"""
+        try:
+            subscribers = self.load_subscribers()
+            
+            if not subscribers['users']:
+                return
+                
+            # Create email content
+            subject = "Dashboard Report Updates"
+            body = self._create_email_body(updates)
+            
+            # Create message
+            msg = MIMEMultipart()
+            msg['From'] = self.smtp_config['from_email']
+            msg['Subject'] = subject
+            msg.attach(MIMEText(body, 'html'))
+            
+            # Send emails
+            with smtplib.SMTP(self.smtp_config['server'], self.smtp_config['port']) as server:
+                server.starttls()
+                server.login(self.smtp_config['username'], self.smtp_config['password'])
+                
+                for user_email in subscribers['users']:
+                    try:
+                        msg['To'] = user_email
+                        server.send_message(msg)
+                        st.success(f"Notification sent to {user_email}")
+                    except Exception as e:
+                        st.error(f"Failed to send email to {user_email}: {str(e)}")
+                        
+        except Exception as e:
+            st.error(f"Error sending notifications: {str(e)}")
+            
+    def _create_email_body(self, updates):
+        """Create HTML email body for updates"""
+        html = """
+        <html>
+            <head>
+                <style>
+                    .container { font-family: Arial, sans-serif; padding: 20px; }
+                    .update-item { margin: 10px 0; padding: 10px; border-left: 4px solid #4CAF50; }
+                    .new { border-left-color: #2196F3; }
+                    .title { font-weight: bold; color: #333; }
+                    .date { color: #666; font-size: 0.9em; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h2>Dashboard Report Updates</h2>
+        """
+        
+        for update in updates:
+            update_type = "New Report Available" if update['type'] == 'new' else "Report Updated"
+            html += f"""
+                    <div class="update-item {'new' if update['type'] == 'new' else ''}">
+                        <div class="title">{update_type}: {update['report']}</div>
+                        <div class="date">Date: {update['date']}</div>
+                    </div>
+            """
+            
+        html += """
+                    <p>Visit the dashboard to view the latest reports.</p>
+                </div>
+            </body>
+        </html>
+        """
+        return html
+
+# Functions outside the class
+def init_notification_system():
+    """Initialize the notification system"""
+    smtp_config = {
+        'server': 'mail.rvsolutions.in',
+        'port': 587,
+        'username': 'harpinder.singh@rvsolutions.in',
+        'password': '@BaljeetKaur529', 
+        'from_email': 'harpinder.singh@rvsolutions.in'
+    }
+    return DashboardNotifier(smtp_config)
+
+def check_file_updates():
+    """Check if any report files have been updated"""
+    files_to_monitor = {
+        "collections_data.xlsx": "Branch Reco Trend",
+        "sdr_trend.xlsx": "CSD SDR Trend",
+        "tsg_trend.xlsx": "TSG Payment Receivables",
+        "itss_tender.xlsx": "ITSS SDR Analysis"
+    }
+    
+    updates = []
+    for file_name, report_name in files_to_monitor.items():
+        try:
+            if os.path.exists(file_name):
+                modified_time = os.path.getmtime(file_name)
+                updates.extend(update_report_tracking(report_name))
+        except Exception as e:
+            st.error(f"Error checking {file_name}: {str(e)}")
+    return updates
+
+def update_report_tracking(report_name):
+    """Track report updates"""
+    try:
+        notifier = init_notification_system()
+        current_reports = notifier.load_report_states()
+        
+        current_reports[report_name] = {
+            'last_updated': datetime.now().isoformat(),
+            'type': 'update' if report_name in current_reports else 'new'
+        }
+        
+        updates = notifier.check_report_updates(current_reports)
+        return updates
+    except Exception as e:
+        st.error(f"Error tracking report update: {str(e)}")
+        return []
+
+def manage_subscribers():
+    """Manage email subscribers"""
+    st.subheader("Email Notification Settings")
+    
+    try:
+        notifier = init_notification_system()
+        
+        # Add subscriber
+        col1, col2 = st.columns([3, 1])
+        new_email = col1.text_input("Add new subscriber email")
+        if col2.button("Add") and new_email:
+            if notifier.add_subscriber(new_email):
+                st.success(f"Added {new_email} to subscribers")
+            else:
+                st.info("Email already subscribed")
+        
+        # Show current subscribers
+        subscribers = notifier.load_subscribers()
+        if subscribers['users']:
+            st.markdown("### Current Subscribers")
+            for email in subscribers['users']:
+                col1, col2 = st.columns([3, 1])
+                col1.write(email)
+                if col2.button("Remove", key=f"remove_{email}"):
+                    notifier.remove_subscriber(email)
+                    st.rerun()
+        
+        # Add test button
+        if st.button("Test Email System"):
+            test_email_notification()
+            
+    except Exception as e:
+        st.error(f"Error managing subscribers: {str(e)}")
+
+def test_email_notification():
+    """Test the email notification system"""
+    try:
+        notifier = init_notification_system()
+        test_updates = [{
+            'report': 'Test Report',
+            'type': 'test',
+            'date': datetime.now().isoformat()
+        }]
+        notifier.send_update_notifications(test_updates)
+        st.success("Test email sent successfully!")
+    except Exception as e:
+        st.error(f"Error sending test email: {str(e)}")
 
 # Configure page settings
 st.set_page_config(
@@ -127,6 +374,9 @@ def load_data():
         for col in df.columns:
             if col != 'Branch Name':
                 df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
+        
+        # Add this at the end of the try block, just before returning df
+        update_report_tracking("Branch Reco Trend")
         
         return df
     except Exception as e:
@@ -659,6 +909,9 @@ def load_sdr_data():
             if col not in ['Ageing Category']:
                 df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
         st.sidebar.write("SDR Data Columns:", list(df.columns))
+        # Add this at the end of the try block, just before returning df
+        update_report_tracking("CSD SDR Trend")
+        
         return df
     except Exception as e:
         st.error(f"Error loading SDR data: {str(e)}")
@@ -852,6 +1105,9 @@ def load_tsg_data():
         for col in df.columns:
             if col != 'Ageing Category':
                 df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
+        
+        # Add this at the end of the try block, just before returning df
+        update_report_tracking("TSG Payment Receivables")
         
         return df
     except Exception as e:
@@ -1048,10 +1304,12 @@ def load_itss_data():
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
         
+        # Add this at the end of the try block, just before returning df
+        update_report_tracking("ITSS SDR Analysis")
+        
         return df
     except Exception as e:
         st.error(f"Error loading ITSS data: {str(e)}")
-        st.write("Error details:", str(e))
         return None
 
 def style_itss_data(df, aging_categories):
@@ -1334,9 +1592,20 @@ def show_dashboard():
 def main():
     if not check_password():
         return
-        
+    
+    # Check for file updates
+    updates = check_file_updates()
+    if updates:
+        st.info(f"Reports updated: {', '.join([u['report'] for u in updates])}")
+    
     # Show department menu and selected report
     selected_report_func = show_department_menu()
+    
+    # Add email notification management for admin
+    if st.session_state.username == "admin":
+        st.sidebar.markdown("---")
+        with st.sidebar.expander("Manage Email Notifications"):
+            manage_subscribers()
     
     if selected_report_func:
         selected_report_func()
@@ -1345,7 +1614,7 @@ def main():
         st.markdown("""
             ### Please select a department from the sidebar
             
-            Available Departments:
+            Available Departments and Reports:
             - **CSD**: Branch Reconciliation and SDR Trends
             - **TSG**: Payment Receivables Analysis
             - **ITSS**: SDR Analysis
