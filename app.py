@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import io
 import socket
+import toml
 import ssl
 import base64
 import smtplib
@@ -18,6 +19,8 @@ import os
 class DashboardNotifier:
     def __init__(self, smtp_config):
         """Initialize the notifier with SMTP configuration"""
+        if not smtp_config:
+            raise ValueError("SMTP configuration cannot be empty.")
         self.smtp_config = smtp_config
         self.report_state_file = 'report_states.json'
         self.subscriber_file = 'subscribers.json'
@@ -170,36 +173,40 @@ class DashboardNotifier:
 # Functions outside the class
 def init_notification_system():
     """Initialize the notification system"""
-    smtp_config = {
-        'server': 'mail.rvsolutions.in',  # Previously `smtp.server`
-        'port': 465,                      # Previously `smtp.port`
-        'username': 'harpinder.singh@rvsolutions.in',  # Previously `smtp.username`
-        'password': '@BaljeetKaur529',    # Previously `smtp.password`
-        'from_email': 'harpinder.singh@rvsolutions.in',  # Previously `smtp.from_email`
-    }
-    return DashboardNotifier(smtp_config)
+    # Load the config from .streamlit/config.toml file
+    try:
+        config = toml.load('.streamlit/config.toml')
+        smtp_config = config['smtp']
+        return DashboardNotifier(smtp_config)
+    except Exception as e:
+        print(f"Error loading SMTP configuration: {e}")
+        return None
     
 def test_smtp_connection():
     """Test SMTP connection with detailed error handling"""
     with st.spinner('Testing SMTP connection...'):
         try:
+            # Load SMTP configuration from the .toml file
+            config = toml.load('.streamlit/config.toml')
+            smtp_config = config['smtp']
+            
             # Print connection details for debugging
-            st.write("Attempting to connect to:", 'mail.rvsolutions.in', "on port:", 465)
+            st.write("Attempting to connect to:", smtp_config['server'], "on port:", smtp_config['port'])
             
             # Create SSL context
             context = ssl.create_default_context()
             
             try:
-                # First try to create socket connection
-                socket.create_connection(('mail.rvsolutions.in', 465), timeout=10)
+                # First, try to create a socket connection to check basic network reachability
+                socket.create_connection((smtp_config['server'], smtp_config['port']), timeout=10)
                 st.info("Socket connection successful")
                 
-                # Then try SMTP connection
-                with smtplib.SMTP_SSL('mail.rvsolutions.in', 465, context=context, timeout=10) as server:
+                # Then, try SMTP connection
+                with smtplib.SMTP_SSL(smtp_config['server'], smtp_config['port'], context=context, timeout=10) as server:
                     st.info("SMTP connection established")
                     
-                    # Try login
-                    server.login('harpinder.singh@rvsolutions.in', '@BaljeetKaur529')
+                    # Try to login using provided credentials
+                    server.login(smtp_config['username'], smtp_config['password'])
                     st.success("✅ Login successful!")
                     return True
                     
@@ -306,6 +313,9 @@ def test_email_notification():
     try:
         with st.spinner('Setting up email test...'):
             notifier = init_notification_system()
+            if notifier is None:
+                st.error("Failed to initialize the notification system. Check the SMTP configuration.")
+                return
             
             # Check if there are subscribers
             subscribers = notifier.load_subscribers()
@@ -321,22 +331,19 @@ def test_email_notification():
             }]
             
             with st.spinner('Sending test email...'):
-                # Use SMTP_SSL for port 465
-                server = smtplib.SMTP_SSL(notifier.smtp_config['server'], notifier.smtp_config['port'])
-                
-                # Try to login
                 try:
-                    server.login(notifier.smtp_config['username'], notifier.smtp_config['password'])
-                    notifier.send_update_notifications(test_updates)
-                    st.success("✅ Test email sent successfully!")
+                    with smtplib.SMTP_SSL(notifier.smtp_config['server'], notifier.smtp_config['port']) as server:
+                        # Try to login
+                        server.login(notifier.smtp_config['username'], notifier.smtp_config['password'])
+                        notifier.send_update_notifications(test_updates)
+                        st.success("✅ Test email sent successfully!")
+                except smtplib.SMTPAuthenticationError:
+                    st.error("Login failed: Incorrect username or password.")
                 except Exception as e:
-                    st.error(f"Login failed: {str(e)}")
-                finally:
-                    server.quit()
+                    st.error(f"Failed to send email: {str(e)}")
                     
     except Exception as e:
         st.error(f"Error setting up email test: {str(e)}")
-        st.write("Error details:", str(e))
 
 # Configure page settings
 st.set_page_config(
