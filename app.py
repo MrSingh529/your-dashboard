@@ -113,30 +113,38 @@ class DashboardNotifier:
             msg['Subject'] = subject
             msg.attach(MIMEText(body, 'html'))
 
-            # Use SSL to connect, as done in the working test script
+            # Use SSL or STARTTLS based on the port
+            socket.setdefaulttimeout(30)  # Set socket timeout to 30 seconds
             context = ssl.create_default_context()
 
-            # Send emails using SMTP_SSL
-            try:
+            if self.smtp_config['port'] == 465:
+                # Using SSL for port 465
                 with smtplib.SMTP_SSL(self.smtp_config['server'], self.smtp_config['port'], context=context) as server:
                     server.login(self.smtp_config['username'], self.smtp_config['password'])
-                    
                     for user_email in subscribers['users']:
-                        try:
-                            msg['To'] = user_email
-                            server.sendmail(
-                                self.smtp_config['from_email'],
-                                user_email,
-                                msg.as_string()
-                            )
-                            st.success(f"✉️ Notification sent to {user_email}")
-                        except Exception as e:
-                            st.error(f"Failed to send email to {user_email}: {str(e)}")
-            except Exception as e:
-                st.error(f"Failed to connect to SMTP server: {str(e)}")
-                        
+                        self._send_email(server, user_email, msg)
+            else:
+                # Use STARTTLS for other ports like 587
+                with smtplib.SMTP(self.smtp_config['server'], self.smtp_config['port']) as server:
+                    server.starttls(context=context)
+                    server.login(self.smtp_config['username'], self.smtp_config['password'])
+                    for user_email in subscribers['users']:
+                        self._send_email(server, user_email, msg)
+        
         except Exception as e:
             st.error(f"Error in notification system: {str(e)}")
+            
+    def _send_email(self, server, user_email, msg):
+        try:
+            msg['To'] = user_email
+            server.sendmail(
+                self.smtp_config['from_email'],
+                user_email,
+                msg.as_string()
+            )
+            st.success(f"✉️ Notification sent to {user_email}")
+        except Exception as e:
+            st.error(f"Failed to send email to {user_email}: {str(e)}")
             
     def _create_email_body(self, updates):
         """Create HTML email body for updates"""
