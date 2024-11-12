@@ -195,8 +195,9 @@ def main():
     )
 
     # Handle authentication
-    authenticator._login_form()
-    authenticator._check_cookie()
+    name, authentication_status, username = authenticator.login("Login", "main")
+    st.session_state["authentication_status"] = authentication_status
+    st.session_state["name"] = name
 
     if st.session_state["authentication_status"]:
         st.sidebar.success(f'Welcome {st.session_state["name"]}')
