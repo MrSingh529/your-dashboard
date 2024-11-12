@@ -68,8 +68,11 @@ random_key = secrets.token_hex(16)
 # Initialize authenticator with corrected credentials format
 authenticator = stauth.Authenticate(credentials, 'cookie_name', random_key, cookie_expiry_days=30)
 
-# Use "sidebar" or "unrendered" for login placement
-name, authentication_status, username = authenticator.login('Login', "sidebar")
+# Use "sidebar" for login placement
+try:
+    name, authentication_status, username = authenticator.login('Login', location="sidebar")
+except ValueError as e:
+    st.error(f"An error occurred during login: {e}")
 
 # Load data from OneDrive using Streamlit Secrets
 def load_data_from_onedrive(link):
