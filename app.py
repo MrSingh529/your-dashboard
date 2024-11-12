@@ -68,9 +68,10 @@ random_key = secrets.token_hex(16)
 # Initialize authenticator with corrected credentials format
 authenticator = stauth.Authenticate(credentials, 'cookie_name', random_key, cookie_expiry_days=30)
 
-# Use "sidebar" for login placement
+# Corrected Login Function
 try:
-    name, authentication_status, username = authenticator.login('Login', location="sidebar")
+    # Here we use only positional arguments for the function call to avoid mismatches
+    name, authentication_status, username = authenticator.login("Login", "sidebar")
 except ValueError as e:
     st.error(f"An error occurred during login: {e}")
 
