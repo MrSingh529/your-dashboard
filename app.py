@@ -186,27 +186,27 @@ def show_itss_dashboard():
     st.plotly_chart(fig_pie, use_container_width=True)
 
 def main():
-    # Initialize session state at the start
+    # Initialize session state
     if 'authentication_status' not in st.session_state:
         st.session_state['authentication_status'] = None
 
     # Define credentials
-    names = ['Admin User', 'CEO User', 'Manager User']
-    usernames = ['admin@rvsolutions.in', 'ceo@rvsolutions.in', 'manager@rvsolutions.in']
-    passwords = ['admin123', 'ceo123', 'manager123']
-
-    # Hash passwords
-    hashed_passwords = stauth.Hasher(passwords).generate()
-
-    # Create credentials dictionary
     credentials = {
-        "usernames": {}
-    }
-    for name, username, hashed_password in zip(names, usernames, hashed_passwords):
-        credentials["usernames"][username] = {
-            "name": name,
-            "password": hashed_password
+        "usernames": {
+            "admin@rvsolutions.in": {
+                "name": "Admin User",
+                "password": "$2b$12$N5.FZF6H8TxMGoxmbHgQRuXb/ZOPtZpAe340qagZncUCGbVCnC4Wm"  # admin123
+            },
+            "ceo@rvsolutions.in": {
+                "name": "CEO User",
+                "password": "$2b$12$9.6TKF0bHJrJRNX9FSrRSeS/fyoYYm7ZP5pUjmR6bX7WYNYIFwj8e"  # ceo123
+            },
+            "manager@rvsolutions.in": {
+                "name": "Manager User",
+                "password": "$2b$12$GLV17UqLv7WaP3dPG4nMneL8hC3k7XVXQVaAE0XmZI9H9E3ZB.Y4O"  # manager123
+            }
         }
+    }
 
     # Create authenticator object
     authenticator = stauth.Authenticate(
@@ -216,43 +216,38 @@ def main():
         cookie_expiry_days=30
     )
 
-    try:
-        # Login section - no context manager, just direct login call
-        name, authentication_status, username = authenticator.login('Login', 'sidebar')
-        st.session_state['authentication_status'] = authentication_status
-        st.session_state['name'] = name
-        st.session_state['username'] = username
+    # Authentication
+    name, authentication_status, username = authenticator.login('Login', 'main')
 
-        # Main application flow
-        if st.session_state['authentication_status']:
-            st.sidebar.success(f'Welcome {st.session_state["name"]}')
-            
-            # Department Reports Section
-            st.sidebar.title("Department Reports")
-            report_type = st.sidebar.radio(
-                "Select Report Type",
-                ["Branch Reco Trend", "CSD SDR Trend", "TSG Payment Receivables", "ITSS SDR Analysis"]
-            )
+    # Handle authentication state
+    if authentication_status:
+        st.sidebar.success(f'Welcome {name}')
+        
+        # Department Reports Section
+        st.sidebar.title("Department Reports")
+        report_type = st.sidebar.radio(
+            "Select Report Type",
+            ["Branch Reco Trend", "CSD SDR Trend", "TSG Payment Receivables", "ITSS SDR Analysis"]
+        )
 
-            if report_type == "Branch Reco Trend":
-                show_collections_dashboard()
-            elif report_type == "CSD SDR Trend":
-                show_sdr_dashboard()
-            elif report_type == "TSG Payment Receivables":
-                show_tsg_dashboard()
-            elif report_type == "ITSS SDR Analysis":
-                show_itss_dashboard()
+        if report_type == "Branch Reco Trend":
+            show_collections_dashboard()
+        elif report_type == "CSD SDR Trend":
+            show_sdr_dashboard()
+        elif report_type == "TSG Payment Receivables":
+            show_tsg_dashboard()
+        elif report_type == "ITSS SDR Analysis":
+            show_itss_dashboard()
 
-            # Logout button
-            if st.sidebar.button("Logout"):
-                st.session_state.clear()
-                st.experimental_rerun()
+        # Logout button
+        if st.sidebar.button("Logout"):
+            st.session_state.clear()
+            st.experimental_rerun()
 
-        elif st.session_state['authentication_status'] is False:
-            st.error("Username or password is incorrect")
-
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
+    elif authentication_status is False:
+        st.error("Username or password is incorrect")
+    else:
+        st.warning("Please enter your username and password")
 
 if __name__ == "__main__":
     main()
