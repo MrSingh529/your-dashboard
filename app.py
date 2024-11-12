@@ -21,9 +21,7 @@ st.set_page_config(
 # Custom CSS (for UI appearance)
 st.markdown("""
     <style>
-    .main {
-        padding: 20px;
-    }
+    .main { padding: 20px; }
     .login-container {
         max-width: 400px;
         margin: auto;
@@ -39,31 +37,24 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Initialize session state for authentication if not already done
+# Initialize session state
 if 'authentication_status' not in st.session_state:
     st.session_state['authentication_status'] = None
-if 'name' not in st.session_state:
-    st.session_state['name'] = None
-if 'username' not in st.session_state:
-    st.session_state['username'] = None
 
-# Streamlit Authentication Setup
+# Define credentials
 credentials = {
     'usernames': {
         'admin@rvsolutions.in': {
-            'email': 'admin@rvsolutions.in',
             'name': 'Admin',
-            'password': stauth.Hasher(['admin123']).generate()[0]
+            'password': '$2b$12$tW.V5H8j6mOhxz3VWJUxZOp6UZ7QKaU3LFbBL5OTf3BDb/lXRhmKW'  # hashed 'admin123'
         },
         'ceo@rvsolutions.in': {
-            'email': 'ceo@rvsolutions.in',
             'name': 'CEO',
-            'password': stauth.Hasher(['ceo123']).generate()[0]
+            'password': '$2b$12$UQJ3RzL3F7ZU6fGR.B8y8eqaWHtxYWyM9q/2CP6dC.OrO0QX0Mgx2'  # hashed 'ceo123'
         },
         'manager@rvsolutions.in': {
-            'email': 'manager@rvsolutions.in',
             'name': 'Manager',
-            'password': stauth.Hasher(['manager123']).generate()[0]
+            'password': '$2b$12$OKbs1UPDPWqV0jDmbK9zKemoIBx3Y8gkj1as6TZRR3LXmVh.YTgDK'  # hashed 'manager123'
         }
     }
 }
@@ -72,18 +63,17 @@ credentials = {
 authenticator = stauth.Authenticate(
     credentials,
     'dashboard_cookie',
-    secrets.token_hex(16),
+    'abcdef123456',  # Cookie key (keep this secret in production)
     cookie_expiry_days=30
 )
 
-# Place login in sidebar - fixed location parameter
-with st.sidebar:
-    name, authentication_status, username = authenticator.login("Login")
-
-# Update session state
-st.session_state['authentication_status'] = authentication_status
-st.session_state['name'] = name
-st.session_state['username'] = username
+# Login
+authentication_status = None
+try:
+    name, authentication_status, username = authenticator.login("Login", "main")
+except Exception as e:
+    st.error(f"An error occurred during login. Please try again.")
+    st.error(f"Error details: {str(e)}")
 
 # Load data from OneDrive using Streamlit Secrets
 def load_data_from_onedrive(link):
