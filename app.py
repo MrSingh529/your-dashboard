@@ -194,10 +194,9 @@ def main():
         cookie_expiry_days=30
     )
 
-    # Handle authentication
-    with st.sidebar:
-        st.title("Login")
-        name, authentication_status, username = authenticator.login('Login')
+    # Handle authentication - simplified without context manager
+    st.sidebar.title("Login")
+    name, authentication_status, username = authenticator.login('Login', 'sidebar')  # explicitly set to 'sidebar'
 
     if authentication_status:
         st.sidebar.success(f'Welcome *{name}*')
