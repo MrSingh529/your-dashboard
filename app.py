@@ -36,12 +36,31 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Correct credentials dictionary
+credentials = {
+    "usernames": {
+        "admin@rvsolutions.in": {
+            "name": "Admin",
+            "password": hashed_passwords[0]  # Assuming passwords were hashed earlier
+        },
+        "ceo@rvsolutions.in": {
+            "name": "CEO",
+            "password": hashed_passwords[1]
+        },
+        "manager@rvsolutions.in": {
+            "name": "Manager",
+            "password": hashed_passwords[2]
+        }
+    }
+}
+
 # Streamlit Authentication Setup
 usernames = ["admin@rvsolutions.in", "ceo@rvsolutions.in", "manager@rvsolutions.in"]
 passwords = ["admin123", "ceo123", "manager123"]
 hashed_passwords = stauth.Hasher(passwords).generate()
 
-authenticator = stauth.Authenticate(usernames, usernames, hashed_passwords, 'cookie_name', 'random_key')
+# Initialize authenticator with corrected credentials format
+authenticator = stauth.Authenticate(credentials, 'cookie_name', 'random_key', cookie_expiry_days=30)
 name, authentication_status, username = authenticator.login('Login', 'main')
 
 # Load data from OneDrive using Streamlit Secrets
