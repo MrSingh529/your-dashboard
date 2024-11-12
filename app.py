@@ -71,19 +71,16 @@ authenticator = stauth.Authenticate(
     cookie_expiry_days=30
 )
 
-# Place login widget in sidebar
-with st.sidebar:
-    name, authentication_status, username = authenticator.login('Login', 'main')
-    
-# Update session state
-st.session_state['authentication_status'] = authentication_status
-st.session_state['name'] = name
-st.session_state['username'] = username
-
-# Login
-authentication_status = None
+# Handle authentication
 try:
-    name, authentication_status, username = authenticator.login("Login", "main")
+    with st.sidebar:
+        name, authentication_status, username = authenticator.login('Login')
+        
+    # Update session state
+    st.session_state['authentication_status'] = authentication_status
+    st.session_state['name'] = name
+    st.session_state['username'] = username
+    
 except Exception as e:
     st.error(f"An error occurred during login. Please try again.")
     st.error(f"Error details: {str(e)}")
