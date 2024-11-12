@@ -82,7 +82,7 @@ name, authentication_status, username = authenticator.login('Login', 'sidebar')
 # Update session state
 st.session_state['authentication_status'] = authentication_status
 st.session_state['name'] = name
-st.session_state['username'] = username.
+st.session_state['username'] = username
 
 # Load data from OneDrive using Streamlit Secrets
 def load_data_from_onedrive(link):
