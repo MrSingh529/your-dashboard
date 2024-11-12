@@ -64,8 +64,8 @@ credentials = {
 # Initialize authenticator with corrected credentials format
 authenticator = stauth.Authenticate(credentials, 'cookie_name', 'random_key', cookie_expiry_days=30)
 
-# Place login in the main section instead of 'main' (as it expects 'main' as a string value)
-name, authentication_status, username = authenticator.login('Login', "main")
+# Use "sidebar" or "unrendered" for login placement
+name, authentication_status, username = authenticator.login('Login', "sidebar")
 
 # Load data from OneDrive using Streamlit Secrets
 def load_data_from_onedrive(link):
