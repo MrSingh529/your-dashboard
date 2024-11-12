@@ -76,8 +76,9 @@ authenticator = stauth.Authenticate(
     cookie_expiry_days=30
 )
 
-# Place login in sidebar
-name, authentication_status, username = authenticator.login('Login', 'sidebar')
+# Place login in sidebar - fixed location parameter
+with st.sidebar:
+    name, authentication_status, username = authenticator.login("Login")
 
 # Update session state
 st.session_state['authentication_status'] = authentication_status
