@@ -217,12 +217,11 @@ def main():
     )
 
     try:
-        # Login section in the sidebar
-        with st.sidebar:
-            name, authentication_status, username = authenticator.login('Login', location='sidebar')
-            st.session_state['authentication_status'] = authentication_status
-            st.session_state['name'] = name
-            st.session_state['username'] = username
+        # Login section - no context manager, just direct login call
+        name, authentication_status, username = authenticator.login('Login', 'sidebar')
+        st.session_state['authentication_status'] = authentication_status
+        st.session_state['name'] = name
+        st.session_state['username'] = username
 
         # Main application flow
         if st.session_state['authentication_status']:
