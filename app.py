@@ -195,8 +195,9 @@ def main():
     )
 
     # Handle authentication
-    st.sidebar.title("Login")
-    name, authentication_status, username = authenticator.login("", location="main")
+    with st.sidebar:
+        st.title("Login")
+        name, authentication_status, username = authenticator.login('Login')
 
     if authentication_status:
         st.sidebar.success(f'Welcome *{name}*')
