@@ -9,7 +9,6 @@ import yaml
 from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
 import secrets
-import bcrypt
 
 # Configure page settings
 st.set_page_config(
@@ -18,10 +17,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# Initialize session state
-if 'authentication_status' not in st.session_state:
-    st.session_state['authentication_status'] = None
 
 # Load data from OneDrive using Streamlit Secrets
 def load_data_from_onedrive(link):
@@ -38,7 +33,6 @@ def load_data_from_onedrive(link):
         st.error(f"Error loading data from OneDrive: {str(e)}")
         return None
 
-# Load specific data files based on links in Streamlit secrets
 def load_collections_data():
     link = st.secrets["onedrive_links"]["collections_data"]
     return load_data_from_onedrive(link)
@@ -55,7 +49,6 @@ def load_tsg_data():
     link = st.secrets["onedrive_links"]["tsg_trend"]
     return load_data_from_onedrive(link)
 
-# Branch Reconciliation Dashboard
 def show_collections_dashboard():
     st.title("Collections & Outstanding Analysis Dashboard")
     df = load_collections_data()
@@ -101,17 +94,11 @@ def show_collections_dashboard():
     fig = go.Figure()
     for branch in selected_branches:
         branch_trend = trend_df[trend_df['Branch'] == branch]
-        fig.add_trace(go.Scatter(x=branch_trend['Date'], y=branch_trend['Balance'], 
-                               name=f"{branch} - Balance", mode='lines+markers'))
-        fig.add_trace(go.Scatter(x=branch_trend['Date'], y=branch_trend['Pending'], 
-                               name=f"{branch} - Pending", line=dict(dash='dot')))
-    fig.update_layout(title="Balance and Pending Trends", 
-                     xaxis_title="Date", 
-                     yaxis_title="Amount (₹)", 
-                     hovermode='x unified')
+        fig.add_trace(go.Scatter(x=branch_trend['Date'], y=branch_trend['Balance'], name=f"{branch} - Balance", mode='lines+markers'))
+        fig.add_trace(go.Scatter(x=branch_trend['Date'], y=branch_trend['Pending'], name=f"{branch} - Pending", line=dict(dash='dot')))
+    fig.update_layout(title="Balance and Pending Trends", xaxis_title="Date", yaxis_title="Amount (₹)", hovermode='x unified')
     st.plotly_chart(fig, use_container_width=True)
 
-# SDR Dashboard
 def show_sdr_dashboard():
     st.title("CSD SDR Trend Analysis")
     df = load_sdr_data()
@@ -131,13 +118,10 @@ def show_sdr_dashboard():
     st.metric(f"Latest Total ({latest_date})", f"{latest_total:,.2f}", delta=-change)
 
     # Line Chart
-    trend_data = df.melt(id_vars=['Ageing Category'], value_vars=df.columns[1:], 
-                        var_name='Date', value_name='Amount')
-    fig = px.line(trend_data, x='Date', y='Amount', color='Ageing Category', 
-                 title="SDR Trends by Ageing Category")
+    trend_data = df.melt(id_vars=['Ageing Category'], value_vars=df.columns[1:], var_name='Date', value_name='Amount')
+    fig = px.line(trend_data, x='Date', y='Amount', color='Ageing Category', title="SDR Trends by Ageing Category")
     st.plotly_chart(fig, use_container_width=True)
 
-# TSG Dashboard
 def show_tsg_dashboard():
     st.title("TSG Payment Receivables Trend Analysis")
     df = load_tsg_data()
@@ -152,17 +136,13 @@ def show_tsg_dashboard():
     prev_total = df[prev_date].sum()
     change = latest_total - prev_total
 
-    st.metric(f"Total Receivables ({latest_date})", f"₹{latest_total:,.0f}", 
-             delta=f"₹{-change:,.0f}")
+    st.metric(f"Total Receivables ({latest_date})", f"₹{latest_total:,.0f}", delta=f"₹{-change:,.0f}")
 
     # Line Chart
-    trend_data = df.melt(id_vars=['Ageing Category'], value_vars=df.columns[1:], 
-                        var_name='Date', value_name='Amount')
-    fig = px.line(trend_data, x='Date', y='Amount', color='Ageing Category', 
-                 title="Receivables Trend by Ageing Category")
+    trend_data = df.melt(id_vars=['Ageing Category'], value_vars=df.columns[1:], var_name='Date', value_name='Amount')
+    fig = px.line(trend_data, x='Date', y='Amount', color='Ageing Category', title="Receivables Trend by Ageing Category")
     st.plotly_chart(fig, use_container_width=True)
 
-# ITSS Dashboard
 def show_itss_dashboard():
     st.title("ITSS SDR Aging Analysis")
     df = load_itss_data()
@@ -176,13 +156,11 @@ def show_itss_dashboard():
     high_risk = df[['361-720', 'More than 2 Yr']].sum().sum()
 
     st.metric("Total Outstanding", f"₹{total_outstanding:.2f} Lakhs")
-    st.metric("High Risk Amount", f"₹{high_risk:.2f} Lakhs", 
-             f"{(high_risk/total_outstanding*100 if total_outstanding else 0):.1f}%")
+    st.metric("High Risk Amount", f"₹{high_risk:.2f} Lakhs", f"{(high_risk/total_outstanding*100 if total_outstanding else 0):.1f}%")
 
     # Distribution Pie Chart
     dist_data = df[aging_categories].sum()
-    fig_pie = px.pie(values=dist_data.values, names=dist_data.index, 
-                    title="Distribution by Aging Category")
+    fig_pie = px.pie(values=dist_data.values, names=dist_data.index, title="Distribution by Aging Category")
     st.plotly_chart(fig_pie, use_container_width=True)
 
 def main():
@@ -216,43 +194,38 @@ def main():
         cookie_expiry_days=30
     )
 
-    try:
-        # Place authentication in the sidebar
-        authenticator._login_form()
-        authenticator._check_cookie()
+    # Handle authentication
+    authenticator._login_form()
+    authenticator._check_cookie()
+
+    if st.session_state["authentication_status"]:
+        st.sidebar.success(f'Welcome {st.session_state["name"]}')
         
-        # Get authentication status from the authenticator
-        if st.session_state["authentication_status"]:
-            st.sidebar.success(f'Welcome {st.session_state["name"]}')
-            
-            # Department Reports Section
-            st.sidebar.title("Department Reports")
-            report_type = st.sidebar.radio(
-                "Select Report Type",
-                ["Branch Reco Trend", "CSD SDR Trend", "TSG Payment Receivables", "ITSS SDR Analysis"]
-            )
+        # Department Reports Section
+        st.sidebar.title("Department Reports")
+        report_type = st.sidebar.radio(
+            "Select Report Type",
+            ["Branch Reco Trend", "CSD SDR Trend", "TSG Payment Receivables", "ITSS SDR Analysis"]
+        )
 
-            if report_type == "Branch Reco Trend":
-                show_collections_dashboard()
-            elif report_type == "CSD SDR Trend":
-                show_sdr_dashboard()
-            elif report_type == "TSG Payment Receivables":
-                show_tsg_dashboard()
-            elif report_type == "ITSS SDR Analysis":
-                show_itss_dashboard()
+        if report_type == "Branch Reco Trend":
+            show_collections_dashboard()
+        elif report_type == "CSD SDR Trend":
+            show_sdr_dashboard()
+        elif report_type == "TSG Payment Receivables":
+            show_tsg_dashboard()
+        elif report_type == "ITSS SDR Analysis":
+            show_itss_dashboard()
 
-            # Logout button
-            if st.sidebar.button("Logout"):
-                st.session_state.clear()
-                st.experimental_rerun()
+        # Logout button
+        if st.sidebar.button("Logout"):
+            st.session_state.clear()
+            st.experimental_rerun()
 
-        elif st.session_state["authentication_status"] == False:
-            st.error("Username or password is incorrect")
-        else:
-            st.warning("Please enter your username and password")
-
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
+    elif st.session_state["authentication_status"] == False:
+        st.error("Username or password is incorrect")
+    else:
+        st.warning("Please enter your username and password")
 
 if __name__ == "__main__":
     main()
