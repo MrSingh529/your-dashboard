@@ -70,10 +70,11 @@ authenticator = stauth.Authenticate(credentials, 'cookie_name', random_key, cook
 
 # Corrected Login Function
 try:
-    # Here we use only positional arguments for the function call to avoid mismatches
-    name, authentication_status, username = authenticator.login("Login", "sidebar")
+    # Using 'sidebar' to ensure placement is correct
+    name, authentication_status, username = authenticator.login("Login", location="sidebar")
 except ValueError as e:
     st.error(f"An error occurred during login: {e}")
+    authentication_status = None  # Default to None to avoid further issues.
 
 # Load data from OneDrive using Streamlit Secrets
 def load_data_from_onedrive(link):
