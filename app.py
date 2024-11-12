@@ -9,6 +9,7 @@ import yaml
 from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
 import secrets
+import bcrypt
 
 # Configure page settings
 st.set_page_config(
@@ -17,6 +18,10 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Generate a new hash for a simple password
+NEW_PASSWORD = "admin123"  # Change this to your desired password
+HASHED = bcrypt.hashpw(NEW_PASSWORD.encode(), bcrypt.gensalt(rounds=12)).decode()
 
 # Load data from OneDrive using Streamlit Secrets
 def load_data_from_onedrive(link):
@@ -168,20 +173,20 @@ def main():
     if 'authentication_status' not in st.session_state:
         st.session_state['authentication_status'] = None
 
-    # Define credentials with pre-hashed passwords
+    # Define credentials with the new hashed password
     credentials = {
         "usernames": {
             "admin@rvsolutions.in": {
                 "name": "Admin",
-                "password": "$2b$12$N5.FZF6H8TxMGoxmbHgQRuXb/ZOPtZpAe340qagZncUCGbVCnC4Wm"
+                "password": HASHED  # Using the newly generated hash
             },
             "ceo@rvsolutions.in": {
                 "name": "CEO",
-                "password": "$2b$12$9.6TKF0bHJrJRNX9FSrRSeS/fyoYYm7ZP5pUjmR6bX7WYNYIFwj8e"
+                "password": HASHED  # Using the same hash for testing
             },
             "manager@rvsolutions.in": {
                 "name": "Manager",
-                "password": "$2b$12$GLV17UqLv7WaP3dPG4nMneL8hC3k7XVXQVaAE0XmZI9H9E3ZB.Y4O"
+                "password": HASHED  # Using the same hash for testing
             }
         }
     }
@@ -194,9 +199,8 @@ def main():
         cookie_expiry_days=30
     )
 
-    # Handle authentication - simplified without context manager
+    # Handle authentication
     st.sidebar.title("Login")
-    # Using location only, as form_name doesn't seem to be a valid argument
     name, authentication_status, username = authenticator.login(location='sidebar')
 
     if authentication_status:
