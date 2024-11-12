@@ -9,6 +9,7 @@ import yaml
 from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
 import secrets
+import bcrypt
 
 # Configure page settings
 st.set_page_config(
@@ -31,8 +32,8 @@ names = ['Admin User', 'CEO User', 'Manager User']
 usernames = ['admin@rvsolutions.in', 'ceo@rvsolutions.in', 'manager@rvsolutions.in']
 passwords = ['admin123', 'ceo123', 'manager123']
 
-# Generate hashed passwords
-hashed_passwords = stauth.Hasher(passwords).generate()
+# Hash passwords using bcrypt
+hashed_passwords = [bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8') for password in passwords]
 
 # Create the credentials dictionary
 credentials = {
@@ -214,7 +215,7 @@ def show_itss_dashboard():
 
 # Show the Dashboard based on the Selection
 def main():
-    if authentication_status:
+    if st.session_state['authentication_status']:
         st.sidebar.title("Department Reports")
         report_type = st.sidebar.radio("Select Report Type", ["Branch Reco Trend", "CSD SDR Trend", "TSG Payment Receivables", "ITSS SDR Analysis"])
 
@@ -231,9 +232,9 @@ def main():
         if st.sidebar.button("Logout"):
             st.session_state.clear()
             st.experimental_rerun()
-    elif authentication_status is False:
+    elif st.session_state['authentication_status'] is False:
         st.error("Username or password is incorrect")
-    elif authentication_status is None:
+    elif st.session_state['authentication_status'] is None:
         st.warning("Please enter your username and password")
 
 if __name__ == "__main__":
