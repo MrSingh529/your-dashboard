@@ -194,16 +194,16 @@ def main():
     credentials = {
         "usernames": {
             "admin@rvsolutions.in": {
-                "name": "Admin User",
-                "password": "$2b$12$N5.FZF6H8TxMGoxmbHgQRuXb/ZOPtZpAe340qagZncUCGbVCnC4Wm"  # admin123
+                "name": "Admin",
+                "password": "$2b$12$N5.FZF6H8TxMGoxmbHgQRuXb/ZOPtZpAe340qagZncUCGbVCnC4Wm"
             },
             "ceo@rvsolutions.in": {
-                "name": "CEO User",
-                "password": "$2b$12$9.6TKF0bHJrJRNX9FSrRSeS/fyoYYm7ZP5pUjmR6bX7WYNYIFwj8e"  # ceo123
+                "name": "CEO",
+                "password": "$2b$12$9.6TKF0bHJrJRNX9FSrRSeS/fyoYYm7ZP5pUjmR6bX7WYNYIFwj8e"
             },
             "manager@rvsolutions.in": {
-                "name": "Manager User",
-                "password": "$2b$12$GLV17UqLv7WaP3dPG4nMneL8hC3k7XVXQVaAE0XmZI9H9E3ZB.Y4O"  # manager123
+                "name": "Manager",
+                "password": "$2b$12$GLV17UqLv7WaP3dPG4nMneL8hC3k7XVXQVaAE0XmZI9H9E3ZB.Y4O"
             }
         }
     }
@@ -212,42 +212,47 @@ def main():
     authenticator = stauth.Authenticate(
         credentials,
         "rvsolutions_dashboard",
-        "d4f56a74b8ac4a7b9eeb8ecf7185ed72",
+        "abcdef123456789",
         cookie_expiry_days=30
     )
 
-    # Authentication
-    name, authentication_status, username = authenticator.login('Login', 'main')
-
-    # Handle authentication state
-    if authentication_status:
-        st.sidebar.success(f'Welcome {name}')
+    try:
+        # Place authentication in the sidebar
+        authenticator._login_form()
+        authenticator._check_cookie()
         
-        # Department Reports Section
-        st.sidebar.title("Department Reports")
-        report_type = st.sidebar.radio(
-            "Select Report Type",
-            ["Branch Reco Trend", "CSD SDR Trend", "TSG Payment Receivables", "ITSS SDR Analysis"]
-        )
+        # Get authentication status from the authenticator
+        if st.session_state["authentication_status"]:
+            st.sidebar.success(f'Welcome {st.session_state["name"]}')
+            
+            # Department Reports Section
+            st.sidebar.title("Department Reports")
+            report_type = st.sidebar.radio(
+                "Select Report Type",
+                ["Branch Reco Trend", "CSD SDR Trend", "TSG Payment Receivables", "ITSS SDR Analysis"]
+            )
 
-        if report_type == "Branch Reco Trend":
-            show_collections_dashboard()
-        elif report_type == "CSD SDR Trend":
-            show_sdr_dashboard()
-        elif report_type == "TSG Payment Receivables":
-            show_tsg_dashboard()
-        elif report_type == "ITSS SDR Analysis":
-            show_itss_dashboard()
+            if report_type == "Branch Reco Trend":
+                show_collections_dashboard()
+            elif report_type == "CSD SDR Trend":
+                show_sdr_dashboard()
+            elif report_type == "TSG Payment Receivables":
+                show_tsg_dashboard()
+            elif report_type == "ITSS SDR Analysis":
+                show_itss_dashboard()
 
-        # Logout button
-        if st.sidebar.button("Logout"):
-            st.session_state.clear()
-            st.experimental_rerun()
+            # Logout button
+            if st.sidebar.button("Logout"):
+                st.session_state.clear()
+                st.experimental_rerun()
 
-    elif authentication_status is False:
-        st.error("Username or password is incorrect")
-    else:
-        st.warning("Please enter your username and password")
+        elif st.session_state["authentication_status"] == False:
+            st.error("Username or password is incorrect")
+        else:
+            st.warning("Please enter your username and password")
+
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
     main()
