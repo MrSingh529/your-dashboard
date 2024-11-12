@@ -18,25 +18,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS (for UI appearance)
-st.markdown("""
-    <style>
-    .main { padding: 20px; }
-    .login-container {
-        max-width: 400px;
-        margin: auto;
-        padding: 20px;
-        background-color: white;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .stButton>button {
-        width: 100%;
-        margin-top: 10px;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
 # Initialize session state
 if 'authentication_status' not in st.session_state:
     st.session_state['authentication_status'] = None
@@ -45,45 +26,41 @@ if 'username' not in st.session_state:
 if 'name' not in st.session_state:
     st.session_state['name'] = None
 
-# Define credentials with usernames as keys
+# Define credentials with pre-hashed passwords
+names = ['Admin User', 'CEO User', 'Manager User']
+usernames = ['admin@rvsolutions.in', 'ceo@rvsolutions.in', 'manager@rvsolutions.in']
+passwords = ['admin123', 'ceo123', 'manager123']
+
+# Generate hashed passwords
+hashed_passwords = stauth.Hasher(passwords).generate()
+
+# Create the credentials dictionary
 credentials = {
-    'usernames': {
-        'admin@rvsolutions.in': {
-            'name': 'Admin User',
-            'password': stauth.Hasher(['admin123']).generate()[0]
-        },
-        'ceo@rvsolutions.in': {
-            'name': 'CEO User',
-            'password': stauth.Hasher(['ceo123']).generate()[0]
-        },
-        'manager@rvsolutions.in': {
-            'name': 'Manager User',
-            'password': stauth.Hasher(['manager123']).generate()[0]
-        }
-    }
+    'usernames': {}
 }
+
+for name, username, hashed_password in zip(names, usernames, hashed_passwords):
+    credentials['usernames'][username] = {
+        'name': name,
+        'password': hashed_password
+    }
 
 # Initialize Authenticator
 authenticator = stauth.Authenticate(
     credentials,
-    'your_cookie_name',
-    'your_signature_key',
+    'rv_solutions_cookie',
+    'abcdef123456789',
     cookie_expiry_days=30
 )
 
 # Handle authentication
 try:
-    with st.sidebar:
-        name, authentication_status, username = authenticator.login('Login')
-        
-    # Update session state
+    name, authentication_status, username = authenticator.login('Login', 'sidebar')
     st.session_state['authentication_status'] = authentication_status
     st.session_state['name'] = name
     st.session_state['username'] = username
-    
 except Exception as e:
-    st.error(f"An error occurred during login. Please try again.")
-    st.error(f"Error details: {str(e)}")
+    st.error('An error occurred during authentication')
 
 # Load data from OneDrive using Streamlit Secrets
 def load_data_from_onedrive(link):
