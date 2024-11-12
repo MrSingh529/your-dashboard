@@ -5,6 +5,8 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import requests
 import io
+import yaml
+from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
 import secrets
 
@@ -37,44 +39,50 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Initialize session state for authentication if not already done
+if 'authentication_status' not in st.session_state:
+    st.session_state['authentication_status'] = None
+if 'name' not in st.session_state:
+    st.session_state['name'] = None
+if 'username' not in st.session_state:
+    st.session_state['username'] = None
+
 # Streamlit Authentication Setup
-usernames = ["admin@rvsolutions.in", "ceo@rvsolutions.in", "manager@rvsolutions.in"]
-passwords = ["admin123", "ceo123", "manager123"]
-
-# Generate hashed passwords
-hashed_passwords = stauth.Hasher(passwords).generate()
-
-# Correct credentials dictionary, using hashed passwords
 credentials = {
-    "usernames": {
-        "admin@rvsolutions.in": {
-            "name": "Admin",
-            "password": hashed_passwords[0]  # Use the first hashed password
+    'usernames': {
+        'admin@rvsolutions.in': {
+            'email': 'admin@rvsolutions.in',
+            'name': 'Admin',
+            'password': stauth.Hasher(['admin123']).generate()[0]
         },
-        "ceo@rvsolutions.in": {
-            "name": "CEO",
-            "password": hashed_passwords[1]  # Use the second hashed password
+        'ceo@rvsolutions.in': {
+            'email': 'ceo@rvsolutions.in',
+            'name': 'CEO',
+            'password': stauth.Hasher(['ceo123']).generate()[0]
         },
-        "manager@rvsolutions.in": {
-            "name": "Manager",
-            "password": hashed_passwords[2]  # Use the third hashed password
+        'manager@rvsolutions.in': {
+            'email': 'manager@rvsolutions.in',
+            'name': 'Manager',
+            'password': stauth.Hasher(['manager123']).generate()[0]
         }
     }
 }
 
-# Generate a secure random key for the cookie
-random_key = secrets.token_hex(16)
+# Create an authentication object
+authenticator = stauth.Authenticate(
+    credentials,
+    'dashboard_cookie',
+    secrets.token_hex(16),
+    cookie_expiry_days=30
+)
 
-# Initialize authenticator with corrected credentials format
-authenticator = stauth.Authenticate(credentials, 'cookie_name', random_key, cookie_expiry_days=30)
+# Place login in sidebar
+name, authentication_status, username = authenticator.login('Login', 'sidebar')
 
-# Corrected Login Function
-try:
-    # Using 'sidebar' to ensure placement is correct
-    name, authentication_status, username = authenticator.login("Login", location="sidebar")
-except ValueError as e:
-    st.error(f"An error occurred during login: {e}")
-    authentication_status = None  # Default to None to avoid further issues.
+# Update session state
+st.session_state['authentication_status'] = authentication_status
+st.session_state['name'] = name
+st.session_state['username'] = username.
 
 # Load data from OneDrive using Streamlit Secrets
 def load_data_from_onedrive(link):
