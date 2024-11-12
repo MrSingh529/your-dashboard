@@ -194,13 +194,12 @@ def main():
         cookie_expiry_days=30
     )
 
-    # Handle authentication in sidebar without any context manager
-    name, authentication_status, username = authenticator.login("Login", location="sidebar")
-    
-    # Update session state
+    # Handle authentication
+    st.sidebar.title("Login")
+    name, authentication_status, username = authenticator.login("", location="main")
+
     if authentication_status:
-        authenticator.logout("Logout", "sidebar")
-        st.sidebar.write(f'Welcome *{name}*')
+        st.sidebar.success(f'Welcome *{name}*')
         
         # Department Reports Section
         st.sidebar.title("Department Reports")
@@ -217,6 +216,11 @@ def main():
             show_tsg_dashboard()
         elif report_type == "ITSS SDR Analysis":
             show_itss_dashboard()
+
+        # Logout button
+        if st.sidebar.button("Logout"):
+            st.session_state.clear()
+            st.experimental_rerun()
 
     elif authentication_status is False:
         st.error("Username or password is incorrect")
