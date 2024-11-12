@@ -168,7 +168,7 @@ def main():
     if 'authentication_status' not in st.session_state:
         st.session_state['authentication_status'] = None
 
-    # Define credentials
+    # Define credentials with pre-hashed passwords
     credentials = {
         "usernames": {
             "admin@rvsolutions.in": {
@@ -194,13 +194,13 @@ def main():
         cookie_expiry_days=30
     )
 
-    # Handle authentication
-    name, authentication_status, username = authenticator.login("Login", "main")
-    st.session_state["authentication_status"] = authentication_status
-    st.session_state["name"] = name
-
-    if st.session_state["authentication_status"]:
-        st.sidebar.success(f'Welcome {st.session_state["name"]}')
+    # Handle authentication in sidebar without any context manager
+    name, authentication_status, username = authenticator.login("Login", location="sidebar")
+    
+    # Update session state
+    if authentication_status:
+        authenticator.logout("Logout", "sidebar")
+        st.sidebar.write(f'Welcome *{name}*')
         
         # Department Reports Section
         st.sidebar.title("Department Reports")
@@ -218,12 +218,7 @@ def main():
         elif report_type == "ITSS SDR Analysis":
             show_itss_dashboard()
 
-        # Logout button
-        if st.sidebar.button("Logout"):
-            st.session_state.clear()
-            st.experimental_rerun()
-
-    elif st.session_state["authentication_status"] == False:
+    elif authentication_status is False:
         st.error("Username or password is incorrect")
     else:
         st.warning("Please enter your username and password")
