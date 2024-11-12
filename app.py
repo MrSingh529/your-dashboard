@@ -196,7 +196,7 @@ def main():
 
     # Handle authentication - simplified without context manager
     st.sidebar.title("Login")
-    name, authentication_status, username = authenticator.login('Login', location='sidebar')  # explicitly set to 'sidebar'
+    name, authentication_status, username = authenticator.login(form_name='Login', location='sidebar')  # explicitly set form_name and location
 
     if authentication_status:
         st.sidebar.success(f'Welcome *{name}*')
