@@ -36,28 +36,30 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Correct credentials dictionary
+# Streamlit Authentication Setup
+usernames = ["admin@rvsolutions.in", "ceo@rvsolutions.in", "manager@rvsolutions.in"]
+passwords = ["admin123", "ceo123", "manager123"]
+
+# Generate hashed passwords
+hashed_passwords = stauth.Hasher(passwords).generate()
+
+# Correct credentials dictionary, using hashed passwords
 credentials = {
     "usernames": {
         "admin@rvsolutions.in": {
             "name": "Admin",
-            "password": hashed_passwords[0]  # Assuming passwords were hashed earlier
+            "password": hashed_passwords[0]  # Use the first hashed password
         },
         "ceo@rvsolutions.in": {
             "name": "CEO",
-            "password": hashed_passwords[1]
+            "password": hashed_passwords[1]  # Use the second hashed password
         },
         "manager@rvsolutions.in": {
             "name": "Manager",
-            "password": hashed_passwords[2]
+            "password": hashed_passwords[2]  # Use the third hashed password
         }
     }
 }
-
-# Streamlit Authentication Setup
-usernames = ["admin@rvsolutions.in", "ceo@rvsolutions.in", "manager@rvsolutions.in"]
-passwords = ["admin123", "ceo123", "manager123"]
-hashed_passwords = stauth.Hasher(passwords).generate()
 
 # Initialize authenticator with corrected credentials format
 authenticator = stauth.Authenticate(credentials, 'cookie_name', 'random_key', cookie_expiry_days=30)
