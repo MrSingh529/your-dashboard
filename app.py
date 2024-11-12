@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import requests
 import io
 import streamlit_authenticator as stauth
+import secrets
 
 # Configure page settings
 st.set_page_config(
@@ -61,8 +62,11 @@ credentials = {
     }
 }
 
+# Generate a secure random key for the cookie
+random_key = secrets.token_hex(16)
+
 # Initialize authenticator with corrected credentials format
-authenticator = stauth.Authenticate(credentials, 'cookie_name', 'random_key', cookie_expiry_days=30)
+authenticator = stauth.Authenticate(credentials, 'cookie_name', random_key, cookie_expiry_days=30)
 
 # Use "sidebar" or "unrendered" for login placement
 name, authentication_status, username = authenticator.login('Login', "sidebar")
