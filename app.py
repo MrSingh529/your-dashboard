@@ -213,12 +213,20 @@ def main():
             cookie_expiry_days=30
         )
 
-        # Place login in sidebar and handle authentication
-        name, authentication_status, username = authenticator.login("Login", "sidebar")
-        st.session_state['authentication_status'] = authentication_status
+        # Authenticate user - fixed location parameter
+        if 'authentication_status' not in st.session_state:
+            st.session_state['authentication_status'] = None
+
+        # Place login widget
+        if st.session_state['authentication_status'] != True:
+            st.sidebar.title("Login")
+            name, authentication_status, username = authenticator.login('', 'main')
+            st.session_state['authentication_status'] = authentication_status
+            st.session_state['name'] = name
+            st.session_state['username'] = username
 
         if st.session_state['authentication_status']:
-            st.sidebar.success(f'Welcome {name}')
+            st.sidebar.success(f'Welcome {st.session_state["name"]}')
             
             # Department Reports Section
             st.sidebar.title("Department Reports")
@@ -247,7 +255,7 @@ def main():
             st.warning("Please enter your username and password")
 
     except Exception as e:
-        st.error(f"An error occurred during authentication: {str(e)}")
+        st.error(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
     main()
