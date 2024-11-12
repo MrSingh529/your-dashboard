@@ -2,10 +2,14 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from datetime import datetime, timedelta
 import requests
 import io
+import yaml
+from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
 import secrets
+import bcrypt
 
 # Configure page settings
 st.set_page_config(
@@ -44,8 +48,8 @@ credentials = {
 # Initialize the authenticator
 authenticator = stauth.Authenticate(
     credentials,
-    "your_dashboard_app",
-    "random_key_for_cookie",
+    "rvsolutions_dashboard",  # This is a unique identifier for your app (replace this appropriately)
+    "d4f56a74b8ac4a7b9eeb8ecf7185ed72",  # Replace with a secure random key for cookies
     cookie_expiry_days=30
 )
 
@@ -205,7 +209,9 @@ try:
             fig_pie = px.pie(values=dist_data.values, names=dist_data.index, title="Distribution by Aging Category")
             st.plotly_chart(fig_pie, use_container_width=True)
 
-        # Show the Dashboard based on the Selection
+# Show the Dashboard based on the Selection
+def main():
+    if st.session_state['authentication_status']:
         st.sidebar.title("Department Reports")
         report_type = st.sidebar.radio("Select Report Type", ["Branch Reco Trend", "CSD SDR Trend", "TSG Payment Receivables", "ITSS SDR Analysis"])
 
@@ -220,16 +226,12 @@ try:
 
         # Logout button
         if st.sidebar.button("Logout"):
-            authenticator.logout("Logout", "sidebar")
+            st.session_state.clear()
             st.experimental_rerun()
-
-    elif authentication_status is False:
+    elif st.session_state['authentication_status'] is False:
         st.error("Username or password is incorrect")
-    elif authentication_status is None:
+    elif st.session_state['authentication_status'] is None:
         st.warning("Please enter your username and password")
-
-except Exception as e:
-    st.error(f"An error occurred during authentication: {e}")
 
 if __name__ == "__main__":
     main()
