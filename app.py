@@ -47,7 +47,7 @@ for name, username, hashed_password in zip(names, usernames, hashed_passwords):
     }
 
 # Initialize Authenticator
-authenticator = bcrypt.Authenticate(
+authenticator = stauth.Authenticate(
     credentials,
     'rv_solutions_cookie',
     'abcdef123456789',
