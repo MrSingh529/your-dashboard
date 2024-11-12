@@ -186,45 +186,45 @@ def show_itss_dashboard():
     st.plotly_chart(fig_pie, use_container_width=True)
 
 def main():
-    try:
-        # Define credentials
-        names = ['Admin User', 'CEO User', 'Manager User']
-        usernames = ['admin@rvsolutions.in', 'ceo@rvsolutions.in', 'manager@rvsolutions.in']
-        passwords = ['admin123', 'ceo123', 'manager123']
+    # Initialize session state at the start
+    if 'authentication_status' not in st.session_state:
+        st.session_state['authentication_status'] = None
 
-        # Hash passwords
-        hashed_passwords = stauth.Hasher(passwords).generate()
+    # Define credentials
+    names = ['Admin User', 'CEO User', 'Manager User']
+    usernames = ['admin@rvsolutions.in', 'ceo@rvsolutions.in', 'manager@rvsolutions.in']
+    passwords = ['admin123', 'ceo123', 'manager123']
 
-        # Create credentials dictionary
-        credentials = {
-            "usernames": {}
+    # Hash passwords
+    hashed_passwords = stauth.Hasher(passwords).generate()
+
+    # Create credentials dictionary
+    credentials = {
+        "usernames": {}
+    }
+    for name, username, hashed_password in zip(names, usernames, hashed_passwords):
+        credentials["usernames"][username] = {
+            "name": name,
+            "password": hashed_password
         }
-        for name, username, hashed_password in zip(names, usernames, hashed_passwords):
-            credentials["usernames"][username] = {
-                "name": name,
-                "password": hashed_password
-            }
 
-        # Create authenticator object
-        authenticator = stauth.Authenticate(
-            credentials,
-            "rvsolutions_dashboard",
-            "d4f56a74b8ac4a7b9eeb8ecf7185ed72",
-            cookie_expiry_days=30
-        )
+    # Create authenticator object
+    authenticator = stauth.Authenticate(
+        credentials,
+        "rvsolutions_dashboard",
+        "d4f56a74b8ac4a7b9eeb8ecf7185ed72",
+        cookie_expiry_days=30
+    )
 
-        # Authenticate user - fixed location parameter
-        if 'authentication_status' not in st.session_state:
-            st.session_state['authentication_status'] = None
-
-        # Place login widget
-        if st.session_state['authentication_status'] != True:
-            st.sidebar.title("Login")
-            name, authentication_status, username = authenticator.login('', 'main')
+    try:
+        # Login section in the sidebar
+        with st.sidebar:
+            name, authentication_status, username = authenticator.login('Login', location='sidebar')
             st.session_state['authentication_status'] = authentication_status
             st.session_state['name'] = name
             st.session_state['username'] = username
 
+        # Main application flow
         if st.session_state['authentication_status']:
             st.sidebar.success(f'Welcome {st.session_state["name"]}')
             
@@ -251,8 +251,6 @@ def main():
 
         elif st.session_state['authentication_status'] is False:
             st.error("Username or password is incorrect")
-        else:
-            st.warning("Please enter your username and password")
 
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
