@@ -40,32 +40,45 @@ st.markdown("""
 # Initialize session state
 if 'authentication_status' not in st.session_state:
     st.session_state['authentication_status'] = None
+if 'username' not in st.session_state:
+    st.session_state['username'] = None
+if 'name' not in st.session_state:
+    st.session_state['name'] = None
 
-# Define credentials
+# Define credentials with usernames as keys
 credentials = {
     'usernames': {
         'admin@rvsolutions.in': {
-            'name': 'Admin',
-            'password': '$2b$12$tW.V5H8j6mOhxz3VWJUxZOp6UZ7QKaU3LFbBL5OTf3BDb/lXRhmKW'  # hashed 'admin123'
+            'name': 'Admin User',
+            'password': stauth.Hasher(['admin123']).generate()[0]
         },
         'ceo@rvsolutions.in': {
-            'name': 'CEO',
-            'password': '$2b$12$UQJ3RzL3F7ZU6fGR.B8y8eqaWHtxYWyM9q/2CP6dC.OrO0QX0Mgx2'  # hashed 'ceo123'
+            'name': 'CEO User',
+            'password': stauth.Hasher(['ceo123']).generate()[0]
         },
         'manager@rvsolutions.in': {
-            'name': 'Manager',
-            'password': '$2b$12$OKbs1UPDPWqV0jDmbK9zKemoIBx3Y8gkj1as6TZRR3LXmVh.YTgDK'  # hashed 'manager123'
+            'name': 'Manager User',
+            'password': stauth.Hasher(['manager123']).generate()[0]
         }
     }
 }
 
-# Create an authentication object
+# Initialize Authenticator
 authenticator = stauth.Authenticate(
     credentials,
-    'dashboard_cookie',
-    'abcdef123456',  # Cookie key (keep this secret in production)
+    'your_cookie_name',
+    'your_signature_key',
     cookie_expiry_days=30
 )
+
+# Place login widget in sidebar
+with st.sidebar:
+    name, authentication_status, username = authenticator.login('Login', 'main')
+    
+# Update session state
+st.session_state['authentication_status'] = authentication_status
+st.session_state['name'] = name
+st.session_state['username'] = username
 
 # Login
 authentication_status = None
