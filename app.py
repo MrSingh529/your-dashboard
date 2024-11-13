@@ -5,13 +5,11 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import numpy as np
 import io
-import base64
 import os
 from cryptography.fernet import Fernet
 
-# Load the encryption key
+# Load the encryption key from Streamlit secrets
 key = st.secrets["ENCRYPTION_KEY"].encode()
-
 cipher = Fernet(key)
 
 # Configure page settings
@@ -108,6 +106,11 @@ def check_password():
 # Function to decrypt and load an Excel file
 def decrypt_and_load_excel(file_path):
     try:
+        # Check if file exists
+        if not os.path.exists(file_path):
+            st.error(f"File not found at path: {file_path}")
+            return None
+
         with open(file_path, "rb") as encrypted_file:
             encrypted_data = encrypted_file.read()
 
@@ -118,34 +121,28 @@ def decrypt_and_load_excel(file_path):
         with io.BytesIO(decrypted_data) as file_obj:
             df = pd.read_excel(file_obj)
         return df
+    except FileNotFoundError as fnf_error:
+        st.error(f"File not found: {str(fnf_error)}")
     except Exception as e:
         st.error(f"Error decrypting and loading file {file_path}: {str(e)}")
-        return None
+    return None
 
-def load_data():
-    """
-    Load and structure data with custom headers
-    """
-    df = decrypt_and_load_excel("collections_data_encrypted.xlsx")
+# Functions to load all the encrypted data files
+
+def load_collections_data():
+    """ Load and structure collections data with custom headers """
+    df = decrypt_and_load_excel("./collections_data_encrypted.xlsx")
     if df is None:
         return None
 
     try:
-        # Create proper column names
-        columns = [
-            'Branch Name',
-            'Reduced Pending Amount'
-        ]
-
-        # Add date-based column names
+        # Assigning column names and preparing the dataframe
+        columns = ['Branch Name', 'Reduced Pending Amount']
         dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
         for date in dates:
             columns.extend([f'Balance_{date}', f'Pending_{date}'])
 
-        # Assign columns to dataframe
         df.columns = columns[:len(df.columns)]
-
-        # Skip the header row
         df = df.iloc[1:].reset_index(drop=True)
 
         # Convert amount columns to numeric
@@ -155,7 +152,7 @@ def load_data():
 
         return df
     except Exception as e:
-        st.error(f"Error loading data: {str(e)}")
+        st.error(f"Error loading collections data: {str(e)}")
         return None
         
 def clean_dataframe(df):
@@ -673,17 +670,17 @@ def show_collections_dashboard():
 
 def load_sdr_data():
     """Load CSD SDR Trend data"""
+    df = decrypt_and_load_excel("./sdr_trend_encrypted.xlsx")
+    if df is None:
+        return None
+
     try:
-        df = decrypt_and_load_excel("sdr_trend_encrypted.xlsx")
-        
-        # Convert amount columns to numeric
         for col in df.columns:
             if col not in ['Ageing Category']:
                 df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
-        st.sidebar.write("SDR Data Columns:", list(df.columns))
         return df
     except Exception as e:
-        st.error(f"Error loading SDR data: {str(e)}")
+        st.error(f"Error processing SDR data: {str(e)}")
         return None
 
 def style_sdr_trend(df):
@@ -867,14 +864,14 @@ def show_sdr_dashboard():
 
 def load_tsg_data():
     """Load TSG Payment Receivables Trend data"""
+    df = decrypt_and_load_excel("./tsg_trend_encrypted.xlsx")
+    if df is None:
+        return None
+
     try:
-        df = decrypt_and_load_excel("tsg_trend_encrypted.xlsx")
-        
-        # Convert amounts from string (with commas) to numeric
         for col in df.columns:
             if col != 'Ageing Category':
                 df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
-        
         return df
     except Exception as e:
         st.error(f"Error loading TSG data: {str(e)}")
@@ -1052,25 +1049,18 @@ def show_dashboard():
 
 def load_itss_data():
     """Load ITSS Tender data"""
+    df = decrypt_and_load_excel("./itss_tender_encrypted.xlsx")
+    if df is None:
+        return None
+
     try:
-        # Load the encrypted Excel file
-        df = decrypt_and_load_excel("itss_tender_encrypted.xlsx")
-        
-        # Define aging categories
-        aging_categories = [
-            '61-90', '91-120', '121-180', '181-360',
-            '361-720', 'More than 2 Yr'
-        ]
-        
-        # Convert amount columns to numeric
+        aging_categories = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         for col in aging_categories:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-        
         return df
     except Exception as e:
         st.error(f"Error loading ITSS data: {str(e)}")
-        st.write("Error details:", str(e))
         return None
 
 def style_itss_data(df, aging_categories):
@@ -1354,31 +1344,40 @@ def main():
     if not check_password():
         return
 
-    # Show department menu and selected report
-    selected_report_func = show_department_menu()
+    # Debugging: Display files available in the current directory
+    st.sidebar.write("Debug: Files in the current directory:")
+    try:
+        files_in_directory = os.listdir(".")
+        st.sidebar.write(files_in_directory)
+    except Exception as e:
+        st.sidebar.error(f"Error listing files: {str(e)}")
 
-    if selected_report_func:
-        selected_report_func()
-    else:
-        st.title("Welcome to Department Reports Dashboard")
-        st.markdown("""
-            ### Please select a department from the sidebar
+    # Show Department Reports Dashboard
+    st.sidebar.title("Select Department")
+    
+    DEPARTMENT_REPORTS = {
+        "CSD": {
+            "Branch Reco Trend": show_collections_dashboard,
+            "CSD SDR Trend": show_sdr_dashboard
+        },
+        "TSG": {
+            "TSG Payment Receivables": show_tsg_dashboard
+        },
+        "ITSS": {
+            "ITSS SDR Analysis": show_itss_dashboard
+        },
+    }
 
-            Available Departments and Reports:
-            - **CSD**: Branch Reconciliation and SDR Trends
-            - **TSG**: Payment Receivables Analysis
-            - **ITSS**: SDR Analysis
-            - **Finance**: Financial Reports
+    department = st.sidebar.selectbox("Select Department", options=list(DEPARTMENT_REPORTS.keys()))
+    report = st.sidebar.selectbox("Select Report", options=list(DEPARTMENT_REPORTS[department].keys()))
+    
+    # Call the report function based on selection
+    if report:
+        DEPARTMENT_REPORTS[department][report]()
 
-            Click on a department to view available reports.
-        """)
-
-    # Logout button
-    st.sidebar.markdown("---")
-    if st.sidebar.button("Logout", type="secondary"):
+    # Logout option
+    if st.sidebar.button("Logout"):
         st.session_state.authenticated = False
-        st.session_state.selected_department = None
-        st.session_state.selected_report = None
         st.rerun()
 
 if __name__ == "__main__":
