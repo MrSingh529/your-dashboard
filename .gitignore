@@ -1,6 +1,4 @@
 # Data files
-*.xlsx
-*.xls
 *.csv
 
 # Secret Key
