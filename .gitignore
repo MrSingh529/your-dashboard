@@ -3,6 +3,9 @@
 *.xls
 *.csv
 
+# Secret Key
+secret.key
+
 # Python
 __pycache__/
 *.py[cod]
