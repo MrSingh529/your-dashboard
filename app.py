@@ -110,21 +110,28 @@ def decrypt_and_load_excel(file_path):
         if not os.path.exists(file_path):
             st.error(f"File not found at path: {file_path}")
             return None
-
+        
+        # Attempt to open and read the encrypted file
+        st.write(f"Attempting to open encrypted file: {file_path}")
         with open(file_path, "rb") as encrypted_file:
             encrypted_data = encrypted_file.read()
 
+        st.write(f"File read successfully: {file_path}, size: {len(encrypted_data)} bytes")
+
         # Decrypt the content
         decrypted_data = cipher.decrypt(encrypted_data)
+        st.write(f"Decryption successful for file: {file_path}")
 
         # Load the decrypted data into a Pandas DataFrame
         with io.BytesIO(decrypted_data) as file_obj:
             df = pd.read_excel(file_obj)
+        st.write(f"Excel loaded successfully for file: {file_path}, number of rows: {len(df)}")
         return df
     except FileNotFoundError as fnf_error:
         st.error(f"File not found: {str(fnf_error)}")
     except Exception as e:
         st.error(f"Error decrypting and loading file {file_path}: {str(e)}")
+        st.write(f"Debugging details - Exception type: {type(e).__name__}, Args: {e.args}")
     return None
 
 # Functions to load all the encrypted data files
