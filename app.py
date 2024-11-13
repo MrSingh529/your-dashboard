@@ -6,11 +6,11 @@ from datetime import datetime, timedelta
 import numpy as np
 import io
 import base64
+import os
 from cryptography.fernet import Fernet
 
 # Load the encryption key
-with open("secret.key", "rb") as key_file:
-    key = key_file.read()
+key = st.secrets["ENCRYPTION_KEY"].encode()
 
 cipher = Fernet(key)
 
