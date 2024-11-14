@@ -9,23 +9,24 @@ import os
 import base64
 from cryptography.fernet import Fernet
 
-# Get the key from secrets
+# Get the encryption key from Streamlit secrets
 key = st.secrets["ENCRYPTION_KEY"]
 
 try:
-    # Check if the key length is correct (it should be 44 characters for a Fernet key)
+    # Check if the key length is correct (it should be 44 characters for a base64 encoded Fernet key)
     if len(key) != 44:
         st.error("Invalid encryption key: Key length must be 44 characters.")
     else:
-        # Decode the key from base64
+        # Decode the key from base64 (should give 32 bytes)
         key_bytes = base64.urlsafe_b64decode(key)
-        # Ensure that the decoded key length is 32 bytes
+
+        # Ensure the decoded key length is correct (should be 32 bytes)
         if len(key_bytes) != 32:
             st.error("Decoded key length is incorrect. It must be 32 bytes.")
         else:
-            # Create a cipher instance
+            # Create a Fernet cipher instance
             cipher = Fernet(key_bytes)
-            st.write("Encryption key loaded successfully.")
+            st.success("Encryption key loaded successfully.")
 
 except Exception as e:
     st.error(f"Error decoding the encryption key: {str(e)}")
