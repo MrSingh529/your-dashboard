@@ -42,14 +42,6 @@ st.markdown("""
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         margin: 10px 0;
     }
-    .trend-positive {
-        color: #2ecc71;
-        font-weight: bold;
-    }
-    .trend-negative {
-        color: #e74c3c;
-        font-weight: bold;
-    }
     .login-container {
         max-width: 400px;
         margin: auto;
@@ -73,16 +65,38 @@ CREDENTIALS = {
 }
 
 # Google Drive file IDs for each data set
-COLLECTIONS_DATA_FILE_ID = '1zCSAx8jzOLewJXxOQlHjlUxXKoHbdopD'
-ITSS_TENDER_FILE_ID = '1o6SjeyNuvSyt9c5uCsq4MGFlZV1moC3V'
-SDR_TREND_FILE_ID = '1PixxavAM29QrtjZUh-TMpa8gDSE7lg60'
-TSG_TREND_FILE_ID = '1Kf8nHi1shw6q0oozXFEScyE0bmhhPDPo'
+FILE_IDS = {
+    "collections": '1zCSAx8jzOLewJXxOQlHjlUxXKoHbdopD',
+    "itss_tender": '1o6SjeyNuvSyt9c5uCsq4MGFlZV1moC3V',
+    "sdr_trend": '1PixxavAM29QrtjZUh-TMpa8gDSE7lg60',
+    "tsg_trend": '1Kf8nHi1shw6q0oozXFEScyE0bmhhPDPo'
+}
 
-# Authenticate with Google Drive
+# Google Drive Authentication using Streamlit secrets
 @st.cache_resource()
 def authenticate_drive():
+    """Authenticate Google Drive access using Streamlit secrets."""
     gauth = GoogleAuth()
-    gauth.LocalWebserverAuth()  # This will prompt for Google login
+
+    # Use Streamlit secrets to load credentials
+    client_secrets = {
+        "installed": {
+            "client_id": st.secrets.google_drive.client_id,
+            "project_id": st.secrets.google_drive.project_id,
+            "auth_uri": st.secrets.google_drive.auth_uri,
+            "token_uri": st.secrets.google_drive.token_uri,
+            "auth_provider_x509_cert_url": st.secrets.google_drive.auth_provider_x509_cert_url,
+            "client_secret": st.secrets.google_drive.client_secret,
+            "redirect_uris": st.secrets.google_drive.redirect_uris
+        }
+    }
+
+    # Write client_secrets.json to authenticate PyDrive
+    with open("client_secrets.json", "w") as f:
+        json.dump(client_secrets, f)
+
+    gauth.LoadClientConfigFile("client_secrets.json")
+    gauth.LocalWebserverAuth()  # This will open a Google login page
     drive = GoogleDrive(gauth)
     return drive
 
@@ -120,7 +134,7 @@ def check_password():
 
 # Dashboard function to load collections data
 def show_collections_dashboard():
-    df = load_data_from_drive(COLLECTIONS_DATA_FILE_ID)
+    df = load_data_from_drive(FILE_IDS['collections'])
     if df is None:
         st.error("Unable to load data. Please check the Google Drive file.")
         return
@@ -151,50 +165,32 @@ def show_collections_dashboard():
 
 # Dashboard function for SDR Trend
 def show_sdr_dashboard():
-    df = load_data_from_drive(SDR_TREND_FILE_ID)
+    df = load_data_from_drive(FILE_IDS['sdr_trend'])
     if df is None:
         st.error("Unable to load SDR data. Please check the Google Drive file.")
         return
 
     st.title("SDR Trend Analysis")
-
-    # Sidebar Filters
-    date_columns = [col for col in df.columns if 'Balance_' in col]
-    selected_date = st.sidebar.selectbox("Select Date for Analysis:", date_columns)
-
-    # Display Data
     st.write("Showing SDR Trend Data", df.head())
 
 # Dashboard function for TSG Payment Receivables
 def show_tsg_dashboard():
-    df = load_data_from_drive(TSG_TREND_FILE_ID)
+    df = load_data_from_drive(FILE_IDS['tsg_trend'])
     if df is None:
         st.error("Unable to load TSG data. Please check the Google Drive file.")
         return
 
     st.title("TSG Payment Receivables Analysis")
-
-    # Sidebar Filters
-    date_columns = [col for col in df.columns if 'Balance_' in col]
-    selected_date = st.sidebar.selectbox("Select Date for Analysis:", date_columns)
-
-    # Display Data
     st.write("Showing TSG Trend Data", df.head())
 
 # Dashboard function for ITSS Tender Data
 def show_itss_dashboard():
-    df = load_data_from_drive(ITSS_TENDER_FILE_ID)
+    df = load_data_from_drive(FILE_IDS['itss_tender'])
     if df is None:
         st.error("Unable to load ITSS data. Please check the Google Drive file.")
         return
 
     st.title("ITSS Tender Data Analysis")
-
-    # Sidebar Filters
-    date_columns = [col for col in df.columns if 'Balance_' in col]
-    selected_date = st.sidebar.selectbox("Select Date for Analysis:", date_columns)
-
-    # Display Data
     st.write("Showing ITSS Data", df.head())
 
 # Main function to handle the entire app flow

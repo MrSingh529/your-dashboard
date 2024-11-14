@@ -4,6 +4,9 @@
 # Secret Key
 secret.key
 
+# Client Secrets
+client_secrets.json
+
 # Python
 __pycache__/
 *.py[cod]
