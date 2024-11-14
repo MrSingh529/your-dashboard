@@ -59,6 +59,18 @@ st.markdown("""
         color: #e74c3c;
         font-weight: bold;
     }
+    .login-container {
+        max-width: 400px;
+        margin: auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .stButton>button {
+        width: 100%;
+        margin-top: 10px;
+    }
     .loading {
         display: inline-block;
         width: 20px;
@@ -124,25 +136,73 @@ def load_data_from_drive(file_id):
         file_buffer.seek(0)
         df = pd.read_excel(file_buffer, header=None)
 
-        # Assign appropriate columns based on file structure
-        columns = ['Branch Name', 'Reduced Pending Amount']
+        # Create proper column names
+        columns = [
+            'Branch Name',
+            'Reduced Pending Amount'
+        ]
+        
+        # Add date-based column names
         dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
         for date in dates:
             columns.extend([f'Balance_{date}', f'Pending_{date}'])
-
+        
+        # Assign columns to dataframe
         df.columns = columns[:len(df.columns)]
+        
+        # Skip the header row
         df = df.iloc[1:].reset_index(drop=True)
-
-        # Convert data to numeric format
+        
+        # Convert amount columns to numeric
         for col in df.columns:
             if col != 'Branch Name':
-                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', '').str.strip(), errors='coerce')
-
+                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
+        
         return df
-
     except Exception as e:
-        st.error(f"Error loading data from Google Drive: {str(e)}")
+        st.error(f"Error loading data: {str(e)}")
+        # Debug information
+        st.write("Available columns:", list(df.columns))
+        st.write("Data sample:")
+        st.write(df.head())
         return None
+        
+def clean_dataframe(df):
+    """
+    Clean and structure the dataframe for branch-wise analysis
+    """
+    try:
+        # Keep only the required columns
+        required_cols = ['Branch Name', 'Reduced Pending Amount']
+        date_cols = []
+        
+        # Group columns by date
+        for i in range(len(df.columns)):
+            if 'Balance As On' in str(df.columns[i]):
+                date = df.columns[i-1]
+                balance_col = df.columns[i]
+                pending_col = df.columns[i+1]
+                
+                date_cols.append({
+                    'date': date,
+                    'balance': balance_col,
+                    'pending': pending_col
+                })
+        
+        # Restructure the data
+        clean_df = pd.DataFrame()
+        clean_df['Branch'] = df['Branch Name']
+        clean_df['Reduced_Pending'] = df['Reduced Pending Amount']
+        
+        for date_group in date_cols:
+            date = pd.to_datetime(date_group['date']).strftime('%Y-%m-%d')
+            clean_df[f'Balance_{date}'] = df[date_group['balance']]
+            clean_df[f'Pending_{date}'] = df[date_group['pending']]
+        
+        return clean_df
+    except Exception as e:
+        st.error(f"Error cleaning data: {str(e)}")
+        return df
 
 # Enhanced metrics calculation
 def calculate_branch_metrics(df, selected_date):
@@ -178,6 +238,49 @@ def calculate_branch_metrics(df, selected_date):
     except Exception as e:
         st.error(f"Error calculating metrics: {str(e)}")
         return None
+
+def calculate_metrics(df):
+    """Calculate key performance metrics with error handling"""
+    try:
+        metrics = {}
+        
+        # Total Collection (assuming column name might be different)
+        collection_col = [col for col in df.columns if 'collection' in col.lower()]
+        if collection_col:
+            metrics['total_collection'] = df[collection_col[0]].sum()
+        else:
+            metrics['total_collection'] = 0
+            
+        # Total Outstanding
+        outstanding_col = [col for col in df.columns if 'outstanding' in col.lower()]
+        if outstanding_col:
+            metrics['total_outstanding'] = df[outstanding_col[0]].sum()
+        else:
+            metrics['total_outstanding'] = 0
+            
+        # Collection Efficiency
+        invoice_col = [col for col in df.columns if 'invoice' in col.lower()]
+        if collection_col and invoice_col:
+            metrics['collection_efficiency'] = (df[collection_col[0]].sum() / df[invoice_col[0]].sum() * 100)
+        else:
+            metrics['collection_efficiency'] = 0
+            
+        # Top Branch
+        branch_col = [col for col in df.columns if any(x in col.lower() for x in ['branch', 'branch name'])]
+        if branch_col and collection_col:
+            metrics['top_branch'] = df.groupby(branch_col[0])[collection_col[0]].sum().idxmax()
+        else:
+            metrics['top_branch'] = "N/A"
+            
+        return metrics
+    except Exception as e:
+        st.error(f"Error calculating metrics: {str(e)}")
+        return {
+            'total_collection': 0,
+            'total_outstanding': 0,
+            'collection_efficiency': 0,
+            'top_branch': "N/A"
+        }
 
 # Enhanced authentication
 def check_password():
@@ -758,6 +861,74 @@ def show_sdr_dashboard():
         st.error(f"Error in SDR analysis: {str(e)}")
         st.write("Error details:", str(e))
 
+def style_itss_data(df, aging_categories):
+    """Style the ITSS dataframe"""
+    def highlight_values(val):
+        try:
+            if pd.isna(val) or val == 0:
+                return ''
+            elif val > 0:
+                return 'background-color: #FF7575'  # Red
+            else:
+                return 'background-color: #92D050'  # Green
+        except:
+            return ''
+    
+    # Apply styling
+    return df.style.applymap(
+        highlight_values,
+        subset=aging_categories
+    ).format(
+        {col: '{:.2f}' for col in aging_categories}
+    )
+
+def style_itss_trend(df, selected_date):
+    """Style the ITSS tender dataframe with color coding comparing to previous date"""
+    def get_comparison_value(row, col):
+        try:
+            current_value = row[f"{selected_date}_{col}"]
+            dates = sorted([c.split('_')[0] for c in df.columns if '_' in c and col in c], reverse=True)
+            current_date_idx = dates.index(selected_date)
+            if current_date_idx < len(dates) - 1:
+                next_date = dates[current_date_idx + 1]
+                previous_value = row[f"{next_date}_{col}"]
+                if pd.notna(current_value) and pd.notna(previous_value):
+                    return current_value - previous_value
+            return None
+        except:
+            return None
+    
+    def color_changes(val, comparison_val):
+        if pd.isna(val) or val == 0:
+            return ''
+        if comparison_val is not None:
+            if comparison_val < 0:
+                return 'background-color: #92D050'  # Green for decrease
+            elif comparison_val > 0:
+                return 'background-color: #FF7575'  # Red for increase
+        return ''
+    
+    # Get aging categories
+    aging_categories = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
+    
+    # Create StyleFrame
+    comparison_styles = pd.DataFrame(index=df.index, columns=df.columns)
+    
+    for category in aging_categories:
+        col_name = f"{selected_date}_{category}"
+        if col_name in df.columns:
+            comparison_values = df.apply(
+                lambda row: get_comparison_value(row, category),
+                axis=1
+            )
+            comparison_styles[col_name] = comparison_values.apply(
+                lambda x: color_changes(x, x)
+            )
+    
+    # Apply styling
+    return df.style.apply(lambda _: comparison_styles, axis=None)\
+                  .format(lambda x: '{:.2f}'.format(x) if isinstance(x, (int, float)) and pd.notna(x) else '-')    
+
 def show_itss_dashboard():
     df = load_data_from_drive(FILE_IDS['itss_tender'])
     if df is None:
@@ -865,6 +1036,44 @@ def show_itss_dashboard():
         st.error(f"Error in ITSS analysis: {str(e)}")
         st.write("Error details:", str(e))
         st.write("Available columns:", list(df.columns))
+
+def style_tsg_trend(df):
+    """
+    Style the TSG trend dataframe with color coding:
+    - Green when amount decreases (improvement)
+    - Red when amount increases (deterioration)
+    """
+    def color_changes(row):
+        styles = [''] * len(df.columns)
+        
+        # Get date columns (exclude 'Ageing Category' and any other non-date columns)
+        date_cols = [col for col in df.columns if col != 'Ageing Category']
+        date_cols.sort(reverse=True)  # Most recent first
+        
+        for i in range(len(date_cols)-1):
+            current_col = date_cols[i]
+            next_col = date_cols[i+1]
+            current_val = row[current_col]
+            next_val = row[next_col]
+            
+            col_idx = df.columns.get_loc(current_col)
+            
+            try:
+                if pd.notna(current_val) and pd.notna(next_val):
+                    if current_val < next_val:  # Amount decreased (improved)
+                        styles[col_idx] = 'background-color: #92D050'  # Green
+                    elif current_val > next_val:  # Amount increased (deteriorated)
+                        styles[col_idx] = 'background-color: #FF7575'  # Red
+            except:
+                pass
+                
+        return styles
+    
+    # Format numbers and apply highlighting
+    styled = df.style.apply(color_changes, axis=1)
+    
+    # Format large numbers with commas and proper decimal places
+    return styled.format(lambda x: '{:,.0f}'.format(x) if pd.notna(x) and isinstance(x, (int, float)) else x)
 
 def show_tsg_dashboard():
     df = load_data_from_drive(FILE_IDS['tsg_trend'])
@@ -982,6 +1191,89 @@ def show_tsg_dashboard():
     except Exception as e:
         st.error(f"Error in TSG analysis: {str(e)}")
         st.write("Error details:", str(e))
+
+# Define menu structure
+DEPARTMENT_REPORTS = {
+    "CSD": {
+        "Branch Reco Trend": show_collections_dashboard,
+        "CSD SDR Trend": show_sdr_dashboard
+    },
+    "TSG": {
+        "TSG Payment Receivables": show_tsg_dashboard
+    },
+    "ITSS": {
+        "ITSS SDR Analysis": show_itss_dashboard
+    },
+    "Finance": {
+        # Add Finance reports here
+    }
+}
+
+def define_department_structure():
+    """Define the department and report structure"""
+    return {
+        "CSD": {
+            "Branch Reco Trend": show_collections_dashboard,
+            "CSD SDR Trend": show_sdr_dashboard
+        },
+        "TSG": {
+            "TSG Payment Receivables": show_tsg_dashboard
+        },
+        "ITSS": {
+            "ITSS SDR Analysis": show_itss_dashboard
+        },
+        "Finance": {
+            # Add Finance reports here
+        }
+    }
+
+def show_department_menu():
+    """Display hierarchical department menu"""
+    # Department selection
+    st.sidebar.title("Select Department")
+    
+    # Get department structure
+    DEPARTMENT_REPORTS = define_department_structure()
+    
+    # Initialize session state for menu
+    if 'selected_department' not in st.session_state:
+        st.session_state.selected_department = None
+    if 'selected_report' not in st.session_state:
+        st.session_state.selected_report = None
+    
+    # Department selection
+    departments = list(DEPARTMENT_REPORTS.keys())
+    
+    # Create department buttons
+    for dept in departments:
+        if st.sidebar.button(
+            dept,
+            key=f"dept_{dept}",
+            help=f"View {dept} department reports"
+        ):
+            st.session_state.selected_department = dept
+            st.session_state.selected_report = None
+            st.rerun()
+    
+    # Show reports for selected department
+    if st.session_state.selected_department:
+        st.sidebar.markdown("---")
+        st.sidebar.subheader(f"{st.session_state.selected_department} Reports")
+        
+        reports = list(DEPARTMENT_REPORTS[st.session_state.selected_department].keys())
+        
+        for report in reports:
+            if st.sidebar.radio(
+                "",
+                [report],
+                key=f"report_{report}",
+                index=0 if st.session_state.selected_report == report else None,
+                label_visibility="collapsed"
+            ):
+                st.session_state.selected_report = report
+                return DEPARTMENT_REPORTS[st.session_state.selected_department][report]
+    
+    return None
 
 # Main function
 def main():
