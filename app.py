@@ -178,19 +178,13 @@ def load_itss_data():
         if df is None:
             return None
 
-        # Assign proper column names as per the screenshot structure
+        # Assign proper column names if they are not already in the file
         columns = ['Account Name', 'Date', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         df.columns = columns[:len(df.columns)]
-
-        # Debug: Print out the Date column values to see if there are any issues
-        st.write("Raw Date Values:", df['Date'].head(10))
-
-        # Attempt to parse the 'Date' column without specifying a format, allowing Pandas to infer
-        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-
-        # Debug: After parsing, show how many dates were parsed successfully
-        st.write("Parsed Date Values:", df['Date'].head(10))
-        st.write(f"Number of valid dates parsed: {df['Date'].notna().sum()} / {len(df)}")
+        
+        # Parse the 'Date' column as datetime and drop rows where parsing fails
+        df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y', errors='coerce')
+        df = df.dropna(subset=['Date'])
 
         # Define aging categories
         aging_categories = [
@@ -198,11 +192,14 @@ def load_itss_data():
             '361-720', 'More than 2 Yr'
         ]
         
-        # Convert amount columns to numeric, handling non-numeric values
+        # Convert amount columns to numeric, handle any errors or non-numeric values
         for col in aging_categories:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
         
+        # Debugging step to print parsed dates in the sidebar
+        st.sidebar.write("Parsed Date Values:", df['Date'].unique())
+
         return df
     except Exception as e:
         st.error(f"Error loading ITSS data: {str(e)}")
