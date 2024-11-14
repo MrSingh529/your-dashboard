@@ -178,31 +178,32 @@ def load_itss_data():
         if df is None:
             return None
 
-        # Assign proper column names if they are not already in the file
-        columns = ['Date', 'Account Name', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
+        # Print the raw data for inspection
+        st.write("Raw Data (First 5 Rows):")
+        st.write(df.head())
+
+        # Assign proper column names
+        columns = ['Account Name', 'Date', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         df.columns = columns[:len(df.columns)]
 
         # Strip any leading/trailing spaces from column headers
         df.columns = df.columns.str.strip()
 
-        # Clean 'Date' column values (remove leading/trailing spaces, handle non-printable characters)
-        df['Date'] = df['Date'].astype(str).str.strip().str.replace(r'[^\x00-\x7F]+', '', regex=True)
-
-        # Print the date column after cleaning for debugging
-        st.write("Cleaned 'Date' Column Values (First 5):")
-        st.write(df['Date'].head())
-
-        # Try parsing the date with the known new format
+        # Check and clean 'Date' column values
+        df['Date'] = df['Date'].astype(str).str.strip().replace('', None)
+        
+        # Attempt to parse the date column using the correct format
+        st.write("Attempting to parse 'Date' column using the format '%d-%m-%Y'")
         df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y', errors='coerce')
 
         # Print the parsed date column for verification
-        st.write("Parsed Date Values:")
-        st.write(df['Date'])
+        st.write("Parsed Date Values (First 5 Rows):")
+        st.write(df['Date'].head())
 
-        # Filter valid dates
+        # Drop rows where 'Date' could not be parsed
         valid_dates = df['Date'].dropna()
-        st.write("Valid Dates After Dropping NaT:")
-        st.write(valid_dates)
+        st.write("Valid Dates After Dropping NaT (First 5 Rows):")
+        st.write(valid_dates.head())
 
         if len(valid_dates) == 0:
             st.error("No valid dates found for analysis.")
