@@ -1040,11 +1040,17 @@ def show_itss_dashboard():
         ]
         
         # Date selection
-        dates = sorted(df['Date'].unique(), reverse=True)
+        valid_dates = df['Date'].dropna().unique()  # Drop NaT values from the date list
+        if len(valid_dates) == 0:
+            st.error("No valid dates found for analysis.")
+            return
+        
+        dates = sorted(valid_dates, reverse=True)
+        
         selected_date = st.selectbox(
             "Select Date for Analysis",
             dates,
-            format_func=lambda x: x.strftime('%Y-%m-%d')
+            format_func=lambda x: x.strftime('%Y-%m-%d') if pd.notna(x) else "Invalid Date"
         )
         
         # Filter data for selected date
