@@ -5,9 +5,6 @@ import plotly.graph_objects as go
 from datetime import datetime
 import numpy as np
 import io
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
-import json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
@@ -20,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS (keeping your existing CSS)
+# Custom CSS (keeping the existing CSS)
 st.markdown("""
     <style>
     .main {
@@ -39,6 +36,33 @@ st.markdown("""
         border-radius: 10px;
         margin-bottom: 20px;
     }
+    .comparison-card {
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin: 10px 0;
+    }
+    .trend-positive {
+        color: #2ecc71;
+        font-weight: bold;
+    }
+    .trend-negative {
+        color: #e74c3c;
+        font-weight: bold;
+    }
+    .login-container {
+        max-width: 400px;
+        margin: auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .stButton>button {
+        width: 100%;
+        margin-top: 10px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -49,6 +73,7 @@ CREDENTIALS = {
     "manager": "manager123"
 }
 
+# File IDs for Google Drive spreadsheets
 FILE_IDS = {
     'collections_data': '1zCSAx8jzOLewJXxOQlHjlUxXKoHbdopD',
     'itss_tender': '1o6SjeyNuvSyt9c5uCsq4MGFlZV1moC3V',
@@ -56,47 +81,61 @@ FILE_IDS = {
     'tsg_trend': '1Kf8nHi1shw6q0oozXFEScyE0bmhhPDPo'
 }
 
-# Test service account credentials to verify they load correctly
-def test_service_account_credentials():
-    try:
-        # Load credentials from Streamlit's secrets manager
-        credentials_info = st.secrets["google_drive"]
-        # Create credentials object from the info
-        credentials = service_account.Credentials.from_service_account_info(credentials_info)
-        st.write("✅ Credentials loaded successfully.")
-    except ValueError as e:
-        st.error(f"❌ Error loading credentials: {e}")
-
-# Main authenticate function
+# Authenticate Google Drive API
 @st.cache_resource()
 def authenticate_drive():
-    # Use the secrets from Streamlit's secrets manager
-    credentials = service_account.Credentials.from_service_account_info(
-        st.secrets["google_drive"]
-    )
-    service = build('drive', 'v3', credentials=credentials)
-    return service
+    try:
+        # Use the secrets from Streamlit's secrets manager
+        credentials = service_account.Credentials.from_service_account_info(
+            st.secrets["google_drive"]
+        )
+        service = build('drive', 'v3', credentials=credentials)
+        st.write("✅ Credentials loaded successfully.")
+        return service
+    except Exception as e:
+        st.error(f"❌ Error loading credentials: {str(e)}")
+        return None
 
-# Run the test function to verify if credentials are correct
-test_service_account_credentials()
-
-# If successful, proceed with authentication and loading data
 drive_service = authenticate_drive()
 
 # Load data from Google Drive
 def load_data_from_drive(file_id):
     try:
         request = drive_service.files().get_media(fileId=file_id)
-        file_data = io.BytesIO()
-        downloader = MediaIoBaseDownload(file_data, request)
+        file_buffer = io.BytesIO()
+        downloader = MediaIoBaseDownload(file_buffer, request)
+
         done = False
         while not done:
             status, done = downloader.next_chunk()
-            st.write(f"Download progress: {int(status.progress() * 100)}%")
+
+        # Reset file buffer's pointer to the beginning
+        file_buffer.seek(0)
         
-        # Load the file into a DataFrame
-        file_data.seek(0)
-        df = pd.read_excel(file_data, header=None)
+        df = pd.read_excel(file_buffer, header=None)
+        
+        # Create proper column names
+        columns = [
+            'Branch Name',
+            'Reduced Pending Amount'
+        ]
+        
+        # Add date-based column names
+        dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
+        for date in dates:
+            columns.extend([f'Balance_{date}', f'Pending_{date}'])
+        
+        # Assign columns to dataframe
+        df.columns = columns[:len(df.columns)]
+        
+        # Skip the header row
+        df = df.iloc[1:].reset_index(drop=True)
+        
+        # Convert amount columns to numeric
+        for col in df.columns:
+            if col != 'Branch Name':
+                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
+        
         return df
     except Exception as e:
         st.error(f"Error loading data from Google Drive: {str(e)}")
@@ -121,18 +160,39 @@ def check_password():
         return False
     return True
 
+def calculate_branch_metrics(df, selected_date):
+    """Calculate advanced branch performance metrics"""
+    metrics = {}
+
+    balance_col = f'Balance_{selected_date}'
+    pending_col = f'Pending_{selected_date}'
+
+    # Basic metrics
+    metrics['total_balance'] = df[balance_col].sum()
+    metrics['total_pending'] = df[pending_col].sum()
+    metrics['total_reduced'] = df['Reduced Pending Amount'].sum()
+
+    # Performance metrics
+    metrics['top_balance_branch'] = df.nlargest(1, balance_col)['Branch Name'].iloc[0]
+    metrics['lowest_pending_branch'] = df.nsmallest(1, pending_col)['Branch Name'].iloc[0]
+    metrics['most_improved'] = df.nlargest(1, 'Reduced Pending Amount')['Branch Name'].iloc[0]
+
+    # Efficiency metrics
+    metrics['collection_ratio'] = (
+        (df[balance_col].sum() / (df[balance_col].sum() + df[pending_col].sum())) * 100
+        if (df[balance_col].sum() + df[pending_col].sum()) != 0 else 0
+    )
+
+    return metrics
+
 # Dashboard function to load collections data
 def show_collections_dashboard():
-    df = load_data_from_drive('1zCSAx8jzOLewJXxOQlHjlUxXKoHbdopD')
+    df = load_data_from_drive(FILE_IDS['collections_data'])
     if df is None:
         st.error("Unable to load data. Please check the Google Drive file.")
         return
 
-    # Prepare the data for usage (structure and assign columns)
-    columns = ['Branch Name', 'Reduced Pending Amount'] + [f'Balance_{date}' for date in df.iloc[0, 2:].tolist()]
-    df.columns = columns
-    df = df.iloc[1:]  # Removing first row (which served as headers)
-
+    # Display the title and metrics
     st.title("Collections Dashboard")
 
     # Sidebar Filters
@@ -146,41 +206,19 @@ def show_collections_dashboard():
     filtered_df = df[df['Branch Name'].isin(selected_branches)]
 
     # Metrics
-    st.metric("Total Balance", filtered_df[selected_date].sum())
+    metrics = calculate_branch_metrics(filtered_df, selected_date)
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Balance", f"₹{metrics['total_balance']:,.2f}")
+    with col2:
+        st.metric("Total Pending", f"₹{metrics['total_pending']:,.2f}")
+    with col3:
+        st.metric("Collection Ratio", f"{metrics['collection_ratio']:.2f}%")
 
     # Plots and Charts
     fig = px.bar(filtered_df, x='Branch Name', y=selected_date, title="Branch-wise Balance")
     st.plotly_chart(fig)
-
-# Dashboard function for SDR Trend
-def show_sdr_dashboard():
-    df = load_data_from_drive(FILE_IDS['sdr_trend'])
-    if df is None:
-        st.error("Unable to load SDR data. Please check the Google Drive file.")
-        return
-
-    st.title("SDR Trend Analysis")
-    st.write("Showing SDR Trend Data", df.head())
-
-# Dashboard function for TSG Payment Receivables
-def show_tsg_dashboard():
-    df = load_data_from_drive(FILE_IDS['tsg_trend'])
-    if df is None:
-        st.error("Unable to load TSG data. Please check the Google Drive file.")
-        return
-
-    st.title("TSG Payment Receivables Analysis")
-    st.write("Showing TSG Trend Data", df.head())
-
-# Dashboard function for ITSS Tender Data
-def show_itss_dashboard():
-    df = load_data_from_drive(FILE_IDS['itss_tender'])
-    if df is None:
-        st.error("Unable to load ITSS data. Please check the Google Drive file.")
-        return
-
-    st.title("ITSS Tender Data Analysis")
-    st.write("Showing ITSS Data", df.head())
 
 # Main function to handle the entire app flow
 def main():
