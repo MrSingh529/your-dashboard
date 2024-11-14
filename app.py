@@ -6,15 +6,29 @@ from datetime import datetime, timedelta
 import numpy as np
 import io
 import os
+import base64
 from cryptography.fernet import Fernet
 
-# Load the encryption key from Streamlit secrets
+# Get the key from secrets
 key = st.secrets["ENCRYPTION_KEY"]
-# If the key is in a string format but needs to be bytes, decode it using base64.
-import base64
-key = base64.urlsafe_b64decode(key)
 
-cipher = Fernet(key)
+try:
+    # Check if the key length is correct (it should be 44 characters for a Fernet key)
+    if len(key) != 44:
+        st.error("Invalid encryption key: Key length must be 44 characters.")
+    else:
+        # Decode the key from base64
+        key_bytes = base64.urlsafe_b64decode(key)
+        # Ensure that the decoded key length is 32 bytes
+        if len(key_bytes) != 32:
+            st.error("Decoded key length is incorrect. It must be 32 bytes.")
+        else:
+            # Create a cipher instance
+            cipher = Fernet(key_bytes)
+            st.write("Encryption key loaded successfully.")
+
+except Exception as e:
+    st.error(f"Error decoding the encryption key: {str(e)}")
 
 # Configure page settings
 st.set_page_config(
