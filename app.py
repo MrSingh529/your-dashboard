@@ -85,7 +85,6 @@ FILE_IDS = {
 @st.cache_resource()
 def authenticate_drive():
     try:
-        # Use the secrets from Streamlit's secrets manager
         credentials = service_account.Credentials.from_service_account_info(
             st.secrets["google_drive"]
         )
@@ -185,14 +184,13 @@ def calculate_branch_metrics(df, selected_date):
 
     return metrics
 
-# Dashboard function to load collections data
+# Dashboard functions
 def show_collections_dashboard():
     df = load_data_from_drive(FILE_IDS['collections_data'])
     if df is None:
         st.error("Unable to load data. Please check the Google Drive file.")
         return
 
-    # Display the title and metrics
     st.title("Collections Dashboard")
 
     # Sidebar Filters
@@ -220,12 +218,38 @@ def show_collections_dashboard():
     fig = px.bar(filtered_df, x='Branch Name', y=selected_date, title="Branch-wise Balance")
     st.plotly_chart(fig)
 
+def show_sdr_dashboard():
+    df = load_data_from_drive(FILE_IDS['sdr_trend'])
+    if df is None:
+        st.error("Unable to load SDR data. Please check the Google Drive file.")
+        return
+
+    st.title("SDR Trend Analysis")
+    st.write("SDR Data:", df.head())
+
+def show_tsg_dashboard():
+    df = load_data_from_drive(FILE_IDS['tsg_trend'])
+    if df is None:
+        st.error("Unable to load TSG data. Please check the Google Drive file.")
+        return
+
+    st.title("TSG Payment Receivables Analysis")
+    st.write("TSG Data:", df.head())
+
+def show_itss_dashboard():
+    df = load_data_from_drive(FILE_IDS['itss_tender'])
+    if df is None:
+        st.error("Unable to load ITSS data. Please check the Google Drive file.")
+        return
+
+    st.title("ITSS Tender Analysis")
+    st.write("ITSS Data:", df.head())
+
 # Main function to handle the entire app flow
 def main():
     if not check_password():
         return
 
-    # Sidebar for selecting the report
     st.sidebar.title("Select Report Type")
     report_option = st.sidebar.radio(
         "Choose a Report",
@@ -243,7 +267,6 @@ def main():
     elif report_option == "Exit":
         st.stop()
 
-    # Logout option
     st.sidebar.markdown("---")
     if st.sidebar.button("Logout"):
         st.session_state.authenticated = False
