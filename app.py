@@ -167,6 +167,102 @@ def load_data_from_drive(file_id):
         st.write(df.head())
         return None
         
+# Specific functions to load each dataset
+@st.cache_data(ttl=300)
+def load_itss_data():
+    """Load ITSS Tender data from Google Drive"""
+    try:
+        # Load data from Google Drive using the appropriate file_id
+        df = load_data_from_drive(FILE_IDS['itss_data'])
+        
+        if df is None:
+            return None
+
+        # Assign proper column names if they are not already in the file
+        columns = ['Date', 'Account Name', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
+        df.columns = columns[:len(df.columns)]
+        
+        # Parse dates column if applicable
+        if 'Date' in df.columns:
+            df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+        
+        # Define aging categories
+        aging_categories = [
+            '61-90', '91-120', '121-180', '181-360',
+            '361-720', 'More than 2 Yr'
+        ]
+        
+        # Convert amount columns to numeric, handle any errors or non-numeric values
+        for col in aging_categories:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        
+        return df
+    except Exception as e:
+        st.error(f"Error loading ITSS data: {str(e)}")
+        st.write("Error details:", str(e))
+        return None
+
+@st.cache_data(ttl=300)
+def load_sdr_data():
+    """Load CSD SDR Trend data from Google Drive"""
+    try:
+        # Load data from Google Drive using the appropriate file_id
+        df = load_data_from_drive(FILE_IDS['sdr_data'])
+        
+        if df is None:
+            return None
+
+        # Assign column names to the DataFrame
+        columns = [
+            'Ageing Category', 'Reduced OS', '8-Nov-24', '25-Oct-24', 
+            '18-Oct-24', '4-Oct-24', '27-Sep-24', '13-Sep-24', '6-Sep-24'
+        ]
+        df.columns = columns[:len(df.columns)]
+
+        # Convert amount columns to numeric (excluding 'Ageing Category')
+        for col in df.columns:
+            if col not in ['Ageing Category']:
+                # Removing commas, converting to numeric, and filling NaNs with 0
+                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+
+        # Display the loaded data columns in the sidebar for verification
+        st.sidebar.write("SDR Data Columns:", list(df.columns))
+        
+        return df
+    except Exception as e:
+        st.error(f"Error loading SDR data: {str(e)}")
+        st.write("Error details:", str(e))
+        return None
+
+@st.cache_data(ttl=300)
+def load_tsg_data():
+    """Load TSG Payment Receivables Trend data from Google Drive"""
+    try:
+        # Load data from Google Drive using the appropriate file_id
+        df = load_data_from_drive(FILE_IDS['tsg_data'])
+        
+        if df is None:
+            return None
+
+        # Assign column names to the DataFrame
+        columns = [
+            'Ageing Category', '8-Nov-24', '25-Oct-24', '18-Oct-24', 
+            '4-Oct-24', '27-Sep-24', '13-Sep-24', '6-Sep-24'
+        ]
+        df.columns = columns[:len(df.columns)]
+
+        # Convert amounts from string (with commas) to numeric, handling non-numeric values
+        for col in df.columns:
+            if col != 'Ageing Category':
+                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+
+        return df
+    except Exception as e:
+        st.error(f"Error loading TSG data: {str(e)}")
+        st.write("Error details:", str(e))
+        return None
+        
 def clean_dataframe(df):
     """
     Clean and structure the dataframe for branch-wise analysis
@@ -736,7 +832,7 @@ def style_sdr_trend(df):
     return styled.format("{:.2f}", subset=numeric_columns)
 
 def show_sdr_dashboard():
-    df = load_data_from_drive(FILE_IDS['sdr_trend'])
+    df = load_sdr_data()
     if df is None:
         return
 
@@ -930,7 +1026,7 @@ def style_itss_trend(df, selected_date):
                   .format(lambda x: '{:.2f}'.format(x) if isinstance(x, (int, float)) and pd.notna(x) else '-')    
 
 def show_itss_dashboard():
-    df = load_data_from_drive(FILE_IDS['itss_tender'])
+    df = load_itss_data()
     if df is None:
         return
 
@@ -1076,7 +1172,7 @@ def style_tsg_trend(df):
     return styled.format(lambda x: '{:,.0f}'.format(x) if pd.notna(x) and isinstance(x, (int, float)) else x)
 
 def show_tsg_dashboard():
-    df = load_data_from_drive(FILE_IDS['tsg_trend'])
+    df = load_tsg_data()
     if df is None:
         return
 
