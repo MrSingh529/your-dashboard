@@ -173,7 +173,11 @@ def load_itss_data():
     """Load ITSS Tender data from Google Drive"""
     try:
         # Load data from Google Drive using the appropriate file_id
-        df = load_data_from_drive(FILE_IDS['itss_data'])
+        if 'itss_tender' in FILE_IDS:
+            df = load_data_from_drive(FILE_IDS['itss_tender'])
+        else:
+            st.error("Error: Key 'itss_tender' not found in FILE_IDS dictionary.")
+            return None
         
         if df is None:
             return None
@@ -188,10 +192,6 @@ def load_itss_data():
         # Parse dates column, handling different formats or any whitespace issues
         df['Date'] = df['Date'].astype(str).str.strip()  # Ensure no extra spaces
         df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y', errors='coerce')
-
-        # Debugging output to see what's going on with the Date column
-        st.write("Raw 'Date' Column Values (First 5):", df['Date'].head())
-        st.write("Parsed Date Values After Conversion:", df['Date'])
 
         # Drop rows where date parsing failed
         df = df.dropna(subset=['Date'])
