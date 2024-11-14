@@ -9,6 +9,14 @@ import os
 import base64
 from cryptography.fernet import Fernet
 
+# Configure page settings
+st.set_page_config(
+    page_title="Collections & Outstanding Analysis Dashboard",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 # Get the encryption key from Streamlit secrets
 key = st.secrets["ENCRYPTION_KEY"]
 
@@ -30,14 +38,6 @@ try:
 
 except Exception as e:
     st.error(f"Error decoding the encryption key: {str(e)}")
-
-# Configure page settings
-st.set_page_config(
-    page_title="Collections & Outstanding Analysis Dashboard",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 # Custom CSS (keeping your existing CSS)
 st.markdown("""
