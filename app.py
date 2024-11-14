@@ -173,11 +173,7 @@ def load_itss_data():
     """Load ITSS Tender data from Google Drive"""
     try:
         # Load data from Google Drive using the appropriate file_id
-        if 'itss_tender' in FILE_IDS:
-            df = load_data_from_drive(FILE_IDS['itss_tender'])
-        else:
-            st.error("Error: Key 'itss_tender' not found in FILE_IDS dictionary.")
-            return None
+        df = load_data_from_drive(FILE_IDS['itss_tender'])
 
         if df is None:
             return None
@@ -185,41 +181,53 @@ def load_itss_data():
         # Assign proper column names if they are not already in the file
         columns = ['Date', 'Account Name', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         df.columns = columns[:len(df.columns)]
-        
-        # Strip whitespace from column names and values
+
+        # Strip any leading/trailing spaces from column headers
         df.columns = df.columns.str.strip()
+
+        # Clean 'Date' column values (remove leading/trailing spaces)
         df['Date'] = df['Date'].astype(str).str.strip()
-        
-        # Debugging Step - Print Raw Date Values
-        st.write("Raw 'Date' Column Values (First 5):", df['Date'].head())
-        
-        # Attempt to parse the dates with multiple formats
-        try_formats = ['%d-%m-%Y', '%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y']
-        for fmt in try_formats:
-            df['Date'] = pd.to_datetime(df['Date'], format=fmt, errors='coerce')
-            valid_dates = df['Date'].dropna()
-            st.write(f"Parsed Date Values with Format {fmt}:", valid_dates.head())
 
-            # If we successfully parsed dates, break the loop
-            if not valid_dates.empty:
-                break
+        # Try parsing the date with the correct format
+        try:
+            df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y', errors='coerce')
+        except ValueError:
+            st.warning("Date parsing failed for format '%d-%m-%Y'. Attempting with different formats.")
 
-        # Drop rows where date parsing failed
-        df = df.dropna(subset=['Date'])
-        st.write("Valid Dates After Dropping NaT:", df['Date'])
+        # If that doesn't work, try a range of common formats
+        possible_formats = ['%d-%m-%Y', '%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y']
+        for fmt in possible_formats:
+            if df['Date'].isna().all():
+                try:
+                    df['Date'] = pd.to_datetime(df['Date'], format=fmt, errors='coerce')
+                    valid_dates = df['Date'].dropna()
+                    st.write(f"Successfully parsed dates with format: {fmt}")
+                    st.write("Valid Dates After Dropping NaT:", valid_dates)
+                    if len(valid_dates) > 0:
+                        break
+                except Exception as e:
+                    st.write(f"Error parsing with format {fmt}: {e}")
 
-        if df['Date'].empty:
+        # Fallback: let pandas infer format
+        if df['Date'].isna().all():
+            df['Date'] = pd.to_datetime(df['Date'], errors='coerce', dayfirst=True)
+
+        # Filter valid dates
+        valid_dates = df['Date'].dropna()
+        st.write("Valid Dates After Dropping NaT:", valid_dates)
+
+        if len(valid_dates) == 0:
             st.error("No valid dates found for analysis.")
             return None
 
         # Define aging categories
         aging_categories = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
 
-        # Convert amount columns to numeric, handle any errors or non-numeric values
+        # Convert amount columns to numeric
         for col in aging_categories:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-        
+
         return df
     except Exception as e:
         st.error(f"Error loading ITSS data: {str(e)}")
