@@ -48,7 +48,18 @@ CREDENTIALS = {
     "manager": "manager123"
 }
 
-# Google Drive Authentication using Secrets from Streamlit
+# Test service account credentials to verify they load correctly
+def test_service_account_credentials():
+    try:
+        # Load credentials from Streamlit's secrets manager
+        credentials_info = st.secrets["google_drive"]
+        # Create credentials object from the info
+        credentials = service_account.Credentials.from_service_account_info(credentials_info)
+        st.write("✅ Credentials loaded successfully.")
+    except ValueError as e:
+        st.error(f"❌ Error loading credentials: {e}")
+
+# Main authenticate function
 @st.cache_resource()
 def authenticate_drive():
     # Use the secrets from Streamlit's secrets manager
@@ -58,6 +69,10 @@ def authenticate_drive():
     service = build('drive', 'v3', credentials=credentials)
     return service
 
+# Run the test function to verify if credentials are correct
+test_service_account_credentials()
+
+# If successful, proceed with authentication and loading data
 drive_service = authenticate_drive()
 
 # Load data from Google Drive
