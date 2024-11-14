@@ -178,12 +178,19 @@ def load_itss_data():
         if df is None:
             return None
 
-        # Assign proper column names
+        # Assign proper column names as per the screenshot structure
         columns = ['Account Name', 'Date', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         df.columns = columns[:len(df.columns)]
-        
-        # Parse the 'Date' column and handle any parsing errors
-        df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y', errors='coerce')
+
+        # Debug: Print out the Date column values to see if there are any issues
+        st.write("Raw Date Values:", df['Date'].head(10))
+
+        # Attempt to parse the 'Date' column without specifying a format, allowing Pandas to infer
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+
+        # Debug: After parsing, show how many dates were parsed successfully
+        st.write("Parsed Date Values:", df['Date'].head(10))
+        st.write(f"Number of valid dates parsed: {df['Date'].notna().sum()} / {len(df)}")
 
         # Define aging categories
         aging_categories = [
@@ -1040,6 +1047,9 @@ def show_itss_dashboard():
         
         # Drop rows where 'Date' is NaT
         df = df.dropna(subset=['Date'])
+
+        # Debug: Check the unique dates available after dropping NaT
+        st.write("Valid Dates After Dropping NaT:", df['Date'].unique())
 
         # Date selection
         valid_dates = df['Date'].unique()  # Use only valid dates
