@@ -178,7 +178,7 @@ def load_itss_data():
         else:
             st.error("Error: Key 'itss_tender' not found in FILE_IDS dictionary.")
             return None
-        
+
         if df is None:
             return None
 
@@ -186,12 +186,23 @@ def load_itss_data():
         columns = ['Date', 'Account Name', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         df.columns = columns[:len(df.columns)]
         
-        # Strip whitespace from column names
+        # Strip whitespace from column names and values
         df.columns = df.columns.str.strip()
+        df['Date'] = df['Date'].astype(str).str.strip()
+        
+        # Debugging Step - Print Raw Date Values
+        st.write("Raw 'Date' Column Values (First 5):", df['Date'].head())
+        
+        # Attempt to parse the dates with multiple formats
+        try_formats = ['%d-%m-%Y', '%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y']
+        for fmt in try_formats:
+            df['Date'] = pd.to_datetime(df['Date'], format=fmt, errors='coerce')
+            valid_dates = df['Date'].dropna()
+            st.write(f"Parsed Date Values with Format {fmt}:", valid_dates.head())
 
-        # Parse dates column, handling different formats or any whitespace issues
-        df['Date'] = df['Date'].astype(str).str.strip()  # Ensure no extra spaces
-        df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y', errors='coerce')
+            # If we successfully parsed dates, break the loop
+            if not valid_dates.empty:
+                break
 
         # Drop rows where date parsing failed
         df = df.dropna(subset=['Date'])
