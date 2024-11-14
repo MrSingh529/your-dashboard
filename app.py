@@ -174,7 +174,7 @@ def load_itss_data():
     try:
         # Load data from Google Drive using the appropriate file_id
         df = load_data_from_drive(FILE_IDS['itss_tender'])
-        
+
         if df is None:
             return None
 
@@ -182,17 +182,14 @@ def load_itss_data():
         columns = ['Account Name', 'Date', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         df.columns = columns[:len(df.columns)]
 
-        # Display the raw 'Date' column to inspect its content
-        st.sidebar.write("Raw 'Date' Column Values (First 5):", df['Date'].head())
-
-        # Remove any leading/trailing whitespaces in the 'Date' column
+        # Force 'Date' column to be read as text and strip whitespaces
         df['Date'] = df['Date'].astype(str).str.strip()
 
-        # Debug the length of each 'Date' value to see if there are issues
-        st.sidebar.write("Character Length of 'Date' Column Values (First 5):", df['Date'].str.len().head())
+        # Print entire 'Date' column to inspect for valid values
+        st.sidebar.write("Entire 'Date' Column Values:", df['Date'])
 
-        # Attempt to parse the 'Date' column
-        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+        # Attempt to parse the 'Date' column, coercing errors
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce', format='%m/%d/%Y')
 
         # Drop rows where the 'Date' column is NaT
         df = df.dropna(subset=['Date'])
@@ -205,7 +202,7 @@ def load_itss_data():
             '61-90', '91-120', '121-180', '181-360',
             '361-720', 'More than 2 Yr'
         ]
-        
+
         # Convert amount columns to numeric, handle any errors or non-numeric values
         for col in aging_categories:
             if col in df.columns:
