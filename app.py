@@ -245,10 +245,16 @@ def show_collections_dashboard():
     balance_col = f"Balance_{selected_date.split('_')[-1]}"
     pending_col = f"Pending_{selected_date.split('_')[-1]}"
     
+    try:
+        avg_balance_change = df[balance_col].pct_change().replace([np.inf, -np.inf], np.nan).mean() * 100
+        avg_balance_change_display = f"{avg_balance_change:.2f}%" if not pd.isna(avg_balance_change) else "N/A"
+    except ZeroDivisionError:
+        avg_balance_change_display = "N/A"
+    
     metrics = {
         'total_balance': df[balance_col].sum(),
         'total_pending': df[pending_col].sum(),
-        'avg_balance_change': df[balance_col].pct_change().mean() * 100
+        'avg_balance_change': avg_balance_change_display
     }
     
     # Display Metrics
@@ -258,26 +264,35 @@ def show_collections_dashboard():
     with col2:
         st.metric("Total Pending", f"₹{metrics['total_pending']:,.2f}")
     with col3:
-        st.metric("Average Balance Change", f"{metrics['avg_balance_change']:.2f}%")
+        st.metric("Average Balance Change", metrics['avg_balance_change'])
     
-    # Visualization
-    st.subheader("Branch-wise Balance and Pending Amounts")
-    trend_data = df.melt(
-        id_vars=['Branch Name'],
-        value_vars=[balance_col, pending_col],
-        var_name='Category',
-        value_name='Amount'
-    )
-    
-    fig = px.bar(
-        trend_data,
-        x='Branch Name',
-        y='Amount',
-        color='Category',
-        barmode='group',
-        title="Branch-wise Balance and Pending Amounts"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    # Highlight Increase/Decrease
+    st.subheader("Branch-wise Balance and Pending Amounts with Changes")
+    try:
+        date_columns = [col for col in df.columns if 'Pending_' in col]
+        comparison_df = df[['Branch Name'] + date_columns].copy()
+
+        # Calculate changes between weeks
+        for i in range(len(date_columns) - 1):
+            current_col = date_columns[i]
+            prev_col = date_columns[i + 1]
+            comparison_df[f'Change_{current_col}'] = df[current_col] - df[prev_col]
+
+        # Apply color formatting for improvements and regressions
+        def highlight_changes(val):
+            if pd.isna(val):
+                return ''
+            elif val < 0:
+                return 'background-color: #92D050'  # Green for decrease in pending amount
+            elif val > 0:
+                return 'background-color: #FF7575'  # Red for increase in pending amount
+            else:
+                return ''
+
+        styled_comparison_df = comparison_df.style.applymap(highlight_changes, subset=[col for col in comparison_df.columns if 'Change_' in col])
+        st.dataframe(styled_comparison_df, height=600, use_container_width=True)
+    except Exception as e:
+        st.error(f"Error in highlighting changes: {str(e)}")
 
 def show_sdr_dashboard():
     df = load_data_from_drive(FILE_IDS['sdr_trend'])
