@@ -218,65 +218,242 @@ def show_collections_dashboard():
 
     st.title("Collections Dashboard")
     
-    # Filters
-    st.sidebar.title("Filter Options")
-    selected_date = st.sidebar.selectbox(
-        "Select Date for Analysis:",
-        sorted([col for col in df.columns if 'Balance_' in col], reverse=True)
-    )
+    # Display data info for verification
+    st.sidebar.write("Data loaded successfully")
+    st.sidebar.write("Number of branches:", len(df['Branch Name'].unique()))
+    
+    # Sidebar Controls
+    st.sidebar.title("Analysis Controls")
+    
+    # Advanced Filtering
+    filter_container = st.sidebar.container()
+    with filter_container:
+        st.subheader("Filters")
+        
+        # Branch Selection with Search
+        all_branches = sorted(df['Branch Name'].unique().tolist())
+        selected_branches = st.multiselect(
+            "Select Branches (Search/Select)",
+            options=all_branches,
+            default=all_branches[:5] if len(all_branches) >= 5 else all_branches
+        )
+        
+        # Date Selection
+        dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
+        selected_date = st.selectbox("Select Analysis Date", dates)
 
-    # Calculate Metrics
-    balance_col = f"Balance_{selected_date.split('_')[-1]}"
-    pending_col = f"Pending_{selected_date.split('_')[-1]}"
+    # Filter Data
+    filtered_df = df.copy()
+    if selected_branches:
+        filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
     
-    try:
-        avg_balance_change = df[balance_col].pct_change().replace([np.inf, -np.inf], np.nan).mean() * 100
-        avg_balance_change_display = f"{avg_balance_change:.2f}%" if not pd.isna(avg_balance_change) else "N/A"
-    except ZeroDivisionError:
-        avg_balance_change_display = "N/A"
+    balance_col = f'Balance_{selected_date}'
+    pending_col = f'Pending_{selected_date}'
     
-    metrics = {
-        'total_balance': df[balance_col].sum(),
-        'total_pending': df[pending_col].sum(),
-        'avg_balance_change': avg_balance_change_display
-    }
+    # Main Dashboard
+    st.title("Branch Reco Trend")
     
-    # Display Metrics
-    col1, col2, col3 = st.columns(3)
+    # Key Metrics Dashboard
+    metrics = calculate_branch_metrics(filtered_df, selected_date)
+    
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("Total Balance", f"₹{metrics['total_balance']:,.2f}")
+        st.metric(
+            "Total Balance",
+            f"₹{metrics['total_balance']:,.2f}",
+            delta=metrics['total_reduced']
+        )
     with col2:
-        st.metric("Total Pending", f"₹{metrics['total_pending']:,.2f}")
+        st.metric(
+            "Total Pending",
+            f"₹{metrics['total_pending']:,.2f}"
+        )
     with col3:
-        st.metric("Average Balance Change", metrics['avg_balance_change'])
+        st.metric(
+            "Collection Ratio",
+            f"{metrics['collection_ratio']:.1f}%"
+        )
+    with col4:
+        st.metric(
+            "Best Performing Branch",
+            metrics['top_balance_branch']
+        )
+
+    # Analysis Tabs
+    tab1, tab2, tab3 = st.tabs(["Trend Analysis", "Branch Performance", "Comparative Analysis"])
     
-    # Highlight Increase/Decrease
-    st.subheader("Branch-wise Balance and Pending Amounts with Changes")
-    try:
-        date_columns = [col for col in df.columns if 'Pending_' in col]
-        comparison_df = df[['Branch Name'] + date_columns].copy()
-
-        # Calculate changes between weeks
-        for i in range(len(date_columns) - 1):
-            current_col = date_columns[i]
-            prev_col = date_columns[i + 1]
-            comparison_df[f'Change_{current_col}'] = df[current_col] - df[prev_col]
-
-        # Apply color formatting for improvements and regressions
-        def highlight_changes(val):
-            if pd.isna(val):
-                return ''
-            elif val < 0:
-                return 'background-color: #92D050'  # Green for decrease in pending amount
-            elif val > 0:
-                return 'background-color: #FF7575'  # Red for increase in pending amount
+    with tab1:
+        st.subheader("Balance & Pending Trends")
+        
+        try:
+            # Prepare trend data safely
+            trend_data = []
+            for branch in selected_branches:
+                branch_data = filtered_df[filtered_df['Branch Name'] == branch]
+                if not branch_data.empty:
+                    for date in dates:
+                        balance_col = f'Balance_{date}'
+                        pending_col = f'Pending_{date}'
+                        if balance_col in branch_data.columns and pending_col in branch_data.columns:
+                            trend_data.append({
+                                'Branch': branch,
+                                'Date': date,
+                                'Balance': branch_data[balance_col].values[0],
+                                'Pending': branch_data[pending_col].values[0]
+                            })
+            
+            if trend_data:
+                trend_df = pd.DataFrame(trend_data)
+                
+                # Create interactive plot
+                fig = go.Figure()
+                
+                for branch in selected_branches:
+                    branch_trend = trend_df[trend_df['Branch'] == branch]
+                    if not branch_trend.empty:
+                        # Balance line
+                        fig.add_trace(go.Scatter(
+                            x=branch_trend['Date'],
+                            y=branch_trend['Balance'],
+                            name=f"{branch} - Balance",
+                            mode='lines+markers'
+                        ))
+                        # Pending line
+                        fig.add_trace(go.Scatter(
+                            x=branch_trend['Date'],
+                            y=branch_trend['Pending'],
+                            name=f"{branch} - Pending",
+                            line=dict(dash='dot')
+                        ))
+                
+                fig.update_layout(
+                    title="Balance and Pending Trends",
+                    xaxis_title="Date",
+                    yaxis_title="Amount (₹)",
+                    hovermode='x unified'
+                )
+                st.plotly_chart(fig, use_container_width=True)
             else:
-                return ''
+                st.warning("No trend data available for selected branches")
+                
+        except Exception as e:
+            st.error(f"Error in trend analysis: {str(e)}")
+            st.write("Please check the data structure and selected filters")
+    
+    with tab2:
+        st.subheader("Branch Performance")
+        try:
+            # Performance metrics
+            performance_df = filtered_df.copy()
+            current_balance = f'Balance_{selected_date}'
+            current_pending = f'Pending_{selected_date}'
+            
+            if current_balance in performance_df.columns and current_pending in performance_df.columns:
+                performance_df['Current Balance'] = performance_df[current_balance]
+                performance_df['Current Pending'] = performance_df[current_pending]
+                performance_df['Net Position'] = performance_df['Current Balance'] - performance_df['Current Pending']
+                
+                # Performance Chart
+                fig_perf = px.bar(
+                    performance_df,
+                    x='Branch Name',
+                    y=['Current Balance', 'Current Pending', 'Net Position'],
+                    title="Branch Performance",
+                    barmode='group'
+                )
+                st.plotly_chart(fig_perf, use_container_width=True)
+                
+                # Metrics Table
+                st.dataframe(
+                    performance_df[['Branch Name', 'Current Balance', 'Current Pending', 'Net Position']]
+                    .sort_values('Net Position', ascending=False),
+                    height=400
+                )
+            else:
+                st.warning("Performance data not available for selected date")
+                
+        except Exception as e:
+            st.error(f"Error in performance analysis: {str(e)}")
+    
+    with tab3:
+        st.subheader("Comparative Analysis")
+        try:
+            # Get all dates for comparison
+            dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
+            
+            # Create comparison DataFrame
+            comparison_df = pd.DataFrame()
+            comparison_df['Branch Name'] = selected_branches
+            
+            # Add data for all dates
+            for date in dates:
+                comparison_df[f'Balance_{date}'] = [
+                    filtered_df[filtered_df['Branch Name'] == branch][f'Balance_{date}'].iloc[0]
+                    for branch in selected_branches
+                ]
+                comparison_df[f'Pending_{date}'] = [
+                    filtered_df[filtered_df['Branch Name'] == branch][f'Pending_{date}'].iloc[0]
+                    for branch in selected_branches
+                ]
+            
+            # Display styled comparison table
+            st.markdown("### Weekly Pending Amount Comparison")
+            styled_df = style_comparison_df(comparison_df, dates)
+            st.dataframe(
+                styled_df,
+                height=400,
+                use_container_width=True
+            )
+            
+            # Add insights about pending amount trends
+            st.markdown("### Pending Amount Trends")
+            for branch in selected_branches:
+                branch_data = comparison_df[comparison_df['Branch Name'] == branch]
+                pending_trend = []
+                
+                # Compare pending amounts across dates
+                for i in range(len(dates)-1):
+                    current = branch_data[f'Pending_{dates[i]}'].iloc[0]
+                    previous = branch_data[f'Pending_{dates[i+1]}'].iloc[0]
+                    if current < previous:
+                        pending_trend.append(f"Decreased from ₹{previous:,.2f} to ₹{current:,.2f}")
+                    elif current > previous:
+                        pending_trend.append(f"Increased from ₹{previous:,.2f} to ₹{current:,.2f}")
+                
+                if pending_trend:
+                    st.markdown(f"**{branch}**:")
+                    for trend in pending_trend[:3]:  # Show last 3 changes
+                        st.markdown(f"- {trend}")
+                    st.markdown("---")
+            
+        except Exception as e:
+            st.error(f"Error in comparative analysis: {str(e)}")
+            st.write("Error details:", str(e))
 
-        styled_comparison_df = comparison_df.style.applymap(highlight_changes, subset=[col for col in comparison_df.columns if 'Change_' in col])
-        st.dataframe(styled_comparison_df, height=600, use_container_width=True)
-    except Exception as e:
-        st.error(f"Error in highlighting changes: {str(e)}")
+    # Export Options
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Export Options")
+    
+    if st.sidebar.button("Export Complete Analysis"):
+        try:
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                filtered_df.to_excel(writer, sheet_name='Raw Data', index=False)
+                if 'trend_df' in locals():
+                    trend_df.to_excel(writer, sheet_name='Trends', index=False)
+                if 'performance_df' in locals():
+                    performance_df.to_excel(writer, sheet_name='Performance', index=False)
+                if 'compare_df' in locals():
+                    compare_df.to_excel(writer, sheet_name='Comparison', index=False)
+            
+            st.sidebar.download_button(
+                label="📥 Download Full Report",
+                data=output.getvalue(),
+                file_name=f"collection_analysis_{selected_date}.xlsx",
+                mime="application/vnd.ms-excel"
+            )
+        except Exception as e:
+            st.sidebar.error(f"Error exporting data: {str(e)}")
 
 def show_sdr_dashboard():
     df = load_data_from_drive(FILE_IDS['sdr_trend'])
@@ -285,50 +462,124 @@ def show_sdr_dashboard():
 
     st.title("CSD SDR Trend Analysis")
     
-    # Filters
-    st.sidebar.title("Filter Options")
-    selected_date = st.sidebar.selectbox(
-        "Select Date for Analysis:",
-        sorted([col for col in df.columns if 'Balance_' in col], reverse=True)
-    )
-
-    # Calculate Metrics
-    balance_col = f"Balance_{selected_date.split('_')[-1]}"
-    pending_col = f"Pending_{selected_date.split('_')[-1]}"
-    
-    metrics = {
-        'total_balance': df[balance_col].sum(),
-        'total_pending': df[pending_col].sum(),
-        'avg_balance_change': df[balance_col].pct_change().mean() * 100
-    }
-    
-    # Display Metrics
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total Balance", f"₹{metrics['total_balance']:,.2f}")
-    with col2:
-        st.metric("Total Pending", f"₹{metrics['total_pending']:,.2f}")
-    with col3:
-        st.metric("Average Balance Change", f"{metrics['avg_balance_change']:.2f}%")
-    
-    # Visualization
-    st.subheader("SDR Trend by Ageing Category")
-    trend_data = df.melt(
-        id_vars=['Branch Name'],
-        value_vars=[balance_col, pending_col],
-        var_name='Category',
-        value_name='Amount'
-    )
-    
-    fig = px.bar(
-        trend_data,
-        x='Branch Name',
-        y='Amount',
-        color='Category',
-        barmode='group',
-        title="Branch-wise SDR Balance and Pending Amounts"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    try:
+        # Get date columns in correct order
+        date_columns = [col for col in df.columns 
+                       if col not in ['Ageing Category', 'Reduced OS']]
+        date_columns.sort(reverse=True)  # Most recent first
+        
+        # Display current data
+        st.markdown("### SDR Ageing Analysis")
+        styled_df = style_sdr_trend(df)
+        st.dataframe(styled_df, height=400, use_container_width=True)
+        
+        # Summary metrics
+        st.markdown("### Summary Metrics")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            total_reduced = df['Reduced OS'].sum()
+            st.metric(
+                "Total Reduced OS",
+                f"{total_reduced:,.2f}",
+                delta=total_reduced
+            )
+        
+        with col2:
+            latest_date = date_columns[0]
+            prev_date = date_columns[1]
+            latest_total = df[latest_date].sum()
+            prev_total = df[prev_date].sum()
+            change = latest_total - prev_total
+            st.metric(
+                f"Latest Total ({latest_date})",
+                f"{latest_total:,.2f}",
+                delta=-change  # Negative change is good
+            )
+        
+        with col3:
+            reduction_percent = ((prev_total - latest_total) / prev_total * 100)
+            st.metric(
+                "Week-on-Week Improvement",
+                f"{reduction_percent:.2f}%",
+                delta=reduction_percent
+            )
+        
+        # Trend Analysis
+        st.markdown("### Trend Analysis")
+        
+        # Create trend data
+        trend_data = []
+        for idx, row in df.iterrows():
+            for date in date_columns:
+                trend_data.append({
+                    'Ageing Category': row['Ageing Category'],
+                    'Date': date,
+                    'Amount': row[date]
+                })
+        
+        trend_df = pd.DataFrame(trend_data)
+        
+        # Line chart for trends
+        fig = px.line(
+            trend_df,
+            x='Date',
+            y='Amount',
+            color='Ageing Category',
+            title="SDR Trends by Ageing Category"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Category Analysis
+        st.markdown("### Category-wise Analysis")
+        
+        latest_date = date_columns[0]
+        prev_date = date_columns[1]
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Pie chart for latest distribution
+            fig_pie = px.pie(
+                df,
+                values=latest_date,
+                names='Ageing Category',
+                title=f"Distribution as of {latest_date}"
+            )
+            st.plotly_chart(fig_pie)
+        
+        with col2:
+            # Bar chart for changes
+            df_changes = df.copy()
+            df_changes['Change'] = df_changes[latest_date] - df_changes[prev_date]
+            
+            fig_changes = px.bar(
+                df_changes,
+                x='Ageing Category',
+                y='Change',
+                title=f"Changes from {prev_date} to {latest_date}",
+                color='Change',
+                color_continuous_scale=['green', 'yellow', 'red']
+            )
+            st.plotly_chart(fig_changes)
+        
+        # Export Option
+        if st.sidebar.button("Export SDR Analysis"):
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                df.to_excel(writer, sheet_name='SDR Data', index=False)
+                trend_df.to_excel(writer, sheet_name='Trend Analysis', index=False)
+            
+            st.sidebar.download_button(
+                label="📥 Download SDR Report",
+                data=buffer.getvalue(),
+                file_name=f"sdr_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                mime="application/vnd.ms-excel"
+            )
+            
+    except Exception as e:
+        st.error(f"Error in SDR analysis: {str(e)}")
+        st.write("Error details:", str(e))
 
 def show_itss_dashboard():
     df = load_data_from_drive(FILE_IDS['itss_tender'])
@@ -445,50 +696,115 @@ def show_tsg_dashboard():
 
     st.title("TSG Payment Receivables Trend Analysis")
     
-    # Filters
-    st.sidebar.title("Filter Options")
-    selected_date = st.sidebar.selectbox(
-        "Select Date for Analysis:",
-        sorted([col for col in df.columns if 'Balance_' in col], reverse=True)
-    )
-
-    # Calculate Metrics
-    balance_col = f"Balance_{selected_date.split('_')[-1]}"
-    pending_col = f"Pending_{selected_date.split('_')[-1]}"
-    
-    metrics = {
-        'total_balance': df[balance_col].sum(),
-        'total_pending': df[pending_col].sum(),
-        'avg_balance_change': df[balance_col].pct_change().mean() * 100
-    }
-    
-    # Display Metrics
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total Balance", f"₹{metrics['total_balance']:,.2f}")
-    with col2:
-        st.metric("Total Pending", f"₹{metrics['total_pending']:,.2f}")
-    with col3:
-        st.metric("Average Balance Change", f"{metrics['avg_balance_change']:.2f}%")
-    
-    # Visualization
-    st.subheader("Receivables Trend by Ageing Category")
-    trend_data = df.melt(
-        id_vars=['Branch Name'],
-        value_vars=[balance_col, pending_col],
-        var_name='Category',
-        value_name='Amount'
-    )
-    
-    fig = px.bar(
-        trend_data,
-        x='Branch Name',
-        y='Amount',
-        color='Category',
-        barmode='group',
-        title="Branch-wise Balance and Pending Amounts"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    try:
+        # Get date columns in correct order
+        date_cols = [col for col in df.columns if col != 'Ageing Category']
+        date_cols.sort(reverse=True)  # Most recent first
+        
+        # Summary metrics
+        st.markdown("### Summary Metrics")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            latest_total = df[date_cols[0]].sum()
+            prev_total = df[date_cols[1]].sum()
+            change = latest_total - prev_total
+            st.metric(
+                f"Total Receivables ({date_cols[0]})",
+                f"₹{latest_total:,.0f}",
+                delta=f"₹{-change:,.0f}"
+            )
+        
+        with col2:
+            week_change_pct = ((prev_total - latest_total) / prev_total * 100)
+            st.metric(
+                "Week-on-Week Change",
+                f"{week_change_pct:.2f}%",
+                delta=week_change_pct
+            )
+            
+        with col3:
+            month_start = df[date_cols[-1]].sum()
+            month_change = ((month_start - latest_total) / month_start * 100)
+            st.metric(
+                "Month-to-Date Change",
+                f"{month_change:.2f}%",
+                delta=month_change
+            )
+        
+        # Main trend table
+        st.markdown("### Ageing-wise Trend Analysis")
+        styled_df = style_tsg_trend(df)
+        st.dataframe(styled_df, height=400, use_container_width=True)
+        
+        # Trend Analysis
+        st.markdown("### Trend Visualization")
+        
+        # Prepare data for plotting
+        trend_data = df.melt(
+            id_vars=['Ageing Category'],
+            value_vars=date_cols,
+            var_name='Date',
+            value_name='Amount'
+        )
+        
+        # Line chart
+        fig_line = px.line(
+            trend_data,
+            x='Date',
+            y='Amount',
+            color='Ageing Category',
+            title="Receivables Trend by Ageing Category"
+        )
+        fig_line.update_layout(yaxis_title="Amount (₹)")
+        st.plotly_chart(fig_line, use_container_width=True)
+        
+        # Category Analysis
+        st.markdown("### Category-wise Analysis")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Latest distribution pie chart
+            fig_pie = px.pie(
+                df,
+                values=date_cols[0],
+                names='Ageing Category',
+                title=f"Distribution as of {date_cols[0]}"
+            )
+            st.plotly_chart(fig_pie)
+        
+        with col2:
+            # Week-on-week changes
+            changes_df = pd.DataFrame({
+                'Category': df['Ageing Category'],
+                'Change': df[date_cols[0]] - df[date_cols[1]]
+            })
+            fig_changes = px.bar(
+                changes_df,
+                x='Category',
+                y='Change',
+                title="Week-on-Week Changes by Category",
+                color='Change',
+                color_continuous_scale=['green', 'yellow', 'red']
+            )
+            st.plotly_chart(fig_changes)
+        
+        # Export Option
+        if st.sidebar.button("Export TSG Analysis"):
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                df.to_excel(writer, sheet_name='TSG Trend', index=False)
+            
+            st.sidebar.download_button(
+                label="📥 Download TSG Report",
+                data=buffer.getvalue(),
+                file_name=f"tsg_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                mime="application/vnd.ms-excel"
+            )
+            
+    except Exception as e:
+        st.error(f"Error in TSG analysis: {str(e)}")
+        st.write("Error details:", str(e))
 
 # Main function
 def main():
