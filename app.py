@@ -187,29 +187,22 @@ def load_itss_data():
 
         # Clean 'Date' column values (remove leading/trailing spaces, handle non-printable characters)
         df['Date'] = df['Date'].astype(str).str.strip().str.replace(r'[^\x00-\x7F]+', '', regex=True)
-        
-        # Try parsing the date with a range of formats
-        date_parsed = None
-        possible_formats = ['%d-%m-%Y', '%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y']
-        
-        for fmt in possible_formats:
-            try:
-                date_parsed = pd.to_datetime(df['Date'], format=fmt, errors='coerce')
-                # If parsing was successful for some rows, break
-                if not date_parsed.isna().all():
-                    df['Date'] = date_parsed
-                    st.write(f"Successfully parsed dates with format: {fmt}")
-                    break
-            except Exception as e:
-                st.write(f"Error parsing with format {fmt}: {e}")
 
-        # Fallback: let pandas infer format
-        if date_parsed is None or date_parsed.isna().all():
-            df['Date'] = pd.to_datetime(df['Date'], errors='coerce', dayfirst=True)
-        
+        # Print the date column after cleaning for debugging
+        st.write("Cleaned 'Date' Column Values (First 5):")
+        st.write(df['Date'].head())
+
+        # Try parsing the date with the known new format
+        df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y', errors='coerce')
+
+        # Print the parsed date column for verification
+        st.write("Parsed Date Values:")
+        st.write(df['Date'])
+
         # Filter valid dates
         valid_dates = df['Date'].dropna()
-        st.write("Valid Dates After Dropping NaT:", valid_dates)
+        st.write("Valid Dates After Dropping NaT:")
+        st.write(valid_dates)
 
         if len(valid_dates) == 0:
             st.error("No valid dates found for analysis.")
