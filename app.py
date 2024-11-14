@@ -2,12 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime, timedelta
+from datetime import datetime
 import numpy as np
 import io
-import os
-import base64
-from cryptography.fernet import Fernet
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 
 # Configure page settings
 st.set_page_config(
@@ -16,29 +15,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# Define global variable for cipher
-cipher = None
-
-# Get the encryption key from secrets
-key = st.secrets.get("ENCRYPTION_KEY", "")
-
-try:
-    # Check if the key length is correct (it should be 44 characters for a Fernet key)
-    if len(key) != 44:
-        st.error("Invalid encryption key: Key length must be 44 characters.")
-    else:
-        # Decode the key from base64
-        key_bytes = base64.urlsafe_b64decode(key)
-        # Ensure that the decoded key length is 32 bytes
-        if len(key_bytes) != 32:
-            st.error("Decoded key length is incorrect. It must be 32 bytes.")
-        else:
-            # Create a cipher instance and make it globally accessible
-            cipher = Fernet(key_bytes)
-            st.write("Encryption key loaded successfully.")
-except Exception as e:
-    st.error(f"Error decoding the encryption key: {str(e)}")
 
 # Custom CSS (keeping your existing CSS)
 st.markdown("""
@@ -89,1330 +65,166 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Simplified credentials
+# Credentials for authentication
 CREDENTIALS = {
     "admin": "admin123",
     "ceo": "ceo123",
     "manager": "manager123"
 }
 
+# Google Drive file IDs for each data set
+COLLECTIONS_DATA_FILE_ID = '1zCSAx8jzOLewJXxOQlHjlUxXKoHbdopD'
+ITSS_TENDER_FILE_ID = '1o6SjeyNuvSyt9c5uCsq4MGFlZV1moC3V'
+SDR_TREND_FILE_ID = '1PixxavAM29QrtjZUh-TMpa8gDSE7lg60'
+TSG_TREND_FILE_ID = '1Kf8nHi1shw6q0oozXFEScyE0bmhhPDPo'
+
+# Authenticate with Google Drive
+@st.cache_resource()
+def authenticate_drive():
+    gauth = GoogleAuth()
+    gauth.LocalWebserverAuth()  # This will prompt for Google login
+    drive = GoogleDrive(gauth)
+    return drive
+
+drive = authenticate_drive()
+
+# Load data from Google Drive
+def load_data_from_drive(file_id):
+    try:
+        file = drive.CreateFile({'id': file_id})
+        file.GetContentFile('data.xlsx')  # Save file locally
+        df = pd.read_excel('data.xlsx', header=None)
+        return df
+    except Exception as e:
+        st.error(f"Error loading data from Google Drive: {str(e)}")
+        return None
+
+# Check password for login
 def check_password():
-    """Returns `True` if the user had a correct password."""
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
-
     if not st.session_state.authenticated:
-        # Center the login form
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.markdown("""
-                <div class="login-container">
-                    <h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>
-                </div>
-            """, unsafe_allow_html=True)
+            st.markdown("<div class='login-container'><h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2></div>", unsafe_allow_html=True)
             username = st.text_input("Username").lower()
             password = st.text_input("Password", type="password")
-
             if st.button("Login"):
                 if username in CREDENTIALS and CREDENTIALS[username] == password:
                     st.session_state.authenticated = True
-                    st.session_state.username = username
-                    st.rerun()
+                    st.experimental_rerun()
                 else:
                     st.error("Invalid credentials")
         return False
     return True
 
-# Function to decrypt and load an Excel file
-def decrypt_and_load_excel(file_path):
-    global cipher  # Use the global cipher variable
-
-    if cipher is None:
-        st.error("Cipher is not initialized, unable to decrypt the file.")
-        return None
-
-    try:
-        # Check if file exists
-        if not os.path.exists(file_path):
-            st.error(f"File not found at path: {file_path}")
-            return None
-
-        # Attempt to open and read the encrypted file
-        st.write(f"Attempting to open encrypted file: {file_path}")
-        with open(file_path, "rb") as encrypted_file:
-            encrypted_data = encrypted_file.read()
-
-        st.write(f"File read successfully: {file_path}, size: {len(encrypted_data)} bytes")
-
-        # Decrypt the content
-        decrypted_data = cipher.decrypt(encrypted_data)
-        st.write(f"Decryption successful for file: {file_path}")
-
-        # Load the decrypted data into a Pandas DataFrame
-        with io.BytesIO(decrypted_data) as file_obj:
-            df = pd.read_excel(file_obj)
-        st.write(f"Excel loaded successfully for file: {file_path}, number of rows: {len(df)}")
-        return df
-
-    except FileNotFoundError as fnf_error:
-        st.error(f"File not found: {str(fnf_error)}")
-    except Exception as e:
-        st.error(f"Error decrypting and loading file {file_path}: {str(e)}")
-        st.write(f"Debugging details - Exception type: {type(e).__name__}, Args: {e.args}")
-    return None
-
-# Functions to load all the encrypted data files
-
-def load_collections_data():
-    """ Load and structure collections data with custom headers """
-    df = decrypt_and_load_excel("./collections_data_encrypted.xlsx")
-    if df is None:
-        return None
-
-    try:
-        # Assigning column names and preparing the dataframe
-        columns = ['Branch Name', 'Reduced Pending Amount']
-        dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
-        for date in dates:
-            columns.extend([f'Balance_{date}', f'Pending_{date}'])
-
-        df.columns = columns[:len(df.columns)]
-        df = df.iloc[1:].reset_index(drop=True)
-
-        # Convert amount columns to numeric
-        for col in df.columns:
-            if col != 'Branch Name':
-                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
-
-        return df
-    except Exception as e:
-        st.error(f"Error loading collections data: {str(e)}")
-        return None
-        
-def clean_dataframe(df):
-    """
-    Clean and structure the dataframe for branch-wise analysis
-    """
-    try:
-        # Keep only the required columns
-        required_cols = ['Branch Name', 'Reduced Pending Amount']
-        date_cols = []
-        
-        # Group columns by date
-        for i in range(len(df.columns)):
-            if 'Balance As On' in str(df.columns[i]):
-                date = df.columns[i-1]
-                balance_col = df.columns[i]
-                pending_col = df.columns[i+1]
-                
-                date_cols.append({
-                    'date': date,
-                    'balance': balance_col,
-                    'pending': pending_col
-                })
-        
-        # Restructure the data
-        clean_df = pd.DataFrame()
-        clean_df['Branch'] = df['Branch Name']
-        clean_df['Reduced_Pending'] = df['Reduced Pending Amount']
-        
-        for date_group in date_cols:
-            date = pd.to_datetime(date_group['date']).strftime('%Y-%m-%d')
-            clean_df[f'Balance_{date}'] = df[date_group['balance']]
-            clean_df[f'Pending_{date}'] = df[date_group['pending']]
-        
-        return clean_df
-    except Exception as e:
-        st.error(f"Error cleaning data: {str(e)}")
-        return df
- 
-def create_sample_data():
-    """Create sample data when actual data isn't available"""
-    dates = pd.date_range(start='2024-01-01', end='2024-03-31', freq='D')
-    branch_data = pd.DataFrame({
-        'Date': dates.repeat(5),
-        'Branch Name': ['Kota', 'Guwahati', 'Kolkata', 'Faridabad', 'Rajkot'] * len(dates),
-        'Invoice': np.random.uniform(1000, 10000, len(dates) * 5),
-        'Collection': np.random.uniform(800, 9000, len(dates) * 5),
-        'Outstanding': np.random.uniform(100, 2000, len(dates) * 5),
-        'Region': ['North', 'East', 'East', 'North', 'West'] * len(dates)
-    })
-    return branch_data
-
-def calculate_branch_metrics(df, selected_date):
-    """Calculate advanced branch performance metrics"""
-    metrics = {}
-    
-    balance_col = f'Balance_{selected_date}'
-    pending_col = f'Pending_{selected_date}'
-    
-    # Basic metrics
-    metrics['total_balance'] = df[balance_col].sum()
-    metrics['total_pending'] = df[pending_col].sum()
-    metrics['total_reduced'] = df['Reduced Pending Amount'].sum()
-    
-    # Performance metrics
-    metrics['top_balance_branch'] = df.nlargest(1, balance_col)['Branch Name'].iloc[0]
-    metrics['lowest_pending_branch'] = df.nsmallest(1, pending_col)['Branch Name'].iloc[0]
-    metrics['most_improved'] = df.nlargest(1, 'Reduced Pending Amount')['Branch Name'].iloc[0]
-    
-    # Efficiency metrics
-    metrics['collection_ratio'] = (
-        (df[balance_col].sum() / (df[balance_col].sum() + df[pending_col].sum())) * 100
-        if (df[balance_col].sum() + df[pending_col].sum()) != 0 else 0
-    )
-    
-    return metrics
-
-def calculate_metrics(df):
-    """Calculate key performance metrics with error handling"""
-    try:
-        metrics = {}
-        
-        # Total Collection (assuming column name might be different)
-        collection_col = [col for col in df.columns if 'collection' in col.lower()]
-        if collection_col:
-            metrics['total_collection'] = df[collection_col[0]].sum()
-        else:
-            metrics['total_collection'] = 0
-            
-        # Total Outstanding
-        outstanding_col = [col for col in df.columns if 'outstanding' in col.lower()]
-        if outstanding_col:
-            metrics['total_outstanding'] = df[outstanding_col[0]].sum()
-        else:
-            metrics['total_outstanding'] = 0
-            
-        # Collection Efficiency
-        invoice_col = [col for col in df.columns if 'invoice' in col.lower()]
-        if collection_col and invoice_col:
-            metrics['collection_efficiency'] = (df[collection_col[0]].sum() / df[invoice_col[0]].sum() * 100)
-        else:
-            metrics['collection_efficiency'] = 0
-            
-        # Top Branch
-        branch_col = [col for col in df.columns if any(x in col.lower() for x in ['branch', 'branch name'])]
-        if branch_col and collection_col:
-            metrics['top_branch'] = df.groupby(branch_col[0])[collection_col[0]].sum().idxmax()
-        else:
-            metrics['top_branch'] = "N/A"
-            
-        return metrics
-    except Exception as e:
-        st.error(f"Error calculating metrics: {str(e)}")
-        return {
-            'total_collection': 0,
-            'total_outstanding': 0,
-            'collection_efficiency': 0,
-            'top_branch': "N/A"
-        }
-
-def show_login_page():
-    """Display the login page"""
-    st.markdown("""
-        <div class="login-container">
-            <h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1,2,1])
-    with col2:
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        
-        if st.button("Login"):
-            if username in CREDENTIALS and CREDENTIALS[username]["password"] == password:
-                st.session_state.authenticated = True
-                st.session_state.user_role = CREDENTIALS[username]["role"]
-                st.session_state.username = username
-                st.rerun()
-            else:
-                st.error("Invalid credentials")
-
-def style_comparison_df(df, dates):
-    """
-    Style the comparison DataFrame with corrected color coding:
-    - Green when pending amount decreases (improvement)
-    - Red when pending amount increases (deterioration)
-    """
-    def highlight_pending_changes(row):
-        styles = [''] * len(df.columns)
-        
-        for i, date in enumerate(dates):
-            if i < len(dates) - 1:  # Skip the last date as it has no next date to compare
-                current_pending_col = f'Pending_{date}'
-                next_pending_col = f'Pending_{dates[i+1]}'
-                
-                if current_pending_col in df.columns and next_pending_col in df.columns:
-                    current_pending = row[current_pending_col]
-                    next_pending = row[next_pending_col]
-                    
-                    # Get column index for current pending column
-                    col_idx = df.columns.get_loc(current_pending_col)
-                    
-                    try:
-                        current_pending = float(current_pending)
-                        next_pending = float(next_pending)
-                        
-                        if pd.notna(current_pending) and pd.notna(next_pending):
-                            if current_pending < next_pending:  # Pending amount decreased
-                                styles[col_idx] = 'background-color: #92D050'  # Green
-                            elif current_pending > next_pending:  # Pending amount increased
-                                styles[col_idx] = 'background-color: #FF7575'  # Red
-                    except:
-                        pass
-                        
-        return styles
-    
-    # Format numbers and apply highlighting
-    return df.style.apply(highlight_pending_changes, axis=1)\
-                  .format({col: '₹{:,.2f}' for col in df.columns if col != 'Branch Name'})
-
-def show_comparative_analysis(filtered_df, dates, selected_branches):
-    """Enhanced comparative analysis with corrected highlighting"""
-    st.subheader("Weekly Pending Amount Comparison")
-    
-    try:
-        # Create comparison DataFrame
-        comparison_df = pd.DataFrame()
-        comparison_df['Branch Name'] = selected_branches
-        
-        # Add data for selected dates
-        for date in dates:
-            balance_col = f'Balance_{date}'
-            pending_col = f'Pending_{date}'
-            
-            comparison_df[balance_col] = [
-                filtered_df[filtered_df['Branch Name'] == branch][balance_col].iloc[0]
-                for branch in selected_branches
-            ]
-            comparison_df[pending_col] = [
-                filtered_df[filtered_df['Branch Name'] == branch][pending_col].iloc[0]
-                for branch in selected_branches
-            ]
-        
-        # Display styled table
-        styled_df = style_comparison_df(comparison_df, dates)
-        st.dataframe(
-            styled_df,
-            height=400,
-            use_container_width=True
-        )
-        
-        # Add summary analytics
-        st.markdown("### Summary of Changes")
-        for branch in selected_branches:
-            branch_data = comparison_df[comparison_df['Branch Name'] == branch]
-            changes = []
-            
-            for i in range(len(dates)-1):
-                current_pending = branch_data[f'Pending_{dates[i]}'].iloc[0]
-                prev_pending = branch_data[f'Pending_{dates[i+1]}'].iloc[0]
-                
-                if current_pending < prev_pending:
-                    changes.append({
-                        'date': dates[i],
-                        'change': prev_pending - current_pending,
-                        'type': 'decrease'
-                    })
-                elif current_pending > prev_pending:
-                    changes.append({
-                        'date': dates[i],
-                        'change': current_pending - prev_pending,
-                        'type': 'increase'
-                    })
-            
-            if changes:
-                st.markdown(f"**{branch}**")
-                for change in changes:
-                    if change['type'] == 'decrease':
-                        st.markdown(f"- 🟢 Reduced by ₹{abs(change['change']):,.2f} on {change['date']}")
-                    else:
-                        st.markdown(f"- 🔴 Increased by ₹{abs(change['change']):,.2f} on {change['date']}")
-        
-        # Summary metrics
-        st.markdown("### Overall Metrics")
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            latest_total = comparison_df[f'Pending_{dates[0]}'].sum()
-            prev_total = comparison_df[f'Pending_{dates[1]}'].sum()
-            change = latest_total - prev_total
-            st.metric(
-                "Total Pending Change",
-                f"₹{change:,.2f}",
-                delta=-change  # Negative is good for pending
-            )
-        
-        with col2:
-            improvement = ((prev_total - latest_total) / prev_total * 100)
-            st.metric(
-                "Improvement Percentage",
-                f"{improvement:.2f}%",
-                delta=improvement
-            )
-            
-    except Exception as e:
-        st.error(f"Error in comparative analysis: {str(e)}")
-        st.write("Please check the data structure and selected filters")
-
+# Dashboard function to load collections data
 def show_collections_dashboard():
-    """Display enhanced dashboard with advanced analytics"""
-    # Load data
-    df = load_data()
-    
+    df = load_data_from_drive(COLLECTIONS_DATA_FILE_ID)
     if df is None:
-        st.error("Unable to load data. Please check your Excel file.")
+        st.error("Unable to load data. Please check the Google Drive file.")
         return
-    
-    # Display data info for verification
-    st.sidebar.write("Data loaded successfully")
-    st.sidebar.write("Number of branches:", len(df['Branch Name'].unique()))
-    
-    # Sidebar Controls
-    st.sidebar.title("Analysis Controls")
-    
-    # Advanced Filtering
-    filter_container = st.sidebar.container()
-    with filter_container:
-        st.subheader("Filters")
-        
-        # Branch Selection with Search
-        all_branches = sorted(df['Branch Name'].unique().tolist())
-        selected_branches = st.multiselect(
-            "Select Branches (Search/Select)",
-            options=all_branches,
-            default=all_branches[:5] if len(all_branches) >= 5 else all_branches
-        )
-        
-        # Date Selection
-        dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
-        selected_date = st.selectbox("Select Analysis Date", dates)
 
-    # Filter Data
-    filtered_df = df.copy()
-    if selected_branches:
-        filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
-    
-    balance_col = f'Balance_{selected_date}'
-    pending_col = f'Pending_{selected_date}'
-    
-    # Main Dashboard
-    st.title("Branch Reco Trend")
-    
-    # Key Metrics Dashboard
-    metrics = calculate_branch_metrics(filtered_df, selected_date)
-    
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric(
-            "Total Balance",
-            f"₹{metrics['total_balance']:,.2f}",
-            delta=metrics['total_reduced']
-        )
-    with col2:
-        st.metric(
-            "Total Pending",
-            f"₹{metrics['total_pending']:,.2f}"
-        )
-    with col3:
-        st.metric(
-            "Collection Ratio",
-            f"{metrics['collection_ratio']:.1f}%"
-        )
-    with col4:
-        st.metric(
-            "Best Performing Branch",
-            metrics['top_balance_branch']
-        )
+    # Prepare the data for usage (structure and assign columns)
+    columns = ['Branch Name', 'Reduced Pending Amount'] + [f'Balance_{date}' for date in df.iloc[0, 2:].tolist()]
+    df.columns = columns
+    df = df.iloc[1:]  # Removing first row (which served as headers)
 
-    # Analysis Tabs
-    tab1, tab2, tab3 = st.tabs(["Trend Analysis", "Branch Performance", "Comparative Analysis"])
-    
-    with tab1:
-        st.subheader("Balance & Pending Trends")
-        
-        try:
-            # Prepare trend data safely
-            trend_data = []
-            for branch in selected_branches:
-                branch_data = filtered_df[filtered_df['Branch Name'] == branch]
-                if not branch_data.empty:
-                    for date in dates:
-                        balance_col = f'Balance_{date}'
-                        pending_col = f'Pending_{date}'
-                        if balance_col in branch_data.columns and pending_col in branch_data.columns:
-                            trend_data.append({
-                                'Branch': branch,
-                                'Date': date,
-                                'Balance': branch_data[balance_col].values[0],
-                                'Pending': branch_data[pending_col].values[0]
-                            })
-            
-            if trend_data:
-                trend_df = pd.DataFrame(trend_data)
-                
-                # Create interactive plot
-                fig = go.Figure()
-                
-                for branch in selected_branches:
-                    branch_trend = trend_df[trend_df['Branch'] == branch]
-                    if not branch_trend.empty:
-                        # Balance line
-                        fig.add_trace(go.Scatter(
-                            x=branch_trend['Date'],
-                            y=branch_trend['Balance'],
-                            name=f"{branch} - Balance",
-                            mode='lines+markers'
-                        ))
-                        # Pending line
-                        fig.add_trace(go.Scatter(
-                            x=branch_trend['Date'],
-                            y=branch_trend['Pending'],
-                            name=f"{branch} - Pending",
-                            line=dict(dash='dot')
-                        ))
-                
-                fig.update_layout(
-                    title="Balance and Pending Trends",
-                    xaxis_title="Date",
-                    yaxis_title="Amount (₹)",
-                    hovermode='x unified'
-                )
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.warning("No trend data available for selected branches")
-                
-        except Exception as e:
-            st.error(f"Error in trend analysis: {str(e)}")
-            st.write("Please check the data structure and selected filters")
-    
-    with tab2:
-        st.subheader("Branch Performance")
-        try:
-            # Performance metrics
-            performance_df = filtered_df.copy()
-            current_balance = f'Balance_{selected_date}'
-            current_pending = f'Pending_{selected_date}'
-            
-            if current_balance in performance_df.columns and current_pending in performance_df.columns:
-                performance_df['Current Balance'] = performance_df[current_balance]
-                performance_df['Current Pending'] = performance_df[current_pending]
-                performance_df['Net Position'] = performance_df['Current Balance'] - performance_df['Current Pending']
-                
-                # Performance Chart
-                fig_perf = px.bar(
-                    performance_df,
-                    x='Branch Name',
-                    y=['Current Balance', 'Current Pending', 'Net Position'],
-                    title="Branch Performance",
-                    barmode='group'
-                )
-                st.plotly_chart(fig_perf, use_container_width=True)
-                
-                # Metrics Table
-                st.dataframe(
-                    performance_df[['Branch Name', 'Current Balance', 'Current Pending', 'Net Position']]
-                    .sort_values('Net Position', ascending=False),
-                    height=400
-                )
-            else:
-                st.warning("Performance data not available for selected date")
-                
-        except Exception as e:
-            st.error(f"Error in performance analysis: {str(e)}")
-    
-    with tab3:
-        st.subheader("Comparative Analysis")
-        try:
-            # Get all dates for comparison
-            dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
-            
-            # Create comparison DataFrame
-            comparison_df = pd.DataFrame()
-            comparison_df['Branch Name'] = selected_branches
-            
-            # Add data for all dates
-            for date in dates:
-                comparison_df[f'Balance_{date}'] = [
-                    filtered_df[filtered_df['Branch Name'] == branch][f'Balance_{date}'].iloc[0]
-                    for branch in selected_branches
-                ]
-                comparison_df[f'Pending_{date}'] = [
-                    filtered_df[filtered_df['Branch Name'] == branch][f'Pending_{date}'].iloc[0]
-                    for branch in selected_branches
-                ]
-            
-            # Display styled comparison table
-            st.markdown("### Weekly Pending Amount Comparison")
-            styled_df = style_comparison_df(comparison_df, dates)
-            st.dataframe(
-                styled_df,
-                height=400,
-                use_container_width=True
-            )
-            
-            # Add insights about pending amount trends
-            st.markdown("### Pending Amount Trends")
-            for branch in selected_branches:
-                branch_data = comparison_df[comparison_df['Branch Name'] == branch]
-                pending_trend = []
-                
-                # Compare pending amounts across dates
-                for i in range(len(dates)-1):
-                    current = branch_data[f'Pending_{dates[i]}'].iloc[0]
-                    previous = branch_data[f'Pending_{dates[i+1]}'].iloc[0]
-                    if current < previous:
-                        pending_trend.append(f"Decreased from ₹{previous:,.2f} to ₹{current:,.2f}")
-                    elif current > previous:
-                        pending_trend.append(f"Increased from ₹{previous:,.2f} to ₹{current:,.2f}")
-                
-                if pending_trend:
-                    st.markdown(f"**{branch}**:")
-                    for trend in pending_trend[:3]:  # Show last 3 changes
-                        st.markdown(f"- {trend}")
-                    st.markdown("---")
-            
-        except Exception as e:
-            st.error(f"Error in comparative analysis: {str(e)}")
-            st.write("Error details:", str(e))
+    st.title("Collections Dashboard")
 
-    # Export Options
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("Export Options")
-    
-    if st.sidebar.button("Export Complete Analysis"):
-        try:
-            output = io.BytesIO()
-            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                filtered_df.to_excel(writer, sheet_name='Raw Data', index=False)
-                if 'trend_df' in locals():
-                    trend_df.to_excel(writer, sheet_name='Trends', index=False)
-                if 'performance_df' in locals():
-                    performance_df.to_excel(writer, sheet_name='Performance', index=False)
-                if 'compare_df' in locals():
-                    compare_df.to_excel(writer, sheet_name='Comparison', index=False)
-            
-            st.sidebar.download_button(
-                label="📥 Download Full Report",
-                data=output.getvalue(),
-                file_name=f"collection_analysis_{selected_date}.xlsx",
-                mime="application/vnd.ms-excel"
-            )
-        except Exception as e:
-            st.sidebar.error(f"Error exporting data: {str(e)}")
+    # Sidebar Filters
+    st.sidebar.title("Filter Options")
+    all_branches = df['Branch Name'].unique().tolist()
+    selected_branches = st.sidebar.multiselect("Select Branches:", all_branches, all_branches[:3])
+    date_columns = [col for col in df.columns if 'Balance_' in col]
+    selected_date = st.sidebar.selectbox("Select Date for Analysis:", date_columns)
 
-def load_sdr_data():
-    """Load CSD SDR Trend data"""
-    df = decrypt_and_load_excel("./sdr_trend_encrypted.xlsx")
-    if df is None:
-        return None
+    # Filtering Data
+    filtered_df = df[df['Branch Name'].isin(selected_branches)]
 
-    try:
-        for col in df.columns:
-            if col not in ['Ageing Category']:
-                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
-        return df
-    except Exception as e:
-        st.error(f"Error processing SDR data: {str(e)}")
-        return None
+    # Metrics
+    st.metric("Total Balance", filtered_df[selected_date].sum())
 
-def style_sdr_trend(df):
-    """
-    Style the SDR trend dataframe with correct color coding:
-    - Green when value decreases (improvement)
-    - Red when value increases (deterioration)
-    - Yellow for no change
-    """
-    def color_values(val, col_name):
-        try:
-            if col_name == 'Reduced OS':
-                # For Reduced OS column, negative is good (green)
-                if pd.isna(val):
-                    return ''
-                elif val < 0:
-                    return 'background-color: #92D050'  # Green
-                elif val > 0:
-                    return 'background-color: #FF7575'  # Red
-                else:
-                    return 'background-color: #FFFF00'  # Yellow
-            else:
-                # Get the date columns in order
-                date_cols = [col for col in df.columns if col not in ['Ageing Category', 'Reduced OS']]
-                date_cols.sort(reverse=True)  # Most recent first
-                
-                if col_name in date_cols:
-                    col_idx = date_cols.index(col_name)
-                    if col_idx < len(date_cols) - 1:  # If not the last date
-                        next_col = date_cols[col_idx + 1]
-                        current_val = val
-                        next_val = df.loc[df[col_name] == val, next_col].iloc[0]
-                        
-                        if pd.isna(current_val) or pd.isna(next_val):
-                            return ''
-                        elif current_val < next_val:  # Decreased (improved)
-                            return 'background-color: #92D050'  # Green
-                        elif current_val > next_val:  # Increased (deteriorated)
-                            return 'background-color: #FF7575'  # Red
-                        else:
-                            return 'background-color: #FFFF00'  # Yellow
-            return ''
-        except:
-            return ''
-    
-    # Apply styling
-    styled = df.style.apply(lambda x: [color_values(val, col) for val, col in zip(x, x.index)], axis=1)
-    
-    # Format numbers
-    numeric_columns = df.select_dtypes(include=['float64', 'int64']).columns
-    return styled.format("{:.2f}", subset=numeric_columns)
+    # Plots and Charts
+    fig = px.bar(filtered_df, x='Branch Name', y=selected_date, title="Branch-wise Balance")
+    st.plotly_chart(fig)
 
+# Dashboard function for SDR Trend
 def show_sdr_dashboard():
-    """Display SDR Trend Analysis"""
-    st.title("CSD SDR Trend Analysis")
-    
-    # Load data
-    df = load_sdr_data()
+    df = load_data_from_drive(SDR_TREND_FILE_ID)
     if df is None:
-        st.error("Unable to load SDR data. Please check the data file.")
+        st.error("Unable to load SDR data. Please check the Google Drive file.")
         return
-        
-    try:
-        # Get date columns in correct order
-        date_columns = [col for col in df.columns 
-                       if col not in ['Ageing Category', 'Reduced OS']]
-        date_columns.sort(reverse=True)  # Most recent first
-        
-        # Display current data
-        st.markdown("### SDR Ageing Analysis")
-        styled_df = style_sdr_trend(df)
-        st.dataframe(styled_df, height=400, use_container_width=True)
-        
-        # Summary metrics
-        st.markdown("### Summary Metrics")
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            total_reduced = df['Reduced OS'].sum()
-            st.metric(
-                "Total Reduced OS",
-                f"{total_reduced:,.2f}",
-                delta=total_reduced
-            )
-        
-        with col2:
-            latest_date = date_columns[0]
-            prev_date = date_columns[1]
-            latest_total = df[latest_date].sum()
-            prev_total = df[prev_date].sum()
-            change = latest_total - prev_total
-            st.metric(
-                f"Latest Total ({latest_date})",
-                f"{latest_total:,.2f}",
-                delta=-change  # Negative change is good
-            )
-        
-        with col3:
-            reduction_percent = ((prev_total - latest_total) / prev_total * 100)
-            st.metric(
-                "Week-on-Week Improvement",
-                f"{reduction_percent:.2f}%",
-                delta=reduction_percent
-            )
-        
-        # Trend Analysis
-        st.markdown("### Trend Analysis")
-        
-        # Create trend data
-        trend_data = []
-        for idx, row in df.iterrows():
-            for date in date_columns:
-                trend_data.append({
-                    'Ageing Category': row['Ageing Category'],
-                    'Date': date,
-                    'Amount': row[date]
-                })
-        
-        trend_df = pd.DataFrame(trend_data)
-        
-        # Line chart for trends
-        fig = px.line(
-            trend_df,
-            x='Date',
-            y='Amount',
-            color='Ageing Category',
-            title="SDR Trends by Ageing Category"
-        )
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Category Analysis
-        st.markdown("### Category-wise Analysis")
-        
-        latest_date = date_columns[0]
-        prev_date = date_columns[1]
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Pie chart for latest distribution
-            fig_pie = px.pie(
-                df,
-                values=latest_date,
-                names='Ageing Category',
-                title=f"Distribution as of {latest_date}"
-            )
-            st.plotly_chart(fig_pie)
-        
-        with col2:
-            # Bar chart for changes
-            df_changes = df.copy()
-            df_changes['Change'] = df_changes[latest_date] - df_changes[prev_date]
-            
-            fig_changes = px.bar(
-                df_changes,
-                x='Ageing Category',
-                y='Change',
-                title=f"Changes from {prev_date} to {latest_date}",
-                color='Change',
-                color_continuous_scale=['green', 'yellow', 'red']
-            )
-            st.plotly_chart(fig_changes)
-        
-        # Export Option
-        if st.sidebar.button("Export SDR Analysis"):
-            buffer = io.BytesIO()
-            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-                df.to_excel(writer, sheet_name='SDR Data', index=False)
-                trend_df.to_excel(writer, sheet_name='Trend Analysis', index=False)
-            
-            st.sidebar.download_button(
-                label="📥 Download SDR Report",
-                data=buffer.getvalue(),
-                file_name=f"sdr_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                mime="application/vnd.ms-excel"
-            )
-            
-    except Exception as e:
-        st.error(f"Error in SDR analysis: {str(e)}")
-        st.write("Error details:", str(e))
 
-def load_tsg_data():
-    """Load TSG Payment Receivables Trend data"""
-    df = decrypt_and_load_excel("./tsg_trend_encrypted.xlsx")
-    if df is None:
-        return None
+    st.title("SDR Trend Analysis")
 
-    try:
-        for col in df.columns:
-            if col != 'Ageing Category':
-                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
-        return df
-    except Exception as e:
-        st.error(f"Error loading TSG data: {str(e)}")
-        return None
+    # Sidebar Filters
+    date_columns = [col for col in df.columns if 'Balance_' in col]
+    selected_date = st.sidebar.selectbox("Select Date for Analysis:", date_columns)
 
-def style_tsg_trend(df):
-    """
-    Style the TSG trend dataframe with color coding:
-    - Green when amount decreases (improvement)
-    - Red when amount increases (deterioration)
-    """
-    def color_changes(row):
-        styles = [''] * len(df.columns)
-        
-        # Get date columns (exclude 'Ageing Category' and any other non-date columns)
-        date_cols = [col for col in df.columns if col != 'Ageing Category']
-        date_cols.sort(reverse=True)  # Most recent first
-        
-        for i in range(len(date_cols)-1):
-            current_col = date_cols[i]
-            next_col = date_cols[i+1]
-            current_val = row[current_col]
-            next_val = row[next_col]
-            
-            col_idx = df.columns.get_loc(current_col)
-            
-            try:
-                if pd.notna(current_val) and pd.notna(next_val):
-                    if current_val < next_val:  # Amount decreased (improved)
-                        styles[col_idx] = 'background-color: #92D050'  # Green
-                    elif current_val > next_val:  # Amount increased (deteriorated)
-                        styles[col_idx] = 'background-color: #FF7575'  # Red
-            except:
-                pass
-                
-        return styles
-    
-    # Format numbers and apply highlighting
-    styled = df.style.apply(color_changes, axis=1)
-    
-    # Format large numbers with commas and proper decimal places
-    return styled.format(lambda x: '{:,.0f}'.format(x) if pd.notna(x) and isinstance(x, (int, float)) else x)
+    # Display Data
+    st.write("Showing SDR Trend Data", df.head())
 
+# Dashboard function for TSG Payment Receivables
 def show_tsg_dashboard():
-    """Display TSG Payment Receivables Trend Analysis"""
-    st.title("TSG Payment Receivables Trend Analysis")
-    
-    # Load data
-    df = load_tsg_data()
+    df = load_data_from_drive(TSG_TREND_FILE_ID)
     if df is None:
+        st.error("Unable to load TSG data. Please check the Google Drive file.")
         return
-        
-    try:
-        # Get date columns in correct order
-        date_cols = [col for col in df.columns if col != 'Ageing Category']
-        date_cols.sort(reverse=True)  # Most recent first
-        
-        # Summary metrics
-        st.markdown("### Summary Metrics")
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            latest_total = df[date_cols[0]].sum()
-            prev_total = df[date_cols[1]].sum()
-            change = latest_total - prev_total
-            st.metric(
-                f"Total Receivables ({date_cols[0]})",
-                f"₹{latest_total:,.0f}",
-                delta=f"₹{-change:,.0f}"
-            )
-        
-        with col2:
-            week_change_pct = ((prev_total - latest_total) / prev_total * 100)
-            st.metric(
-                "Week-on-Week Change",
-                f"{week_change_pct:.2f}%",
-                delta=week_change_pct
-            )
-            
-        with col3:
-            month_start = df[date_cols[-1]].sum()
-            month_change = ((month_start - latest_total) / month_start * 100)
-            st.metric(
-                "Month-to-Date Change",
-                f"{month_change:.2f}%",
-                delta=month_change
-            )
-        
-        # Main trend table
-        st.markdown("### Ageing-wise Trend Analysis")
-        styled_df = style_tsg_trend(df)
-        st.dataframe(styled_df, height=400, use_container_width=True)
-        
-        # Trend Analysis
-        st.markdown("### Trend Visualization")
-        
-        # Prepare data for plotting
-        trend_data = df.melt(
-            id_vars=['Ageing Category'],
-            value_vars=date_cols,
-            var_name='Date',
-            value_name='Amount'
-        )
-        
-        # Line chart
-        fig_line = px.line(
-            trend_data,
-            x='Date',
-            y='Amount',
-            color='Ageing Category',
-            title="Receivables Trend by Ageing Category"
-        )
-        fig_line.update_layout(yaxis_title="Amount (₹)")
-        st.plotly_chart(fig_line, use_container_width=True)
-        
-        # Category Analysis
-        st.markdown("### Category-wise Analysis")
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Latest distribution pie chart
-            fig_pie = px.pie(
-                df,
-                values=date_cols[0],
-                names='Ageing Category',
-                title=f"Distribution as of {date_cols[0]}"
-            )
-            st.plotly_chart(fig_pie)
-        
-        with col2:
-            # Week-on-week changes
-            changes_df = pd.DataFrame({
-                'Category': df['Ageing Category'],
-                'Change': df[date_cols[0]] - df[date_cols[1]]
-            })
-            fig_changes = px.bar(
-                changes_df,
-                x='Category',
-                y='Change',
-                title="Week-on-Week Changes by Category",
-                color='Change',
-                color_continuous_scale=['green', 'yellow', 'red']
-            )
-            st.plotly_chart(fig_changes)
-        
-        # Export Option
-        if st.sidebar.button("Export TSG Analysis"):
-            buffer = io.BytesIO()
-            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-                df.to_excel(writer, sheet_name='TSG Trend', index=False)
-            
-            st.sidebar.download_button(
-                label="📥 Download TSG Report",
-                data=buffer.getvalue(),
-                file_name=f"tsg_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                mime="application/vnd.ms-excel"
-            )
-            
-    except Exception as e:
-        st.error(f"Error in TSG analysis: {str(e)}")
-        st.write("Error details:", str(e))
 
-def show_dashboard():
-    """Main dashboard selector"""
-    # Report Selection
-    report_type = st.sidebar.radio(
-        "Select Report Type",
-        ["Branch Reco Trend", "CSD SDR Trend"]
-    )
-    
-    if report_type == "Branch Reco Trend":
-        show_collections_dashboard()  # Your existing dashboard function
-    else:
-        show_sdr_dashboard()
+    st.title("TSG Payment Receivables Analysis")
 
-def load_itss_data():
-    """Load ITSS Tender data"""
-    df = decrypt_and_load_excel("./itss_tender_encrypted.xlsx")
-    if df is None:
-        return None
+    # Sidebar Filters
+    date_columns = [col for col in df.columns if 'Balance_' in col]
+    selected_date = st.sidebar.selectbox("Select Date for Analysis:", date_columns)
 
-    try:
-        aging_categories = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
-        for col in aging_categories:
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-        return df
-    except Exception as e:
-        st.error(f"Error loading ITSS data: {str(e)}")
-        return None
+    # Display Data
+    st.write("Showing TSG Trend Data", df.head())
 
-def style_itss_data(df, aging_categories):
-    """Style the ITSS dataframe"""
-    def highlight_values(val):
-        try:
-            if pd.isna(val) or val == 0:
-                return ''
-            elif val > 0:
-                return 'background-color: #FF7575'  # Red
-            else:
-                return 'background-color: #92D050'  # Green
-        except:
-            return ''
-    
-    # Apply styling
-    return df.style.applymap(
-        highlight_values,
-        subset=aging_categories
-    ).format(
-        {col: '{:.2f}' for col in aging_categories}
-    )
-
-def style_itss_trend(df, selected_date):
-    """Style the ITSS tender dataframe with color coding comparing to previous date"""
-    def get_comparison_value(row, col):
-        try:
-            current_value = row[f"{selected_date}_{col}"]
-            dates = sorted([c.split('_')[0] for c in df.columns if '_' in c and col in c], reverse=True)
-            current_date_idx = dates.index(selected_date)
-            if current_date_idx < len(dates) - 1:
-                next_date = dates[current_date_idx + 1]
-                previous_value = row[f"{next_date}_{col}"]
-                if pd.notna(current_value) and pd.notna(previous_value):
-                    return current_value - previous_value
-            return None
-        except:
-            return None
-    
-    def color_changes(val, comparison_val):
-        if pd.isna(val) or val == 0:
-            return ''
-        if comparison_val is not None:
-            if comparison_val < 0:
-                return 'background-color: #92D050'  # Green for decrease
-            elif comparison_val > 0:
-                return 'background-color: #FF7575'  # Red for increase
-        return ''
-    
-    # Get aging categories
-    aging_categories = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
-    
-    # Create StyleFrame
-    comparison_styles = pd.DataFrame(index=df.index, columns=df.columns)
-    
-    for category in aging_categories:
-        col_name = f"{selected_date}_{category}"
-        if col_name in df.columns:
-            comparison_values = df.apply(
-                lambda row: get_comparison_value(row, category),
-                axis=1
-            )
-            comparison_styles[col_name] = comparison_values.apply(
-                lambda x: color_changes(x, x)
-            )
-    
-    # Apply styling
-    return df.style.apply(lambda _: comparison_styles, axis=None)\
-                  .format(lambda x: '{:.2f}'.format(x) if isinstance(x, (int, float)) and pd.notna(x) else '-')
-
+# Dashboard function for ITSS Tender Data
 def show_itss_dashboard():
-    """Display ITSS Tender Analysis Dashboard"""
-    st.title("ITSS SDR Aging Analysis")
-    
-    # Load data
-    df = load_itss_data()
+    df = load_data_from_drive(ITSS_TENDER_FILE_ID)
     if df is None:
+        st.error("Unable to load ITSS data. Please check the Google Drive file.")
         return
-    
-    try:
-        # Define aging categories
-        aging_categories = [
-            '61-90', '91-120', '121-180', '181-360',
-            '361-720', 'More than 2 Yr'
-        ]
-        
-        # Date selection
-        dates = sorted(df['Date'].unique(), reverse=True)
-        selected_date = st.selectbox(
-            "Select Date for Analysis",
-            dates,
-            format_func=lambda x: x.strftime('%Y-%m-%d')
-        )
-        
-        # Filter data for selected date
-        current_data = df[df['Date'] == selected_date].copy()
-        
-        # Summary metrics
-        st.markdown("### Summary Metrics")
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            total_outstanding = current_data[aging_categories].sum().sum()
-            st.metric(
-                "Total Outstanding",
-                f"₹{total_outstanding:.2f} Lakhs"
-            )
-        
-        with col2:
-            high_risk = current_data[['361-720', 'More than 2 Yr']].sum().sum()
-            st.metric(
-                "High Risk Amount",
-                f"₹{high_risk:.2f} Lakhs",
-                f"{(high_risk/total_outstanding*100 if total_outstanding else 0):.1f}%"
-            )
-        
-        with col3:
-            active_accounts = len(current_data[current_data[aging_categories].sum(axis=1) > 0])
-            st.metric(
-                "Active Accounts",
-                str(active_accounts)
-            )
-        
-        # Main data display
-        st.markdown("### Account-wise Aging Analysis")
-        display_cols = ['Account Name'] + aging_categories
-        st.dataframe(
-            style_itss_data(current_data[display_cols], aging_categories),
-            height=400,
-            use_container_width=True
-        )
-        
-        # Visualizations
-        st.markdown("### Analysis")
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Distribution pie chart
-            dist_data = current_data[aging_categories].sum()
-            fig_pie = px.pie(
-                values=dist_data.values,
-                names=dist_data.index,
-                title="Distribution by Aging Category"
-            )
-            st.plotly_chart(fig_pie, use_container_width=True)
-        
-        with col2:
-            # Top accounts
-            current_data['Total'] = current_data[aging_categories].sum(axis=1)
-            top_accounts = current_data.nlargest(5, 'Total')
-            fig_bar = px.bar(
-                top_accounts,
-                x='Account Name',
-                y='Total',
-                title="Top 5 Accounts by Outstanding"
-            )
-            st.plotly_chart(fig_bar, use_container_width=True)
-        
-        # Export option
-        if st.sidebar.button("Export Analysis"):
-            buffer = io.BytesIO()
-            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-                current_data[display_cols].to_excel(
-                    writer, 
-                    sheet_name='ITSS Analysis',
-                    index=False
-                )
-            
-            st.sidebar.download_button(
-                label="📥 Download Report",
-                data=buffer.getvalue(),
-                file_name=f"itss_analysis_{selected_date.strftime('%Y-%m-%d')}.xlsx",
-                mime="application/vnd.ms-excel"
-            )
-        
-    except Exception as e:
-        st.error(f"Error in ITSS analysis: {str(e)}")
-        st.write("Error details:", str(e))
-        st.write("Available columns:", list(df.columns))
 
-# Define menu structure
-DEPARTMENT_REPORTS = {
-    "CSD": {
-        "Branch Reco Trend": show_collections_dashboard,
-        "CSD SDR Trend": show_sdr_dashboard
-    },
-    "TSG": {
-        "TSG Payment Receivables": show_tsg_dashboard
-    },
-    "ITSS": {
-        "ITSS SDR Analysis": show_itss_dashboard
-    },
-    "Finance": {
-        # Add Finance reports here
-    }
-}
+    st.title("ITSS Tender Data Analysis")
 
-def define_department_structure():
-    """Define the department and report structure"""
-    return {
-        "CSD": {
-            "Branch Reco Trend": show_collections_dashboard,
-            "CSD SDR Trend": show_sdr_dashboard
-        },
-        "TSG": {
-            "TSG Payment Receivables": show_tsg_dashboard
-        },
-        "ITSS": {
-            "ITSS SDR Analysis": show_itss_dashboard
-        },
-        "Finance": {
-            # Add Finance reports here
-        }
-    }
+    # Sidebar Filters
+    date_columns = [col for col in df.columns if 'Balance_' in col]
+    selected_date = st.sidebar.selectbox("Select Date for Analysis:", date_columns)
 
-def show_department_menu():
-    """Display hierarchical department menu"""
-    # Department selection
-    st.sidebar.title("Select Department")
-    
-    # Get department structure
-    DEPARTMENT_REPORTS = define_department_structure()
-    
-    # Initialize session state for menu
-    if 'selected_department' not in st.session_state:
-        st.session_state.selected_department = None
-    if 'selected_report' not in st.session_state:
-        st.session_state.selected_report = None
-    
-    # Department selection
-    departments = list(DEPARTMENT_REPORTS.keys())
-    
-    # Create department buttons
-    for dept in departments:
-        if st.sidebar.button(
-            dept,
-            key=f"dept_{dept}",
-            help=f"View {dept} department reports"
-        ):
-            st.session_state.selected_department = dept
-            st.session_state.selected_report = None
-            st.rerun()
-    
-    # Show reports for selected department
-    if st.session_state.selected_department:
-        st.sidebar.markdown("---")
-        st.sidebar.subheader(f"{st.session_state.selected_department} Reports")
-        
-        reports = list(DEPARTMENT_REPORTS[st.session_state.selected_department].keys())
-        
-        for report in reports:
-            if st.sidebar.radio(
-                "",
-                [report],
-                key=f"report_{report}",
-                index=0 if st.session_state.selected_report == report else None,
-                label_visibility="collapsed"
-            ):
-                st.session_state.selected_report = report
-                return DEPARTMENT_REPORTS[st.session_state.selected_department][report]
-    
-    return None
+    # Display Data
+    st.write("Showing ITSS Data", df.head())
 
-def show_dashboard():
-    """Main dashboard selector"""
-    report_type = st.sidebar.radio(
-        "Select Report Type",
-        ["Branch Reco Trend", "CSD SDR Trend", "TSG Payment Receivables", "ITSS SDR Analysis"]
-    )
-    
-    if report_type == "Branch Reco Trend":
-        show_collections_dashboard()
-    elif report_type == "CSD SDR Trend":
-        show_sdr_dashboard()
-    elif report_type == "TSG Payment Receivables":
-        show_tsg_dashboard()
-    else:
-        show_itss_dashboard()
-
+# Main function to handle the entire app flow
 def main():
     if not check_password():
         return
 
-    # Debugging: Display files available in the current directory
-    st.sidebar.write("Debug: Files in the current directory:")
-    try:
-        files_in_directory = os.listdir(".")
-        st.sidebar.write(files_in_directory)
-    except Exception as e:
-        st.sidebar.error(f"Error listing files: {str(e)}")
+    # Sidebar for selecting the report
+    st.sidebar.title("Select Report Type")
+    report_option = st.sidebar.radio(
+        "Choose a Report",
+        ["Collections Dashboard", "SDR Trend Analysis", "TSG Payment Receivables", "ITSS Tender Analysis", "Exit"]
+    )
 
-    # Show Department Reports Dashboard
-    st.sidebar.title("Select Department")
-    
-    DEPARTMENT_REPORTS = {
-        "CSD": {
-            "Branch Reco Trend": show_collections_dashboard,
-            "CSD SDR Trend": show_sdr_dashboard
-        },
-        "TSG": {
-            "TSG Payment Receivables": show_tsg_dashboard
-        },
-        "ITSS": {
-            "ITSS SDR Analysis": show_itss_dashboard
-        },
-    }
-
-    department = st.sidebar.selectbox("Select Department", options=list(DEPARTMENT_REPORTS.keys()))
-    report = st.sidebar.selectbox("Select Report", options=list(DEPARTMENT_REPORTS[department].keys()))
-    
-    # Call the report function based on selection
-    if report:
-        DEPARTMENT_REPORTS[department][report]()
+    if report_option == "Collections Dashboard":
+        show_collections_dashboard()
+    elif report_option == "SDR Trend Analysis":
+        show_sdr_dashboard()
+    elif report_option == "TSG Payment Receivables":
+        show_tsg_dashboard()
+    elif report_option == "ITSS Tender Analysis":
+        show_itss_dashboard()
+    elif report_option == "Exit":
+        st.stop()
 
     # Logout option
+    st.sidebar.markdown("---")
     if st.sidebar.button("Logout"):
         st.session_state.authenticated = False
-        st.rerun()
+        st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
