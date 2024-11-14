@@ -79,13 +79,13 @@ import hashlib
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
+# Credentials for Google Drive
 CREDENTIALS = {
-    "admin": hash_password("admin123"),
-    "ceo": hash_password("ceo123"),
-    "manager": hash_password("manager123")
+    "admin": hashlib.sha256("admin123".encode()).hexdigest(),
+    "ceo": hashlib.sha256("ceo123".encode()).hexdigest(),
+    "manager": hashlib.sha256("manager123".encode()).hexdigest()
 }
 
-# File IDs configuration with error handling
 FILE_IDS = {
     'collections_data': '1zCSAx8jzOLewJXxOQlHjlUxXKoHbdopD',
     'itss_tender': '1o6SjeyNuvSyt9c5uCsq4MGFlZV1moC3V',
@@ -93,72 +93,55 @@ FILE_IDS = {
     'tsg_trend': '1Kf8nHi1shw6q0oozXFEScyE0bmhhPDPo'
 }
 
-# Enhanced Google Drive authentication with retry mechanism
-@st.cache_resource(ttl=3600)  # Cache for 1 hour
+@st.cache_resource(ttl=3600)  # Cache authentication for 1 hour
 def authenticate_drive():
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            credentials = service_account.Credentials.from_service_account_info(
-                st.secrets["google_drive"],
-                scopes=['https://www.googleapis.com/auth/drive.readonly']
-            )
-            service = build('drive', 'v3', credentials=credentials)
-            return service
-        except Exception as e:
-            if attempt == max_retries - 1:
-                st.error(f"❌ Failed to authenticate after {max_retries} attempts: {str(e)}")
-                return None
-            time.sleep(1)  # Wait before retrying
+    try:
+        credentials = service_account.Credentials.from_service_account_info(
+            st.secrets["google_drive"],
+            scopes=['https://www.googleapis.com/auth/drive.readonly']
+        )
+        service = build('drive', 'v3', credentials=credentials)
+        return service
+    except Exception as e:
+        st.error(f"Failed to authenticate with Google Drive: {str(e)}")
+        return None
 
-# Enhanced data loading with caching and progress tracking
 @st.cache_data(ttl=300)
 def load_data_from_drive(file_id):
     try:
-        with st.spinner("Loading data..."):
-            service = authenticate_drive()
-            if not service:
-                return None
+        service = authenticate_drive()
+        if not service:
+            return None
 
-            request = service.files().get_media(fileId=file_id)
-            file_buffer = io.BytesIO()
-            downloader = MediaIoBaseDownload(file_buffer, request)
+        request = service.files().get_media(fileId=file_id)
+        file_buffer = io.BytesIO()
+        downloader = MediaIoBaseDownload(file_buffer, request)
 
-            progress_bar = st.progress(0)
-            done = False
-            while not done:
-                status, done = downloader.next_chunk()
-                progress_bar.progress(status.progress())
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
 
-            file_buffer.seek(0)
-            df = pd.read_excel(file_buffer, header=None)
+        file_buffer.seek(0)
+        df = pd.read_excel(file_buffer, header=None)
 
-            # Enhanced column handling
-            date_columns = [
-                datetime.strptime(date, '%d-%b-%y').strftime('%d-%b-%y')
-                for date in ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', 
-                            '06-Oct-24', '30-Sep-24', '21-Sep-24']
-            ]
+        # Assign appropriate columns based on file structure
+        columns = ['Branch Name', 'Reduced Pending Amount']
+        dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
+        for date in dates:
+            columns.extend([f'Balance_{date}', f'Pending_{date}'])
 
-            columns = ['Branch Name', 'Reduced Pending Amount']
-            for date in date_columns:
-                columns.extend([f'Balance_{date}', f'Pending_{date}'])
+        df.columns = columns[:len(df.columns)]
+        df = df.iloc[1:].reset_index(drop=True)
 
-            df.columns = columns[:len(df.columns)]
-            df = df.iloc[1:].reset_index(drop=True)
+        # Convert data to numeric format
+        for col in df.columns:
+            if col != 'Branch Name':
+                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', '').str.strip(), errors='coerce')
 
-            # Enhanced data cleaning
-            for col in df.columns:
-                if col != 'Branch Name':
-                    df[col] = pd.to_numeric(
-                        df[col].astype(str).str.replace(',', '').str.strip(), 
-                        errors='coerce'
-                    )
-            
-            return df
+        return df
 
     except Exception as e:
-        st.error(f"Error loading data: {str(e)}")
+        st.error(f"Error loading data from Google Drive: {str(e)}")
         return None
 
 # Enhanced metrics calculation
@@ -201,7 +184,7 @@ def check_password():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
         st.session_state.login_attempts = 0
-        
+
     if not st.session_state.authenticated:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
@@ -209,14 +192,14 @@ def check_password():
             st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>", unsafe_allow_html=True)
             username = st.text_input("Username").lower()
             password = st.text_input("Password", type="password")
-            
+
             if st.button("Login"):
                 if st.session_state.login_attempts >= 3:
                     st.error("Too many failed attempts. Please try again later.")
                     time.sleep(5)
                     return False
-                
-                if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
+
+                if username in CREDENTIALS and CREDENTIALS[username] == hashlib.sha256(password.encode()).hexdigest():
                     st.session_state.authenticated = True
                     st.session_state.username = username
                     st.experimental_rerun()
@@ -352,51 +335,108 @@ def show_itss_dashboard():
     if df is None:
         return
 
-    st.title("ITSS Tender Analysis Dashboard")
+    st.title("ITSS Tender Analysis")
     
-    # Filters
-    st.sidebar.title("Filter Options")
-    selected_date = st.sidebar.selectbox(
-        "Select Date for Analysis:",
-        sorted(df['Date'].unique(), reverse=True)
-    )
-
-    # Filter data for the selected date
-    df_filtered = df[df['Date'] == selected_date].copy()
-    aging_columns = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
-    
-    # Display Metrics
-    st.subheader("Account-wise Aging Analysis")
     try:
-        # Highlight Increase/Decrease in Aging Buckets
-        df_filtered.sort_values(by='Account Name', inplace=True)
-        previous_date = df['Date'].unique()
-        previous_date.sort()
-        previous_date = previous_date[previous_date.tolist().index(selected_date) - 1] if selected_date != previous_date[0] else None
-        if previous_date is not None:
-            df_previous = df[df['Date'] == previous_date].set_index('Account Name')[aging_columns]
-            df_filtered.set_index('Account Name', inplace=True)
-            changes_df = df_filtered[aging_columns].subtract(df_previous, fill_value=0)
-            changes_df.reset_index(inplace=True)
-            df_filtered.reset_index(inplace=True)
+        # Define aging categories
+        aging_categories = [
+            '61-90', '91-120', '121-180', '181-360',
+            '361-720', 'More than 2 Yr'
+        ]
+        
+        # Date selection
+        dates = sorted(df['Date'].unique(), reverse=True)
+        selected_date = st.selectbox(
+            "Select Date for Analysis",
+            dates,
+            format_func=lambda x: x.strftime('%Y-%m-%d')
+        )
+        
+        # Filter data for selected date
+        current_data = df[df['Date'] == selected_date].copy()
+        
+        # Summary metrics
+        st.markdown("### Summary Metrics")
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            total_outstanding = current_data[aging_categories].sum().sum()
+            st.metric(
+                "Total Outstanding",
+                f"₹{total_outstanding:.2f} Lakhs"
+            )
+        
+        with col2:
+            high_risk = current_data[['361-720', 'More than 2 Yr']].sum().sum()
+            st.metric(
+                "High Risk Amount",
+                f"₹{high_risk:.2f} Lakhs",
+                f"{(high_risk/total_outstanding*100 if total_outstanding else 0):.1f}%"
+            )
+        
+        with col3:
+            active_accounts = len(current_data[current_data[aging_categories].sum(axis=1) > 0])
+            st.metric(
+                "Active Accounts",
+                str(active_accounts)
+            )
+        
+        # Main data display
+        st.markdown("### Account-wise Aging Analysis")
+        display_cols = ['Account Name'] + aging_categories
+        st.dataframe(
+            style_itss_data(current_data[display_cols], aging_categories),
+            height=400,
+            use_container_width=True
+        )
+        
+        # Visualizations
+        st.markdown("### Analysis")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Distribution pie chart
+            dist_data = current_data[aging_categories].sum()
+            fig_pie = px.pie(
+                values=dist_data.values,
+                names=dist_data.index,
+                title="Distribution by Aging Category"
+            )
+            st.plotly_chart(fig_pie, use_container_width=True)
+        
+        with col2:
+            # Top accounts
+            current_data['Total'] = current_data[aging_categories].sum(axis=1)
+            top_accounts = current_data.nlargest(5, 'Total')
+            fig_bar = px.bar(
+                top_accounts,
+                x='Account Name',
+                y='Total',
+                title="Top 5 Accounts by Outstanding"
+            )
+            st.plotly_chart(fig_bar, use_container_width=True)
+        
+        # Export option
+        if st.sidebar.button("Export Analysis"):
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                current_data[display_cols].to_excel(
+                    writer, 
+                    sheet_name='ITSS Analysis',
+                    index=False
+                )
             
-            # Apply color formatting for improvements and regressions
-            def highlight_itss_changes(val):
-                if pd.isna(val):
-                    return ''
-                elif val < 0:
-                    return 'background-color: #92D050'  # Green for decrease in amount
-                elif val > 0:
-                    return 'background-color: #FF7575'  # Red for increase in amount
-                else:
-                    return ''
-
-            styled_changes_df = changes_df.style.applymap(highlight_itss_changes, subset=aging_columns)
-            st.dataframe(styled_changes_df, height=600, use_container_width=True)
-        else:
-            st.dataframe(df_filtered[['Account Name'] + aging_columns], height=600, use_container_width=True)
+            st.sidebar.download_button(
+                label="📥 Download Report",
+                data=buffer.getvalue(),
+                file_name=f"itss_analysis_{selected_date.strftime('%Y-%m-%d')}.xlsx",
+                mime="application/vnd.ms-excel"
+            )
+        
     except Exception as e:
-        st.error(f"Error in ITSS tender analysis: {str(e)}")
+        st.error(f"Error in ITSS analysis: {str(e)}")
+        st.write("Error details:", str(e))
+        st.write("Available columns:", list(df.columns))
 
 def show_tsg_dashboard():
     df = load_data_from_drive(FILE_IDS['tsg_trend'])
