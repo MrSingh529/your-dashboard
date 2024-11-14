@@ -48,6 +48,13 @@ CREDENTIALS = {
     "manager": "manager123"
 }
 
+FILE_IDS = {
+    'collections_data': '1zCSAx8jzOLewJXxOQlHjlUxXKoHbdopD',
+    'itss_tender': '1o6SjeyNuvSyt9c5uCsq4MGFlZV1moC3V',
+    'sdr_trend': '1PixxavAM29QrtjZUh-TMpa8gDSE7lg60',
+    'tsg_trend': '1Kf8nHi1shw6q0oozXFEScyE0bmhhPDPo'
+}
+
 # Test service account credentials to verify they load correctly
 def test_service_account_credentials():
     try:
