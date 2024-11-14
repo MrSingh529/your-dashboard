@@ -8,6 +8,8 @@ import io
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import json
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 
 # Configure page settings
 st.set_page_config(
@@ -36,25 +38,6 @@ st.markdown("""
         border-radius: 10px;
         margin-bottom: 20px;
     }
-    .comparison-card {
-        background-color: #ffffff;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        margin: 10px 0;
-    }
-    .login-container {
-        max-width: 400px;
-        margin: auto;
-        padding: 20px;
-        background-color: white;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .stButton>button {
-        width: 100%;
-        margin-top: 10px;
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -65,50 +48,32 @@ CREDENTIALS = {
     "manager": "manager123"
 }
 
-# Google Drive file IDs for each data set
-FILE_IDS = {
-    "collections": '1zCSAx8jzOLewJXxOQlHjlUxXKoHbdopD',
-    "itss_tender": '1o6SjeyNuvSyt9c5uCsq4MGFlZV1moC3V',
-    "sdr_trend": '1PixxavAM29QrtjZUh-TMpa8gDSE7lg60',
-    "tsg_trend": '1Kf8nHi1shw6q0oozXFEScyE0bmhhPDPo'
-}
-
-# Google Drive Authentication using Streamlit secrets
+# Google Drive Authentication using Secrets from Streamlit
 @st.cache_resource()
 def authenticate_drive():
-    """Authenticate Google Drive access using Streamlit secrets."""
-    gauth = GoogleAuth()
+    # Use the secrets from Streamlit's secrets manager
+    credentials = service_account.Credentials.from_service_account_info(
+        st.secrets["google_drive"]
+    )
+    service = build('drive', 'v3', credentials=credentials)
+    return service
 
-    # Use Streamlit secrets to load credentials
-    client_secrets = {
-        "installed": {
-            "client_id": st.secrets.google_drive.client_id,
-            "project_id": st.secrets.google_drive.project_id,
-            "auth_uri": st.secrets.google_drive.auth_uri,
-            "token_uri": st.secrets.google_drive.token_uri,
-            "auth_provider_x509_cert_url": st.secrets.google_drive.auth_provider_x509_cert_url,
-            "client_secret": st.secrets.google_drive.client_secret,
-            "redirect_uris": st.secrets.google_drive.redirect_uris
-        }
-    }
-
-    # Write client_secrets.json to authenticate PyDrive
-    with open("client_secrets.json", "w") as f:
-        json.dump(client_secrets, f)
-
-    gauth.LoadClientConfigFile("client_secrets.json")
-    gauth.LocalWebserverAuth()  # This will open a Google login page
-    drive = GoogleDrive(gauth)
-    return drive
-
-drive = authenticate_drive()
+drive_service = authenticate_drive()
 
 # Load data from Google Drive
 def load_data_from_drive(file_id):
     try:
-        file = drive.CreateFile({'id': file_id})
-        file.GetContentFile('data.xlsx')  # Save file locally
-        df = pd.read_excel('data.xlsx', header=None)
+        request = drive_service.files().get_media(fileId=file_id)
+        file_data = io.BytesIO()
+        downloader = MediaIoBaseDownload(file_data, request)
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
+            st.write(f"Download progress: {int(status.progress() * 100)}%")
+        
+        # Load the file into a DataFrame
+        file_data.seek(0)
+        df = pd.read_excel(file_data, header=None)
         return df
     except Exception as e:
         st.error(f"Error loading data from Google Drive: {str(e)}")
@@ -135,7 +100,7 @@ def check_password():
 
 # Dashboard function to load collections data
 def show_collections_dashboard():
-    df = load_data_from_drive(FILE_IDS['collections'])
+    df = load_data_from_drive('1zCSAx8jzOLewJXxOQlHjlUxXKoHbdopD')
     if df is None:
         st.error("Unable to load data. Please check the Google Drive file.")
         return
