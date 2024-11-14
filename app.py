@@ -185,33 +185,28 @@ def load_itss_data():
         # Strip any leading/trailing spaces from column headers
         df.columns = df.columns.str.strip()
 
-        # Clean 'Date' column values (remove leading/trailing spaces)
-        df['Date'] = df['Date'].astype(str).str.strip()
-
-        # Try parsing the date with the correct format
-        try:
-            df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y', errors='coerce')
-        except ValueError:
-            st.warning("Date parsing failed for format '%d-%m-%Y'. Attempting with different formats.")
-
-        # If that doesn't work, try a range of common formats
+        # Clean 'Date' column values (remove leading/trailing spaces, handle non-printable characters)
+        df['Date'] = df['Date'].astype(str).str.strip().str.replace(r'[^\x00-\x7F]+', '', regex=True)
+        
+        # Try parsing the date with a range of formats
+        date_parsed = None
         possible_formats = ['%d-%m-%Y', '%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y']
+        
         for fmt in possible_formats:
-            if df['Date'].isna().all():
-                try:
-                    df['Date'] = pd.to_datetime(df['Date'], format=fmt, errors='coerce')
-                    valid_dates = df['Date'].dropna()
+            try:
+                date_parsed = pd.to_datetime(df['Date'], format=fmt, errors='coerce')
+                # If parsing was successful for some rows, break
+                if not date_parsed.isna().all():
+                    df['Date'] = date_parsed
                     st.write(f"Successfully parsed dates with format: {fmt}")
-                    st.write("Valid Dates After Dropping NaT:", valid_dates)
-                    if len(valid_dates) > 0:
-                        break
-                except Exception as e:
-                    st.write(f"Error parsing with format {fmt}: {e}")
+                    break
+            except Exception as e:
+                st.write(f"Error parsing with format {fmt}: {e}")
 
         # Fallback: let pandas infer format
-        if df['Date'].isna().all():
+        if date_parsed is None or date_parsed.isna().all():
             df['Date'] = pd.to_datetime(df['Date'], errors='coerce', dayfirst=True)
-
+        
         # Filter valid dates
         valid_dates = df['Date'].dropna()
         st.write("Valid Dates After Dropping NaT:", valid_dates)
