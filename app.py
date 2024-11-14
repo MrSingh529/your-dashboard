@@ -357,46 +357,45 @@ def show_itss_dashboard():
     st.sidebar.title("Filter Options")
     selected_date = st.sidebar.selectbox(
         "Select Date for Analysis:",
-        sorted([col for col in df.columns if 'Balance_' in col], reverse=True)
+        sorted(df['Date'].unique(), reverse=True)
     )
 
-    # Calculate Metrics
-    balance_col = f"Balance_{selected_date.split('_')[-1]}"
-    pending_col = f"Pending_{selected_date.split('_')[-1]}"
-    
-    metrics = {
-        'total_balance': df[balance_col].sum(),
-        'total_pending': df[pending_col].sum(),
-        'avg_balance_change': df[balance_col].pct_change().mean() * 100
-    }
+    # Filter data for the selected date
+    df_filtered = df[df['Date'] == selected_date].copy()
+    aging_columns = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
     
     # Display Metrics
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total Balance", f"₹{metrics['total_balance']:,.2f}")
-    with col2:
-        st.metric("Total Pending", f"₹{metrics['total_pending']:,.2f}")
-    with col3:
-        st.metric("Average Balance Change", f"{metrics['avg_balance_change']:.2f}%")
-    
-    # Visualization
-    st.subheader("ITSS Tender Balance and Pending Analysis")
-    trend_data = df.melt(
-        id_vars=['Branch Name'],
-        value_vars=[balance_col, pending_col],
-        var_name='Category',
-        value_name='Amount'
-    )
-    
-    fig = px.bar(
-        trend_data,
-        x='Branch Name',
-        y='Amount',
-        color='Category',
-        barmode='group',
-        title="Branch-wise ITSS Balance and Pending Amounts"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    st.subheader("Account-wise Aging Analysis")
+    try:
+        # Highlight Increase/Decrease in Aging Buckets
+        df_filtered.sort_values(by='Account Name', inplace=True)
+        previous_date = df['Date'].unique()
+        previous_date.sort()
+        previous_date = previous_date[previous_date.tolist().index(selected_date) - 1] if selected_date != previous_date[0] else None
+        if previous_date is not None:
+            df_previous = df[df['Date'] == previous_date].set_index('Account Name')[aging_columns]
+            df_filtered.set_index('Account Name', inplace=True)
+            changes_df = df_filtered[aging_columns].subtract(df_previous, fill_value=0)
+            changes_df.reset_index(inplace=True)
+            df_filtered.reset_index(inplace=True)
+            
+            # Apply color formatting for improvements and regressions
+            def highlight_itss_changes(val):
+                if pd.isna(val):
+                    return ''
+                elif val < 0:
+                    return 'background-color: #92D050'  # Green for decrease in amount
+                elif val > 0:
+                    return 'background-color: #FF7575'  # Red for increase in amount
+                else:
+                    return ''
+
+            styled_changes_df = changes_df.style.applymap(highlight_itss_changes, subset=aging_columns)
+            st.dataframe(styled_changes_df, height=600, use_container_width=True)
+        else:
+            st.dataframe(df_filtered[['Account Name'] + aging_columns], height=600, use_container_width=True)
+    except Exception as e:
+        st.error(f"Error in ITSS tender analysis: {str(e)}")
 
 def show_tsg_dashboard():
     df = load_data_from_drive(FILE_IDS['tsg_trend'])
