@@ -172,27 +172,26 @@ def load_data_from_drive(file_id):
 def load_itss_data():
     """Load ITSS Tender data from Google Drive"""
     try:
-        # Load data from Google Drive using the correct file_id key 'itss_tender'
+        # Load data from Google Drive using the appropriate file_id
         df = load_data_from_drive(FILE_IDS['itss_tender'])
         
         if df is None:
             return None
 
-        # Assign proper column names if they are not already in the file
-        columns = ['Date', 'Account Name', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
+        # Assign proper column names
+        columns = ['Account Name', 'Date', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         df.columns = columns[:len(df.columns)]
         
-        # Parse dates column if applicable
-        if 'Date' in df.columns:
-            df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-        
+        # Parse the 'Date' column and handle any parsing errors
+        df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y', errors='coerce')
+
         # Define aging categories
         aging_categories = [
             '61-90', '91-120', '121-180', '181-360',
             '361-720', 'More than 2 Yr'
         ]
         
-        # Convert amount columns to numeric, handle any errors or non-numeric values
+        # Convert amount columns to numeric, handling non-numeric values
         for col in aging_categories:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
@@ -1039,8 +1038,11 @@ def show_itss_dashboard():
             '361-720', 'More than 2 Yr'
         ]
         
+        # Drop rows where 'Date' is NaT
+        df = df.dropna(subset=['Date'])
+
         # Date selection
-        valid_dates = df['Date'].dropna().unique()  # Drop NaT values from the date list
+        valid_dates = df['Date'].unique()  # Use only valid dates
         if len(valid_dates) == 0:
             st.error("No valid dates found for analysis.")
             return
