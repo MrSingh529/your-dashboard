@@ -10,10 +10,11 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from functools import lru_cache
 import time
+import hashlib
 
 # Configure page settings
 st.set_page_config(
-    page_title="Collections & Outstanding Analysis Dashboard",
+    page_title="TSG Payment Receivables Dashboard",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -56,18 +57,6 @@ st.markdown("""
     .trend-negative {
         color: #e74c3c;
         font-weight: bold;
-    }
-    .login-container {
-        max-width: 400px;
-        margin: auto;
-        padding: 20px;
-        background-color: white;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .stButton>button {
-        width: 100%;
-        margin-top: 10px;
     }
     .loading {
         display: inline-block;
@@ -122,7 +111,7 @@ def authenticate_drive():
             time.sleep(1)  # Wait before retrying
 
 # Enhanced data loading with caching and progress tracking
-@st.cache_data(ttl=300)  # Cache for 5 minutes
+@st.cache_data(ttl=300)
 def load_data_from_drive(file_id):
     try:
         with st.spinner("Loading data..."):
@@ -165,15 +154,6 @@ def load_data_from_drive(file_id):
                         errors='coerce'
                     )
             
-            # Add percentage change columns
-            for i in range(len(date_columns)-1):
-                current_date = date_columns[i]
-                prev_date = date_columns[i+1]
-                df[f'Balance_Change_{current_date}'] = (
-                    (df[f'Balance_{current_date}'] - df[f'Balance_{prev_date}']) /
-                    df[f'Balance_{prev_date}'] * 100
-                ).round(2)
-
             return df
 
     except Exception as e:
@@ -254,71 +234,206 @@ def show_collections_dashboard():
 
     st.title("Collections Dashboard")
     
-    # Enhanced filters with session state
-    if 'selected_branches' not in st.session_state:
-        st.session_state.selected_branches = df['Branch Name'].unique().tolist()[:3]
-    
+    # Filters
     st.sidebar.title("Filter Options")
-    selected_branches = st.sidebar.multiselect(
-        "Select Branches:",
-        df['Branch Name'].unique().tolist(),
-        st.session_state.selected_branches
+    selected_date = st.sidebar.selectbox(
+        "Select Date for Analysis:",
+        sorted([col for col in df.columns if 'Balance_' in col], reverse=True)
     )
-    st.session_state.selected_branches = selected_branches
+
+    # Calculate Metrics
+    balance_col = f"Balance_{selected_date.split('_')[-1]}"
+    pending_col = f"Pending_{selected_date.split('_')[-1]}"
     
-    date_columns = [col for col in df.columns if 'Balance_' in col]
-    selected_date = st.sidebar.selectbox("Select Date for Analysis:", date_columns)
+    metrics = {
+        'total_balance': df[balance_col].sum(),
+        'total_pending': df[pending_col].sum(),
+        'avg_balance_change': df[balance_col].pct_change().mean() * 100
+    }
     
-    # Filter data
-    filtered_df = df[df['Branch Name'].isin(selected_branches)]
+    # Display Metrics
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Balance", f"₹{metrics['total_balance']:,.2f}")
+    with col2:
+        st.metric("Total Pending", f"₹{metrics['total_pending']:,.2f}")
+    with col3:
+        st.metric("Average Balance Change", f"{metrics['avg_balance_change']:.2f}%")
     
-    # Calculate and display metrics
-    metrics = calculate_branch_metrics(filtered_df, selected_date)
-    if metrics:
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric(
-                "Total Balance",
-                f"₹{metrics['total_balance']:,.2f}",
-                f"{metrics.get('avg_balance_change', 0):.1f}%"
-            )
-        with col2:
-            st.metric(
-                "Total Pending",
-                f"₹{metrics['total_pending']:,.2f}"
-            )
-        with col3:
-            st.metric(
-                "Collection Ratio",
-                f"{metrics['collection_ratio']:.2f}%"
-            )
-        
-        # Enhanced visualizations
-        col1, col2 = st.columns(2)
-        with col1:
-            fig1 = px.bar(
-                filtered_df,
-                x='Branch Name',
-                y=selected_date,
-                title="Branch-wise Balance",
-                color='Branch Name',
-                labels={'value': 'Amount (₹)'}
-            )
-            fig1.update_layout(showlegend=False)
-            st.plotly_chart(fig1, use_container_width=True)
-            
-        with col2:
-            if f'Balance_Change_{selected_date}' in filtered_df.columns:
-                fig2 = px.scatter(
-                    filtered_df,
-                    x='Branch Name',
-                    y=f'Balance_Change_{selected_date}',
-                    size=selected_date,
-                    title="Balance Change by Branch",
-                    color=f'Balance_Change_{selected_date}',
-                    color_continuous_scale='RdYlGn'
-                )
-                st.plotly_chart(fig2, use_container_width=True)
+    # Visualization
+    st.subheader("Branch-wise Balance and Pending Amounts")
+    trend_data = df.melt(
+        id_vars=['Branch Name'],
+        value_vars=[balance_col, pending_col],
+        var_name='Category',
+        value_name='Amount'
+    )
+    
+    fig = px.bar(
+        trend_data,
+        x='Branch Name',
+        y='Amount',
+        color='Category',
+        barmode='group',
+        title="Branch-wise Balance and Pending Amounts"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+def show_sdr_dashboard():
+    df = load_data_from_drive(FILE_IDS['sdr_trend'])
+    if df is None:
+        return
+
+    st.title("CSD SDR Trend Analysis")
+    
+    # Filters
+    st.sidebar.title("Filter Options")
+    selected_date = st.sidebar.selectbox(
+        "Select Date for Analysis:",
+        sorted([col for col in df.columns if 'Balance_' in col], reverse=True)
+    )
+
+    # Calculate Metrics
+    balance_col = f"Balance_{selected_date.split('_')[-1]}"
+    pending_col = f"Pending_{selected_date.split('_')[-1]}"
+    
+    metrics = {
+        'total_balance': df[balance_col].sum(),
+        'total_pending': df[pending_col].sum(),
+        'avg_balance_change': df[balance_col].pct_change().mean() * 100
+    }
+    
+    # Display Metrics
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Balance", f"₹{metrics['total_balance']:,.2f}")
+    with col2:
+        st.metric("Total Pending", f"₹{metrics['total_pending']:,.2f}")
+    with col3:
+        st.metric("Average Balance Change", f"{metrics['avg_balance_change']:.2f}%")
+    
+    # Visualization
+    st.subheader("SDR Trend by Ageing Category")
+    trend_data = df.melt(
+        id_vars=['Branch Name'],
+        value_vars=[balance_col, pending_col],
+        var_name='Category',
+        value_name='Amount'
+    )
+    
+    fig = px.bar(
+        trend_data,
+        x='Branch Name',
+        y='Amount',
+        color='Category',
+        barmode='group',
+        title="Branch-wise SDR Balance and Pending Amounts"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+def show_itss_dashboard():
+    df = load_data_from_drive(FILE_IDS['itss_tender'])
+    if df is None:
+        return
+
+    st.title("ITSS Tender Analysis Dashboard")
+    
+    # Filters
+    st.sidebar.title("Filter Options")
+    selected_date = st.sidebar.selectbox(
+        "Select Date for Analysis:",
+        sorted([col for col in df.columns if 'Balance_' in col], reverse=True)
+    )
+
+    # Calculate Metrics
+    balance_col = f"Balance_{selected_date.split('_')[-1]}"
+    pending_col = f"Pending_{selected_date.split('_')[-1]}"
+    
+    metrics = {
+        'total_balance': df[balance_col].sum(),
+        'total_pending': df[pending_col].sum(),
+        'avg_balance_change': df[balance_col].pct_change().mean() * 100
+    }
+    
+    # Display Metrics
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Balance", f"₹{metrics['total_balance']:,.2f}")
+    with col2:
+        st.metric("Total Pending", f"₹{metrics['total_pending']:,.2f}")
+    with col3:
+        st.metric("Average Balance Change", f"{metrics['avg_balance_change']:.2f}%")
+    
+    # Visualization
+    st.subheader("ITSS Tender Balance and Pending Analysis")
+    trend_data = df.melt(
+        id_vars=['Branch Name'],
+        value_vars=[balance_col, pending_col],
+        var_name='Category',
+        value_name='Amount'
+    )
+    
+    fig = px.bar(
+        trend_data,
+        x='Branch Name',
+        y='Amount',
+        color='Category',
+        barmode='group',
+        title="Branch-wise ITSS Balance and Pending Amounts"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+def show_tsg_dashboard():
+    df = load_data_from_drive(FILE_IDS['tsg_trend'])
+    if df is None:
+        return
+
+    st.title("TSG Payment Receivables Trend Analysis")
+    
+    # Filters
+    st.sidebar.title("Filter Options")
+    selected_date = st.sidebar.selectbox(
+        "Select Date for Analysis:",
+        sorted([col for col in df.columns if 'Balance_' in col], reverse=True)
+    )
+
+    # Calculate Metrics
+    balance_col = f"Balance_{selected_date.split('_')[-1]}"
+    pending_col = f"Pending_{selected_date.split('_')[-1]}"
+    
+    metrics = {
+        'total_balance': df[balance_col].sum(),
+        'total_pending': df[pending_col].sum(),
+        'avg_balance_change': df[balance_col].pct_change().mean() * 100
+    }
+    
+    # Display Metrics
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Balance", f"₹{metrics['total_balance']:,.2f}")
+    with col2:
+        st.metric("Total Pending", f"₹{metrics['total_pending']:,.2f}")
+    with col3:
+        st.metric("Average Balance Change", f"{metrics['avg_balance_change']:.2f}%")
+    
+    # Visualization
+    st.subheader("Receivables Trend by Ageing Category")
+    trend_data = df.melt(
+        id_vars=['Branch Name'],
+        value_vars=[balance_col, pending_col],
+        var_name='Category',
+        value_name='Amount'
+    )
+    
+    fig = px.bar(
+        trend_data,
+        x='Branch Name',
+        y='Amount',
+        color='Category',
+        barmode='group',
+        title="Branch-wise Balance and Pending Amounts"
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 # Main function
 def main():
@@ -328,23 +443,17 @@ def main():
     st.sidebar.title("Navigation")
     report_option = st.sidebar.radio(
         "Choose a Report",
-        ["Collections Dashboard", "SDR Trend Analysis", 
-         "TSG Payment Receivables", "ITSS Tender Analysis", "Exit"]
+        ["Collections Dashboard", "CSD SDR Trend Analysis", "TSG Payment Receivables", "ITSS Tender Analysis"]
     )
 
-    # Session info
-    st.sidebar.markdown(f"Logged in as: **{st.session_state.username}**")
-    
     if report_option == "Collections Dashboard":
         show_collections_dashboard()
-    elif report_option == "SDR Trend Analysis":
+    elif report_option == "CSD SDR Trend Analysis":
         show_sdr_dashboard()
     elif report_option == "TSG Payment Receivables":
         show_tsg_dashboard()
     elif report_option == "ITSS Tender Analysis":
         show_itss_dashboard()
-    elif report_option == "Exit":
-        st.stop()
 
     st.sidebar.markdown("---")
     if st.sidebar.button("Logout"):
