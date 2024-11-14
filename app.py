@@ -182,8 +182,14 @@ def load_itss_data():
         columns = ['Account Name', 'Date', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         df.columns = columns[:len(df.columns)]
 
+        # Display the raw 'Date' column to inspect its content
+        st.sidebar.write("Raw 'Date' Column Values (First 5):", df['Date'].head())
+
         # Remove any leading/trailing whitespaces in the 'Date' column
         df['Date'] = df['Date'].astype(str).str.strip()
+
+        # Debug the length of each 'Date' value to see if there are issues
+        st.sidebar.write("Character Length of 'Date' Column Values (First 5):", df['Date'].str.len().head())
 
         # Attempt to parse the 'Date' column
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
@@ -191,7 +197,7 @@ def load_itss_data():
         # Drop rows where the 'Date' column is NaT
         df = df.dropna(subset=['Date'])
 
-        # Debugging output to inspect the 'Date' column
+        # Debugging output to inspect the 'Date' column after parsing
         st.sidebar.write("Valid Dates After Dropping NaT:", df['Date'].unique())
 
         # Define aging categories
