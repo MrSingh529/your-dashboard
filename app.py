@@ -9,7 +9,11 @@ import os
 from cryptography.fernet import Fernet
 
 # Load the encryption key from Streamlit secrets
-key = st.secrets["ENCRYPTION_KEY"].encode()
+key = st.secrets["ENCRYPTION_KEY"]
+# If the key is in a string format but needs to be bytes, decode it using base64.
+import base64
+key = base64.urlsafe_b64decode(key)
+
 cipher = Fernet(key)
 
 # Configure page settings
