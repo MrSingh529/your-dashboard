@@ -20,7 +20,7 @@ st.set_page_config(
 # Define global variable for cipher
 cipher = None
 
-# Get the key from secrets
+# Get the encryption key from secrets
 key = st.secrets.get("ENCRYPTION_KEY", "")
 
 try:
@@ -126,7 +126,7 @@ def check_password():
 # Function to decrypt and load an Excel file
 def decrypt_and_load_excel(file_path):
     global cipher  # Use the global cipher variable
-    
+
     if cipher is None:
         st.error("Cipher is not initialized, unable to decrypt the file.")
         return None
@@ -153,6 +153,7 @@ def decrypt_and_load_excel(file_path):
             df = pd.read_excel(file_obj)
         st.write(f"Excel loaded successfully for file: {file_path}, number of rows: {len(df)}")
         return df
+
     except FileNotFoundError as fnf_error:
         st.error(f"File not found: {str(fnf_error)}")
     except Exception as e:
