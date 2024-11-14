@@ -455,6 +455,56 @@ def show_collections_dashboard():
         except Exception as e:
             st.sidebar.error(f"Error exporting data: {str(e)}")
 
+def style_sdr_trend(df):
+    """
+    Style the SDR trend dataframe with correct color coding:
+    - Green when value decreases (improvement)
+    - Red when value increases (deterioration)
+    - Yellow for no change
+    """
+    def color_values(val, col_name):
+        try:
+            if col_name == 'Reduced OS':
+                # For Reduced OS column, negative is good (green)
+                if pd.isna(val):
+                    return ''
+                elif val < 0:
+                    return 'background-color: #92D050'  # Green
+                elif val > 0:
+                    return 'background-color: #FF7575'  # Red
+                else:
+                    return 'background-color: #FFFF00'  # Yellow
+            else:
+                # Get the date columns in order
+                date_cols = [col for col in df.columns if col not in ['Ageing Category', 'Reduced OS']]
+                date_cols.sort(reverse=True)  # Most recent first
+                
+                if col_name in date_cols:
+                    col_idx = date_cols.index(col_name)
+                    if col_idx < len(date_cols) - 1:  # If not the last date
+                        next_col = date_cols[col_idx + 1]
+                        current_val = val
+                        next_val = df.loc[df[col_name] == val, next_col].iloc[0]
+                        
+                        if pd.isna(current_val) or pd.isna(next_val):
+                            return ''
+                        elif current_val < next_val:  # Decreased (improved)
+                            return 'background-color: #92D050'  # Green
+                        elif current_val > next_val:  # Increased (deteriorated)
+                            return 'background-color: #FF7575'  # Red
+                        else:
+                            return 'background-color: #FFFF00'  # Yellow
+            return ''
+        except:
+            return ''
+    
+    # Apply styling
+    styled = df.style.apply(lambda x: [color_values(val, col) for val, col in zip(x, x.index)], axis=1)
+    
+    # Format numbers
+    numeric_columns = df.select_dtypes(include=['float64', 'int64']).columns
+    return styled.format("{:.2f}", subset=numeric_columns)
+
 def show_sdr_dashboard():
     df = load_data_from_drive(FILE_IDS['sdr_trend'])
     if df is None:
