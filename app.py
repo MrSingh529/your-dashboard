@@ -173,41 +173,42 @@ def load_itss_data():
     """Load ITSS Tender data from Google Drive"""
     try:
         # Load data from Google Drive using the appropriate file_id
-        df = load_data_from_drive(FILE_IDS['itss_tender'])
-
+        df = load_data_from_drive(FILE_IDS['itss_data'])
+        
         if df is None:
             return None
 
         # Assign proper column names if they are not already in the file
-        columns = ['Account Name', 'Date', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
+        columns = ['Date', 'Account Name', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         df.columns = columns[:len(df.columns)]
+        
+        # Strip whitespace from column names
+        df.columns = df.columns.str.strip()
 
-        # Force 'Date' column to be read as text and strip whitespaces
-        df['Date'] = df['Date'].astype(str).str.strip()
+        # Parse dates column, handling different formats or any whitespace issues
+        df['Date'] = df['Date'].astype(str).str.strip()  # Ensure no extra spaces
+        df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y', errors='coerce')
 
-        # Print entire 'Date' column to inspect for valid values
-        st.sidebar.write("Entire 'Date' Column Values:", df['Date'])
+        # Debugging output to see what's going on with the Date column
+        st.write("Raw 'Date' Column Values (First 5):", df['Date'].head())
+        st.write("Parsed Date Values After Conversion:", df['Date'])
 
-        # Attempt to parse the 'Date' column, coercing errors
-        df['Date'] = pd.to_datetime(df['Date'], errors='coerce', format='%m/%d/%Y')
-
-        # Drop rows where the 'Date' column is NaT
+        # Drop rows where date parsing failed
         df = df.dropna(subset=['Date'])
+        st.write("Valid Dates After Dropping NaT:", df['Date'])
 
-        # Debugging output to inspect the 'Date' column after parsing
-        st.sidebar.write("Valid Dates After Dropping NaT:", df['Date'].unique())
+        if df['Date'].empty:
+            st.error("No valid dates found for analysis.")
+            return None
 
         # Define aging categories
-        aging_categories = [
-            '61-90', '91-120', '121-180', '181-360',
-            '361-720', 'More than 2 Yr'
-        ]
+        aging_categories = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
 
         # Convert amount columns to numeric, handle any errors or non-numeric values
         for col in aging_categories:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-
+        
         return df
     except Exception as e:
         st.error(f"Error loading ITSS data: {str(e)}")
