@@ -181,10 +181,18 @@ def load_itss_data():
         # Assign proper column names if they are not already in the file
         columns = ['Account Name', 'Date', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         df.columns = columns[:len(df.columns)]
-        
-        # Parse the 'Date' column as datetime and drop rows where parsing fails
-        df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y', errors='coerce')
+
+        # Remove any leading/trailing whitespaces in the 'Date' column
+        df['Date'] = df['Date'].astype(str).str.strip()
+
+        # Attempt to parse the 'Date' column
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+
+        # Drop rows where the 'Date' column is NaT
         df = df.dropna(subset=['Date'])
+
+        # Debugging output to inspect the 'Date' column
+        st.sidebar.write("Valid Dates After Dropping NaT:", df['Date'].unique())
 
         # Define aging categories
         aging_categories = [
@@ -196,9 +204,6 @@ def load_itss_data():
         for col in aging_categories:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-        
-        # Debugging step to print parsed dates in the sidebar
-        st.sidebar.write("Parsed Date Values:", df['Date'].unique())
 
         return df
     except Exception as e:
@@ -404,7 +409,7 @@ def check_password():
                 if username in CREDENTIALS and CREDENTIALS[username] == hashlib.sha256(password.encode()).hexdigest():
                     st.session_state.authenticated = True
                     st.session_state.username = username
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     st.session_state.login_attempts += 1
                     st.error("Invalid credentials")
@@ -1409,7 +1414,7 @@ def main():
     st.sidebar.markdown("---")
     if st.sidebar.button("Logout"):
         st.session_state.clear()
-        st.experimental_rerun()
+        st.rerun()
 
 if __name__ == "__main__":
     main()
