@@ -17,19 +17,24 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Define global variable for cipher
+cipher = None
+
 # Get the key from secrets
 key = st.secrets.get("ENCRYPTION_KEY", "")
 
-# Check the length and try to create the cipher instance
 try:
+    # Check if the key length is correct (it should be 44 characters for a Fernet key)
     if len(key) != 44:
         st.error("Invalid encryption key: Key length must be 44 characters.")
     else:
         # Decode the key from base64
         key_bytes = base64.urlsafe_b64decode(key)
+        # Ensure that the decoded key length is 32 bytes
         if len(key_bytes) != 32:
             st.error("Decoded key length is incorrect. It must be 32 bytes.")
         else:
+            # Create a cipher instance and make it globally accessible
             cipher = Fernet(key_bytes)
             st.write("Encryption key loaded successfully.")
 except Exception as e:
@@ -120,6 +125,8 @@ def check_password():
 
 # Function to decrypt and load an Excel file
 def decrypt_and_load_excel(file_path):
+    global cipher  # Use the global cipher variable
+    
     if cipher is None:
         st.error("Cipher is not initialized, unable to decrypt the file.")
         return None
@@ -130,22 +137,28 @@ def decrypt_and_load_excel(file_path):
             st.error(f"File not found at path: {file_path}")
             return None
 
-        # Read the encrypted file
+        # Attempt to open and read the encrypted file
+        st.write(f"Attempting to open encrypted file: {file_path}")
         with open(file_path, "rb") as encrypted_file:
             encrypted_data = encrypted_file.read()
 
+        st.write(f"File read successfully: {file_path}, size: {len(encrypted_data)} bytes")
+
         # Decrypt the content
         decrypted_data = cipher.decrypt(encrypted_data)
+        st.write(f"Decryption successful for file: {file_path}")
 
         # Load the decrypted data into a Pandas DataFrame
         with io.BytesIO(decrypted_data) as file_obj:
             df = pd.read_excel(file_obj)
-
+        st.write(f"Excel loaded successfully for file: {file_path}, number of rows: {len(df)}")
         return df
-
+    except FileNotFoundError as fnf_error:
+        st.error(f"File not found: {str(fnf_error)}")
     except Exception as e:
         st.error(f"Error decrypting and loading file {file_path}: {str(e)}")
-        return None
+        st.write(f"Debugging details - Exception type: {type(e).__name__}, Args: {e.args}")
+    return None
 
 # Functions to load all the encrypted data files
 
