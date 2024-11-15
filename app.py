@@ -171,64 +171,74 @@ def load_data_from_drive(file_id):
 # Specific functions to load each dataset
 @st.cache_data(ttl=300)
 def load_itss_data():
-    """Load ITSS Tender data from Google Drive with fixed Excel date handling"""
+    """Load ITSS Tender data from Google Drive with fixed column separation"""
     try:
         # Load data from Google Drive using the appropriate file_id
         df = load_data_from_drive(FILE_IDS['itss_tender'])
-        if df is None:
-            return None
-
-        # Assign proper column names
-        columns = ['Account Name', 'Date', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
-        df.columns = columns[:len(df.columns)]
-        df.columns = df.columns.str.strip()
-
-        # Debug: Show initial data
-        st.write("Initial data types:")
-        st.write(df.dtypes)
-
-        # Read dates directly from Excel - crucial step
-        def clean_date(date_str):
-            if pd.isna(date_str) or str(date_str).strip() in ['', 'None', 'nan', '-']:
-                return pd.NaT
-            try:
-                # Handle the specific format from your Excel (DD-M-YYYY)
-                if isinstance(date_str, str):
-                    date_str = date_str.strip()
-                    # Check if the date is in the format "DD-M-YYYY"
-                    if '-' in date_str:
-                        day, month, year = date_str.split('-')
-                        # Ensure month is two digits
-                        month = month.zfill(2)
-                        return pd.to_datetime(f"{year}-{month}-{day}")
-                return pd.to_datetime(date_str)
-            except:
-                return pd.NaT
-
-        # Convert dates
-        df['Date'] = df['Date'].apply(clean_date)
         
-        # Debug: Show dates after conversion
-        st.write("Dates after conversion:")
-        st.write(df['Date'].head())
-
-        # Handle numeric columns - convert all numeric columns properly
+        # Debug: Print raw data as received
+        st.write("Raw data as received:")
+        st.write(df.head())
+        
+        # If the data is coming in as a single column, split it
+        if len(df.columns) == 1:
+            # Split the single column into multiple columns
+            df = pd.read_excel(
+                FILE_IDS['itss_tender'],
+                engine='openpyxl',
+                sheet_name=0,
+                header=0,
+                parse_dates=['Date']  # Explicitly parse the Date column
+            )
+        
+        # Expected column names
+        expected_columns = [
+            'Account Name', 'Date', '61-90', '91-120', '121-180', 
+            '181-360', '361-720', 'More than 2 Yr'
+        ]
+        
+        # Ensure columns match expected format
+        if set(expected_columns) != set(df.columns):
+            st.error("Column mismatch detected. Current columns:")
+            st.write(df.columns.tolist())
+            st.write("Expected columns:")
+            st.write(expected_columns)
+        
+        # Clean up the Date column
+        if 'Date' in df.columns:
+            # Convert to datetime using Excel's date format
+            df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y', errors='coerce')
+            
+            # Debug: Show date conversion results
+            st.write("Date column after conversion:")
+            st.write(df['Date'].head())
+            
+            # Check for any failed conversions
+            failed_dates = df[df['Date'].isna()]
+            if not failed_dates.empty:
+                st.warning("Some dates failed to convert:")
+                st.write(failed_dates[['Account Name', 'Date']].head())
+        
+        # Convert numeric columns
         numeric_columns = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         for col in numeric_columns:
             if col in df.columns:
-                # Replace any non-numeric values with 0
-                df[col] = df[col].replace(['-', '', 'None', 'nan', None], 0)
-                # Convert to float
+                # Replace dash with 0
+                df[col] = df[col].replace('-', 0)
+                # Convert to numeric
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-
-        # Verify we have valid dates
-        valid_dates = df['Date'].notna()
-        if not valid_dates.any():
-            st.error("No valid dates found in the data after conversion.")
-            st.write("Sample of dates that failed conversion:")
-            st.write(df[['Account Name', 'Date']].head())
+        
+        # Verify we have data
+        if df.empty:
+            st.error("No data found after processing")
             return None
-
+            
+        # Debug: Show final processed data
+        st.write("Final processed data:")
+        st.write(df.head())
+        st.write("Data types:")
+        st.write(df.dtypes)
+        
         return df
 
     except Exception as e:
@@ -236,18 +246,31 @@ def load_itss_data():
         st.write("Error details:", traceback.format_exc())
         return None
 
-# Helper function to read Excel file directly (add this as well)
-def read_excel_directly(file_path):
-    """Read Excel file directly to verify data"""
+# Add this helper function to directly check the Excel file
+def verify_excel_structure(file_path):
+    """Verify the structure of the Excel file"""
     try:
-        df = pd.read_excel(file_path, engine='openpyxl')
-        st.write("Direct Excel read results:")
-        st.write(df.head())
+        # Try reading with different options
+        df_regular = pd.read_excel(file_path, engine='openpyxl')
+        st.write("Standard Excel read:")
+        st.write(df_regular.head())
+        
+        df_no_header = pd.read_excel(file_path, engine='openpyxl', header=None)
+        st.write("\nExcel read without header:")
+        st.write(df_no_header.head())
+        
+        # Show column information
+        st.write("\nColumn names:")
+        st.write(df_regular.columns.tolist())
+        
+        # Show data types
         st.write("\nData types:")
-        st.write(df.dtypes)
-        return df
+        st.write(df_regular.dtypes)
+        
+        return df_regular
+        
     except Exception as e:
-        st.error(f"Error reading Excel directly: {str(e)}")
+        st.error(f"Error verifying Excel structure: {str(e)}")
         return None
 
 @st.cache_data(ttl=300)
