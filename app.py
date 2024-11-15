@@ -198,19 +198,36 @@ def load_itss_data():
 
         # View raw date values
         if 'Date' in df.columns:
-            try:
-                df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-            except Exception as e:
-                st.write(f"Date parsing error: {e}")
+            st.write("Raw Date column data before conversion (first 10 values):")
+            st.write(df['Date'].head(10))
 
-            # Display conversion results
-            st.write("Date column after attempting generic conversion:")
+            # Remove non-printable characters, leading/trailing whitespace
+            df['Date'] = df['Date'].astype(str).str.encode('ascii', 'ignore').str.decode('ascii').str.strip()
+
+            st.write("Cleaned Date column data (first 10 values):")
+            st.write(df['Date'].head(10))
+
+            # Attempt to parse dates with common formats
+            formats = ['%d-%m-%Y', '%d/%m/%Y', '%Y-%m-%d']
+            for fmt in formats:
+                try:
+                    df['Date'] = pd.to_datetime(df['Date'], format=fmt, errors='coerce')
+                    if df['Date'].notna().all():  # If all dates are successfully parsed, stop
+                        break
+                except ValueError:
+                    continue
+
+            # As a fallback, attempt a generic conversion
+            if df['Date'].isna().any():
+                df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+
+            st.write("Date column after conversion:")
             st.write(df['Date'].head())
 
-            # Check for failed dates
+            # Check for any failed conversions
             failed_dates = df[df['Date'].isna()]
             if not failed_dates.empty:
-                st.warning("Some dates failed to convert after generic parsing:")
+                st.warning("Some dates failed to convert. Displaying failed rows:")
                 st.write(failed_dates[['Account Name', 'Date']].head(10))
 
         # Convert numeric columns
