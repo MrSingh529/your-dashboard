@@ -196,14 +196,27 @@ def load_itss_data():
         # Assign column names explicitly
         df.columns = expected_columns
 
-        # Clean up the Date column
+        # View raw date values
         if 'Date' in df.columns:
-            st.write("Raw Date column data before conversion:")
-            st.write(df['Date'].head())  # Display the first few entries of the Date column to see its raw state
-            
-            # Remove any leading/trailing whitespace and parse the Date
+            st.write("Raw Date column data before conversion (first 10 values):")
+            st.write(df['Date'].head(10))
+
+            # Remove whitespaces
             df['Date'] = df['Date'].astype(str).str.strip()
-            df['Date'] = pd.to_datetime(df['Date'], infer_datetime_format=True, errors='coerce', dayfirst=True)
+
+            # Attempt to parse dates
+            formats = ['%d-%m-%Y', '%d/%m/%Y', '%Y-%m-%d']  # Add common formats if needed
+            for fmt in formats:
+                try:
+                    df['Date'] = pd.to_datetime(df['Date'], format=fmt, errors='coerce')
+                    if df['Date'].notna().all():  # If all dates are successfully parsed, stop
+                        break
+                except ValueError:
+                    continue
+
+            # As a fallback, attempt a generic conversion
+            if df['Date'].isna().any():
+                df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
 
             st.write("Date column after conversion:")
             st.write(df['Date'].head())
@@ -211,8 +224,8 @@ def load_itss_data():
             # Check for any failed conversions
             failed_dates = df[df['Date'].isna()]
             if not failed_dates.empty:
-                st.warning("Some dates failed to convert:")
-                st.write(failed_dates[['Account Name', 'Date']].head())
+                st.warning("Some dates failed to convert. Displaying failed rows:")
+                st.write(failed_dates[['Account Name', 'Date']].head(10))
 
         # Convert numeric columns
         numeric_columns = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
