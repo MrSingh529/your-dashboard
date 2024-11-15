@@ -198,33 +198,19 @@ def load_itss_data():
 
         # View raw date values
         if 'Date' in df.columns:
-            st.write("All unique values in the Date column:")
-            st.write(df['Date'].unique())
-
-            # Remove whitespaces
-            df['Date'] = df['Date'].astype(str).str.strip()
-
-            # Attempt to parse dates
-            formats = ['%d-%m-%Y', '%d/%m/%Y', '%Y-%m-%d']  # Add common formats if needed
-            for fmt in formats:
-                try:
-                    df['Date'] = pd.to_datetime(df['Date'], format=fmt, errors='coerce')
-                    if df['Date'].notna().all():  # If all dates are successfully parsed, stop
-                        break
-                except ValueError:
-                    continue
-
-            # As a fallback, attempt a generic conversion
-            if df['Date'].isna().any():
+            try:
                 df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+            except Exception as e:
+                st.write(f"Date parsing error: {e}")
 
-            st.write("Date column after conversion:")
+            # Display conversion results
+            st.write("Date column after attempting generic conversion:")
             st.write(df['Date'].head())
 
-            # Check for any failed conversions
+            # Check for failed dates
             failed_dates = df[df['Date'].isna()]
             if not failed_dates.empty:
-                st.warning("Some dates failed to convert. Displaying failed rows:")
+                st.warning("Some dates failed to convert after generic parsing:")
                 st.write(failed_dates[['Account Name', 'Date']].head(10))
 
         # Convert numeric columns
