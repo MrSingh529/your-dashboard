@@ -171,7 +171,7 @@ def load_data_from_drive(file_id):
 # Specific functions to load each dataset
 @st.cache_data(ttl=300)
 def load_itss_data():
-    """Load ITSS Tender data from Google Drive with improved date handling"""
+    """Load ITSS Tender data from Google Drive with fixed date handling"""
     try:
         # Load data from Google Drive using the appropriate file_id
         df = load_data_from_drive(FILE_IDS['itss_tender'])
@@ -183,53 +183,63 @@ def load_itss_data():
         df.columns = columns[:len(df.columns)]
         df.columns = df.columns.str.strip()
 
-        # Debug: Show raw data
-        st.write("Raw Data (First 5 Rows):")
-        st.write(df.head())
+        # Debug: Print the raw date column
+        st.write("Raw Date column values:")
+        st.write(df['Date'].head())
+        
+        # First, ensure the date column is read as string
+        df['Date'] = df['Date'].astype(str)
+        
+        # Debug: Print date column after conversion to string
+        st.write("Date column as string:")
+        st.write(df['Date'].head())
 
-        # Clean and convert the Date column
-        def parse_date(date_str):
+        # Convert the dates - handle the specific format from your Excel
+        def convert_date(date_str):
             try:
-                if pd.isna(date_str) or date_str == 'nan':
-                    return pd.NaT
-                
-                # Remove any leading/trailing spaces
-                date_str = str(date_str).strip()
-                
-                # Try parsing with different formats
-                for fmt in ['%d-%m-%Y', '%Y-%m-%d', '%d/%m/%Y']:
-                    try:
-                        return pd.to_datetime(date_str, format=fmt)
-                    except:
-                        continue
-                        
-                # If no format works, try the default parser
-                return pd.to_datetime(date_str)
+                if pd.isna(date_str) or date_str.lower() in ['none', 'nan', '']:
+                    return None
+                # Your Excel shows dates in DD-M-YYYY format
+                parts = date_str.split('-')
+                if len(parts) == 3:
+                    day, month, year = parts
+                    # Ensure proper formatting
+                    return f"{day.zfill(2)}-{month.zfill(2)}-{year}"
+                return None
             except:
-                return pd.NaT
+                return None
 
-        # Convert Date column
-        df['Date'] = df['Date'].apply(parse_date)
+        # Apply the conversion
+        df['Date'] = df['Date'].apply(convert_date)
+        
+        # Debug: Print dates after conversion
+        st.write("Dates after initial conversion:")
+        st.write(df['Date'].head())
 
-        # Show dates after parsing
-        st.write("Dates after parsing (First 5 rows):")
+        # Now convert to datetime
+        df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y', errors='coerce')
+        
+        # Debug: Print final datetime values
+        st.write("Final datetime values:")
         st.write(df['Date'].head())
 
         # Handle numeric columns
         aging_categories = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         for col in aging_categories:
             if col in df.columns:
-                # Convert string values to numeric, handling various formats
-                df[col] = df[col].replace(['-', ''], '0')  # Replace dashes and empty strings with '0'
+                df[col] = df[col].replace(['-', '', 'None', 'nan'], 0)
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
-        # Remove rows where date is NaT (Not a Time)
-        df = df.dropna(subset=['Date'])
+        # Since dates might be important for your analysis, instead of dropping rows
+        # let's check if we have any valid dates first
+        valid_dates = df['Date'].notna().sum()
+        if valid_dates == 0:
+            st.warning("No valid dates found in the data. Please check the date format in your Excel file.")
+            # Print a sample of the original dates for debugging
+            st.write("Sample of original date values from Excel:")
+            st.write(df['Date'].head(10))
+            return df  # Return the DataFrame anyway so other analyses can continue
         
-        if len(df) == 0:
-            st.error("No valid data remaining after cleaning.")
-            return None
-
         return df
 
     except Exception as e:
