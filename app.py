@@ -198,10 +198,17 @@ def load_itss_data():
 
         # Clean up the Date column
         if 'Date' in df.columns:
-            df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y', errors='coerce')
+            st.write("Raw Date column data before conversion:")
+            st.write(df['Date'].head())  # Display the first few entries of the Date column to see its raw state
+            
+            # Remove any leading/trailing whitespace and parse the Date
+            df['Date'] = df['Date'].astype(str).str.strip()
+            df['Date'] = pd.to_datetime(df['Date'], infer_datetime_format=True, errors='coerce', dayfirst=True)
+
             st.write("Date column after conversion:")
             st.write(df['Date'].head())
 
+            # Check for any failed conversions
             failed_dates = df[df['Date'].isna()]
             if not failed_dates.empty:
                 st.warning("Some dates failed to convert:")
