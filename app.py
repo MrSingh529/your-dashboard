@@ -178,10 +178,6 @@ def load_itss_data():
         if df is None:
             return None
 
-        # Print the raw data for inspection
-        st.write("Raw Data (First 5 Rows):")
-        st.write(df.head())
-
         # Assign proper column names
         columns = ['Account Name', 'Date', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         df.columns = columns[:len(df.columns)]
@@ -189,9 +185,23 @@ def load_itss_data():
         # Strip any leading/trailing spaces from column headers
         df.columns = df.columns.str.strip()
 
+        # Debugging: Print the raw data for inspection
+        st.write("Raw Data (First 5 Rows):")
+        st.write(df.head())
+
         # Check and clean 'Date' column values
-        df['Date'] = df['Date'].astype(str).str.strip().replace('', None)
-        
+        df['Date'] = df['Date'].astype(str).str.strip()  # Ensure 'Date' is string and stripped of spaces
+
+        # Debugging: Check unique values in the 'Date' column
+        st.write("Unique values in 'Date' column before parsing:")
+        st.write(df['Date'].unique())
+
+        # Check if there are any non-date values and their positions
+        non_date_mask = df['Date'].apply(lambda x: not bool(re.match(r'\d{1,2}-\d{1,2}-\d{4}', x)))
+        if non_date_mask.any():
+            st.write("Non-date values in 'Date' column:")
+            st.write(df[non_date_mask])
+
         # Attempt to parse the date column using the correct format
         st.write("Attempting to parse 'Date' column using the format '%d-%m-%Y'")
         df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y', errors='coerce')
