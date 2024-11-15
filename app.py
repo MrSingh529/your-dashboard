@@ -171,67 +171,70 @@ def load_data_from_drive(file_id):
 # Specific functions to load each dataset
 @st.cache_data(ttl=300)
 def load_itss_data():
-    """Load ITSS Tender data from Google Drive"""
+    """Load ITSS Tender data from Google Drive with improved date handling"""
     try:
         # Load data from Google Drive using the appropriate file_id
         df = load_data_from_drive(FILE_IDS['itss_tender'])
-
         if df is None:
             return None
 
         # Assign proper column names
         columns = ['Account Name', 'Date', '61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         df.columns = columns[:len(df.columns)]
-
-        # Strip any leading/trailing spaces from column headers
         df.columns = df.columns.str.strip()
 
-        # Debugging: Print the raw data for inspection
+        # Debug: Show raw data
         st.write("Raw Data (First 5 Rows):")
         st.write(df.head())
 
-        # Check and clean 'Date' column values
-        df['Date'] = df['Date'].astype(str).str.strip()  # Ensure 'Date' is string and stripped of spaces
+        # Clean and convert the Date column
+        def parse_date(date_str):
+            try:
+                if pd.isna(date_str) or date_str == 'nan':
+                    return pd.NaT
+                
+                # Remove any leading/trailing spaces
+                date_str = str(date_str).strip()
+                
+                # Try parsing with different formats
+                for fmt in ['%d-%m-%Y', '%Y-%m-%d', '%d/%m/%Y']:
+                    try:
+                        return pd.to_datetime(date_str, format=fmt)
+                    except:
+                        continue
+                        
+                # If no format works, try the default parser
+                return pd.to_datetime(date_str)
+            except:
+                return pd.NaT
 
-        # Debugging: Check unique values in the 'Date' column
-        st.write("Unique values in 'Date' column before parsing:")
-        st.write(df['Date'].unique())
+        # Convert Date column
+        df['Date'] = df['Date'].apply(parse_date)
 
-        # Check if there are any non-date values and their positions
-        non_date_mask = df['Date'].apply(lambda x: not bool(re.match(r'\d{1,2}-\d{1,2}-\d{4}', x)))
-        if non_date_mask.any():
-            st.write("Non-date values in 'Date' column:")
-            st.write(df[non_date_mask])
-
-        # Attempt to parse the date column using the correct format
-        st.write("Attempting to parse 'Date' column using the format '%d-%m-%Y'")
-        df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y', errors='coerce')
-
-        # Print the parsed date column for verification
-        st.write("Parsed Date Values (First 5 Rows):")
+        # Show dates after parsing
+        st.write("Dates after parsing (First 5 rows):")
         st.write(df['Date'].head())
 
-        # Drop rows where 'Date' could not be parsed
-        valid_dates = df['Date'].dropna()
-        st.write("Valid Dates After Dropping NaT (First 5 Rows):")
-        st.write(valid_dates.head())
-
-        if len(valid_dates) == 0:
-            st.error("No valid dates found for analysis.")
-            return None
-
-        # Define aging categories
+        # Handle numeric columns
         aging_categories = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
-
-        # Convert amount columns to numeric
         for col in aging_categories:
             if col in df.columns:
+                # Convert string values to numeric, handling various formats
+                df[col] = df[col].replace(['-', ''], '0')  # Replace dashes and empty strings with '0'
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
+        # Remove rows where date is NaT (Not a Time)
+        df = df.dropna(subset=['Date'])
+        
+        if len(df) == 0:
+            st.error("No valid data remaining after cleaning.")
+            return None
+
         return df
+
     except Exception as e:
         st.error(f"Error loading ITSS data: {str(e)}")
-        st.write("Error details:", str(e))
+        st.write("Error details:", traceback.format_exc())
         return None
 
 @st.cache_data(ttl=300)
