@@ -198,8 +198,8 @@ def load_itss_data():
 
         # View raw date values
         if 'Date' in df.columns:
-            st.write("Raw Date column data before conversion (first 10 values):")
-            st.write(df['Date'].head(10))
+            st.write("All unique values in the Date column:")
+            st.write(df['Date'].unique())
 
             # Remove whitespaces
             df['Date'] = df['Date'].astype(str).str.strip()
