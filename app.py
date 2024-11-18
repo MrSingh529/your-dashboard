@@ -317,9 +317,6 @@ def load_sdr_trend():
             if col not in static_columns:
                 # Removing commas, converting to numeric, and filling NaNs with 0
                 df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-
-        # Display the loaded data columns in the sidebar for verification
-        st.sidebar.write("SDR Data Columns:", list(df.columns))
         
         return df
 
