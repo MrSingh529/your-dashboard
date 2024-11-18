@@ -652,10 +652,6 @@ def show_collections_dashboard():
 
     st.title("Collections Dashboard")
 
-    # Display data info for verification
-    st.sidebar.write("Data loaded successfully")
-    st.sidebar.write("Number of branches:", len(df['Branch Name'].unique()))
-
     # Sidebar Controls for Filtering
     st.sidebar.title("Analysis Controls")
 
