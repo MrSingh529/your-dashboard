@@ -784,30 +784,50 @@ def show_collections_dashboard():
     with tab3:
         st.subheader("Comparative Analysis")
         try:
-            if not filtered_df.empty:
+            if not filtered_df_1.empty and not filtered_df_2.empty:
                 # Create comparison DataFrame
                 comparison_df = pd.DataFrame()
                 comparison_df['Branch Name'] = selected_branches
 
-                # Add data for the selected date
-                comparison_df['Balance'] = [
-                    filtered_df[filtered_df['Branch Name'] == branch]['Balance As On'].iloc[0] if branch in filtered_df['Branch Name'].values else 0
+                # Add data for the selected dates
+                comparison_df['Balance_1'] = [
+                    filtered_df_1[filtered_df_1['Branch Name'] == branch]['Balance As On'].iloc[0] if branch in filtered_df_1['Branch Name'].values else 0
                     for branch in selected_branches
                 ]
-                comparison_df['Pending'] = [
-                    filtered_df[filtered_df['Branch Name'] == branch]['Pending Amount'].iloc[0] if branch in filtered_df['Branch Name'].values else 0
+                comparison_df['Pending_1'] = [
+                    filtered_df_1[filtered_df_1['Branch Name'] == branch]['Pending Amount'].iloc[0] if branch in filtered_df_1['Branch Name'].values else 0
+                    for branch in selected_branches
+                ]
+                comparison_df['Balance_2'] = [
+                    filtered_df_2[filtered_df_2['Branch Name'] == branch]['Balance As On'].iloc[0] if branch in filtered_df_2['Branch Name'].values else 0
+                    for branch in selected_branches
+                ]
+                comparison_df['Pending_2'] = [
+                    filtered_df_2[filtered_df_2['Branch Name'] == branch]['Pending Amount'].iloc[0] if branch in filtered_df_2['Branch Name'].values else 0
                     for branch in selected_branches
                 ]
 
+                # Add a column for Pending Amount difference and highlight accordingly
+                comparison_df['Pending Change'] = comparison_df['Pending_2'] - comparison_df['Pending_1']
+
+                def highlight_pending_changes(row):
+                    styles = []
+                    for pending_change in row:
+                        if pending_change < 0:
+                            styles.append('background-color: #92D050')  # Green for decrease
+                        elif pending_change > 0:
+                            styles.append('background-color: #FF7575')  # Red for increase
+                        else:
+                            styles.append('')
+                    return styles
+
                 # Display styled comparison table
+                styled_df = comparison_df.style.apply(highlight_pending_changes, subset=['Pending Change'], axis=1)
                 st.markdown("### Balance and Pending Comparison")
-                st.dataframe(
-                    comparison_df,
-                    height=400,
-                    use_container_width=True
-                )
+                st.dataframe(styled_df, height=400, use_container_width=True)
+
             else:
-                st.warning("No comparison data available for selected date")
+                st.warning("No comparison data available for selected dates")
 
         except Exception as e:
             st.error(f"Error in comparative analysis: {str(e)}")
@@ -826,7 +846,7 @@ def show_collections_dashboard():
             st.sidebar.download_button(
                 label="📥 Download Full Report",
                 data=output.getvalue(),
-                file_name=f"collection_analysis_{selected_date}.xlsx",
+                file_name=f"collection_analysis_{selected_date_1}_vs_{selected_date_2}.xlsx",
                 mime="application/vnd.ms-excel"
             )
         except Exception as e:
