@@ -793,24 +793,27 @@ def show_collections_dashboard():
                 comparison_df['Branch Name'] = selected_branches
 
                 # Add data for the selected dates
-                comparison_df['Balance_1'] = [
+                comparison_df[f'Balance ({selected_date_1.date()})'] = [
                     filtered_df_1[filtered_df_1['Branch Name'] == branch]['Balance As On'].iloc[0] if branch in filtered_df_1['Branch Name'].values else 0
                     for branch in selected_branches
                 ]
-                comparison_df['Pending_1'] = [
+                comparison_df[f'Pending ({selected_date_1.date()})'] = [
                     filtered_df_1[filtered_df_1['Branch Name'] == branch]['Pending Amount'].iloc[0] if branch in filtered_df_1['Branch Name'].values else 0
                     for branch in selected_branches
                 ]
-                comparison_df['Balance_2'] = [
+                comparison_df[f'Balance ({selected_date_2.date()})'] = [
                     filtered_df_2[filtered_df_2['Branch Name'] == branch]['Balance As On'].iloc[0] if branch in filtered_df_2['Branch Name'].values else 0
                     for branch in selected_branches
                 ]
-                comparison_df['Pending_2'] = [
+                comparison_df[f'Pending ({selected_date_2.date()})'] = [
                     filtered_df_2[filtered_df_2['Branch Name'] == branch]['Pending Amount'].iloc[0] if branch in filtered_df_2['Branch Name'].values else 0
                     for branch in selected_branches
                 ]
 
                 # Style the dataframe to highlight changes directly in 'Pending_2'
+                pending_col_1 = f'Pending ({selected_date_1.date()})'
+                pending_col_2 = f'Pending ({selected_date_2.date()})'
+
                 def highlight_changes(val, pending_1, pending_2):
                     if val == pending_2:
                         if pending_2 < pending_1:
@@ -821,7 +824,7 @@ def show_collections_dashboard():
 
                 styled_df = comparison_df.style.apply(
                     lambda x: [
-                        highlight_changes(val, x['Pending_1'], x['Pending_2']) if col == 'Pending_2' else '' 
+                        highlight_changes(val, x[pending_col_1], x[pending_col_2]) if col == pending_col_2 else '' 
                         for col, val in zip(x.index, x.values)
                     ],
                     axis=1
