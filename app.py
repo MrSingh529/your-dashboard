@@ -121,6 +121,7 @@ def authenticate_drive():
 @st.cache_data(ttl=300)
 def load_data_from_drive(file_id):
     try:
+        # Authenticate and download the file from Google Drive
         service = authenticate_drive()
         if not service:
             return None
@@ -134,38 +135,50 @@ def load_data_from_drive(file_id):
             status, done = downloader.next_chunk()
 
         file_buffer.seek(0)
-        df = pd.read_excel(file_buffer, header=None)
+        
+        # Load the Excel file with the header in the first row
+        df = pd.read_excel(file_buffer, engine='openpyxl', header=0)
 
-        # Create proper column names
-        columns = [
-            'Branch Name',
-            'Reduced Pending Amount'
-        ]
-        
-        # Add date-based column names
-        dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
-        for date in dates:
-            columns.extend([f'Balance_{date}', f'Pending_{date}'])
-        
-        # Assign columns to dataframe
-        df.columns = columns[:len(df.columns)]
-        
-        # Skip the header row
-        df = df.iloc[1:].reset_index(drop=True)
-        
-        # Convert amount columns to numeric
+        # Deduplicate column names manually if duplicates are found
+        df.columns = deduplicate_columns(df.columns)
+
+        # Debugging: Print out the initial state of the DataFrame after header assignment
+        st.write("Debug: DataFrame after assigning headers")
+        st.write(df.head())
+
+        # Convert amount columns to numeric (excluding 'Branch Name')
         for col in df.columns:
             if col != 'Branch Name':
-                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
-        
+                try:
+                    # Removing commas, converting to numeric, and filling NaNs with 0
+                    df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+                except Exception as e:
+                    # Debugging: If there's an error converting this column, print the column name and error
+                    st.error(f"Error converting column '{col}' to numeric: {str(e)}")
+                    st.write(df[col].head())  # Display problematic column values for analysis
+
+        # Remove debug information for the final version
         return df
+
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
-        # Debug information
-        st.write("Available columns:", list(df.columns))
-        st.write("Data sample:")
-        st.write(df.head())
+        st.write("Error details:", str(e))
         return None
+
+def deduplicate_columns(columns):
+    """Function to deduplicate column names."""
+    new_columns = []
+    seen = {}
+
+    for col in columns:
+        if col not in seen:
+            seen[col] = 0
+            new_columns.append(col)
+        else:
+            seen[col] += 1
+            new_columns.append(f"{col}_{seen[col]}")
+
+    return new_columns
 
 # Enhanced authentication
 def check_password():
