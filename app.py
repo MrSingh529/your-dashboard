@@ -138,10 +138,12 @@ def load_data_from_drive(file_id):
         file_buffer.seek(0)
         df = pd.read_excel(file_buffer)
 
-        # Automatically set column headers based on the Google Sheets structure
-        df.columns = df.iloc[0]  # Assuming the first row is the header
-        df = df[1:]  # Remove the header row from the data
-        df.reset_index(drop=True, inplace=True)
+        # Clean and assign column headers properly
+        df.columns = df.iloc[0]  # Use the first row as column names
+        df = df.drop(0).reset_index(drop=True)  # Drop the first row and reset index
+
+        # Ensure the headers do not contain extraneous values by renaming them appropriately
+        df.columns = [str(col).split('|')[0].strip() for col in df.columns]
 
         # Convert date column to datetime type if necessary
         if 'Date' in df.columns:
@@ -625,12 +627,7 @@ def show_collections_dashboard():
         return
 
     # Debugging: Display columns to confirm the actual column names
-    st.sidebar.write("Available columns in DataFrame (raw):", list(df.columns))
-
-    # Clean up column names to remove any numeric or extra data
-    df.columns = [str(col).split("|")[0].strip() for col in df.columns]
-
-    st.sidebar.write("Cleaned columns in DataFrame:", list(df.columns))
+    st.sidebar.write("Available columns in DataFrame:", list(df.columns))
 
     # If 'Branch Name' column is not found, handle gracefully
     if 'Branch Name' not in df.columns:
@@ -654,15 +651,16 @@ def show_collections_dashboard():
         default=all_branches[:5] if len(all_branches) >= 5 else all_branches
     )
 
-    # Extract all date-specific column headers automatically
-    # Assuming columns that contain dates are formatted properly, we extract those that match a date pattern
-    date_pattern = re.compile(r"\d{2}-[A-Za-z]{3}-\d{2}")  # Example pattern like '03-Nov-24'
+    # Extract unique date-based columns automatically
+    # Columns that have "Balance As On" or "Pending Amount" are used for date selection
+    balance_columns = [col for col in df.columns if "Balance As On" in col]
+    pending_columns = [col for col in df.columns if "Pending Amount" in col]
+
     available_dates = sorted(
-        list(set([col for col in df.columns if date_pattern.search(col)])),
+        list(set([re.findall(r'\d{4}-\d{2}-\d{2}', col)[0] for col in balance_columns if re.search(r'\d{4}-\d{2}-\d{2}', col)])),
         reverse=True
     )
-
-    st.sidebar.write("Available dates (cleaned):", available_dates)
+    st.sidebar.write("Available dates:", available_dates)
 
     if not available_dates:
         st.error("No valid dates found in the dataset for analysis.")
@@ -675,9 +673,9 @@ def show_collections_dashboard():
     if selected_branches:
         filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
 
-    # Generate column names for Balance and Pending for the selected date
-    balance_col = next((col for col in df.columns if selected_date in col and "Balance As On" in col), None)
-    pending_col = next((col for col in df.columns if selected_date in col and "Pending Amount" in col), None)
+    # Identify column names for Balance and Pending based on the selected date
+    balance_col = next((col for col in balance_columns if selected_date in col), None)
+    pending_col = next((col for col in pending_columns if selected_date in col), None)
 
     # Check if the necessary columns are present in the data
     if not balance_col or not pending_col:
@@ -723,8 +721,8 @@ def show_collections_dashboard():
                 branch_data = filtered_df[filtered_df['Branch Name'] == branch]
                 if not branch_data.empty:
                     for date in available_dates:
-                        balance_col = next((col for col in branch_data.columns if date in col and "Balance As On" in col), None)
-                        pending_col = next((col for col in branch_data.columns if date in col and "Pending Amount" in col), None)
+                        balance_col = next((col for col in balance_columns if date in col), None)
+                        pending_col = next((col for col in pending_columns if date in col), None)
 
                         if balance_col and pending_col:
                             trend_data.append({
