@@ -164,9 +164,6 @@ def load_data_from_drive(file_id):
         for col in numeric_cols:
             df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', '').replace('-', '0'), errors='coerce')
 
-        # Display the first few rows for debugging purposes
-        st.write("Data preview after processing:", df.head())
-
         return df
 
     except Exception as e:
