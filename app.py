@@ -322,7 +322,7 @@ def load_tsg_trend():
         # Assign column names to the DataFrame
         columns = [
             'Ageing Category', '8-Nov-24', '25-Oct-24', '18-Oct-24', 
-            '4-Oct-24', '27-Sep-24', '13-Sep-24', '6-Sep-24'
+            '4-Oct-24', '27-Sep-24', '13-Sep-24', '6-Sep-24', '2-Sep-24', '24-Aug-24',	'20-Aug-24',	'12-Aug-24',	'5-Aug-24'
         ]
         df.columns = columns[:len(df.columns)]
 
