@@ -1113,16 +1113,26 @@ def show_itss_dashboard():
             '361-720', 'More than 2 Yr'
         ]
         
+        # Ensure Date column is properly parsed
+        if 'Date' in df.columns:
+            # Convert Date column to datetime, handling various formats
+            df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y', errors='coerce')
+            if df['Date'].isna().all():
+                # Try alternative format if first attempt fails
+                df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d', errors='coerce')
+        
         # Drop rows where 'Date' is NaT
         df = df.dropna(subset=['Date'])
 
-        # Debug: Check the unique dates available after dropping NaT
-        st.write("Valid Dates After Dropping NaT:", df['Date'].unique())
+        # Debug: Print date range and format
+        st.write("Date Range:", 
+                f"From {df['Date'].min().strftime('%Y-%m-%d')} to {df['Date'].max().strftime('%Y-%m-%d')}" 
+                if not df['Date'].empty else "No dates available")
 
         # Date selection
-        valid_dates = df['Date'].unique()  # Use only valid dates
+        valid_dates = df['Date'].unique()
         if len(valid_dates) == 0:
-            st.error("No valid dates found for analysis.")
+            st.error("No valid dates found for analysis. Please check the date format in your input data.")
             return
         
         dates = sorted(valid_dates, reverse=True)
@@ -1135,6 +1145,10 @@ def show_itss_dashboard():
         
         # Filter data for selected date
         current_data = df[df['Date'] == selected_date].copy()
+        
+        # Convert numeric columns to float, replacing '-' with 0
+        for col in aging_categories:
+            current_data[col] = pd.to_numeric(current_data[col].replace('-', '0'), errors='coerce').fillna(0)
         
         # Summary metrics
         st.markdown("### Summary Metrics")
