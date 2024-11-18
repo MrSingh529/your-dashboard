@@ -121,7 +121,7 @@ def authenticate_drive():
 
 @st.cache_data(ttl=300)
 def load_data_from_drive(file_id):
-    """Load Collections Dashboard data from Google Drive"""
+    """Load Branch Reco Dashboard data from Google Drive"""
     try:
         service = authenticate_drive()
         if not service:
@@ -640,7 +640,7 @@ def show_collections_dashboard():
         st.error("The column 'Branch Name' is not available in the dataset. Please verify the column names.")
         return
 
-    st.title("Collections Dashboard")
+    st.title("Branch Reco Dashboard")
 
     # Sidebar Controls for Filtering - Moved to the Sidebar
     st.sidebar.title("Analysis Controls")
@@ -671,7 +671,6 @@ def show_collections_dashboard():
     filtered_df_2 = filtered_df[filtered_df['Date'] == selected_date_2]
 
     # Key Metrics Dashboard
-    st.title("Branch Reco Trend")
     try:
         # Ensure necessary columns are present
         if 'Balance As On' not in filtered_df.columns or 'Pending Amount' not in filtered_df.columns:
@@ -1519,10 +1518,10 @@ def main():
     st.sidebar.title("Navigation")
     report_option = st.sidebar.radio(
         "Choose a Report",
-        ["Collections Dashboard", "CSD SDR Trend Analysis", "TSG Payment Receivables", "ITSS Tender Analysis"]
+        ["Branch Reco Dashboard", "CSD SDR Trend Analysis", "TSG Payment Receivables", "ITSS Tender Analysis"]
     )
 
-    if report_option == "Collections Dashboard":
+    if report_option == "Branch Reco Dashboard":
         show_collections_dashboard()
     elif report_option == "CSD SDR Trend Analysis":
         show_sdr_dashboard()
