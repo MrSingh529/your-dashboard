@@ -625,7 +625,12 @@ def show_collections_dashboard():
         return
 
     # Debugging: Display columns to confirm the actual column names
-    st.sidebar.write("Available columns in DataFrame:", list(df.columns))
+    st.sidebar.write("Available columns in DataFrame (raw):", list(df.columns))
+
+    # Clean up column names to remove any numeric or extra data
+    df.columns = [str(col).split("|")[0].strip() for col in df.columns]
+
+    st.sidebar.write("Cleaned columns in DataFrame:", list(df.columns))
 
     # If 'Branch Name' column is not found, handle gracefully
     if 'Branch Name' not in df.columns:
@@ -650,12 +655,14 @@ def show_collections_dashboard():
     )
 
     # Extract all date-specific column headers automatically
-    # Columns that have "Balance As On" or "Pending Amount" are used for date selection
+    # Assuming columns that contain dates are formatted properly, we extract those that match a date pattern
+    date_pattern = re.compile(r"\d{2}-[A-Za-z]{3}-\d{2}")  # Example pattern like '03-Nov-24'
     available_dates = sorted(
-        list(set([col.split(" | ")[0] for col in df.columns if "Balance As On" in col or "Pending Amount" in col])),
+        list(set([col for col in df.columns if date_pattern.search(col)])),
         reverse=True
     )
-    st.sidebar.write("Available dates:", available_dates)
+
+    st.sidebar.write("Available dates (cleaned):", available_dates)
 
     if not available_dates:
         st.error("No valid dates found in the dataset for analysis.")
@@ -668,9 +675,9 @@ def show_collections_dashboard():
     if selected_branches:
         filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
 
-    # Identify column names for Balance and Pending based on the selected date
-    balance_col = next((col for col in df.columns if f"{selected_date}" in col and "Balance As On" in col), None)
-    pending_col = next((col for col in df.columns if f"{selected_date}" in col and "Pending Amount" in col), None)
+    # Generate column names for Balance and Pending for the selected date
+    balance_col = next((col for col in df.columns if selected_date in col and "Balance As On" in col), None)
+    pending_col = next((col for col in df.columns if selected_date in col and "Pending Amount" in col), None)
 
     # Check if the necessary columns are present in the data
     if not balance_col or not pending_col:
@@ -716,8 +723,8 @@ def show_collections_dashboard():
                 branch_data = filtered_df[filtered_df['Branch Name'] == branch]
                 if not branch_data.empty:
                     for date in available_dates:
-                        balance_col = next((col for col in branch_data.columns if f"{date}" in col and "Balance As On" in col), None)
-                        pending_col = next((col for col in branch_data.columns if f"{date}" in col and "Pending Amount" in col), None)
+                        balance_col = next((col for col in branch_data.columns if date in col and "Balance As On" in col), None)
+                        pending_col = next((col for col in branch_data.columns if date in col and "Pending Amount" in col), None)
 
                         if balance_col and pending_col:
                             trend_data.append({
@@ -807,8 +814,8 @@ def show_collections_dashboard():
 
             # Add data for all dates
             for date in available_dates:
-                balance_col = next((col for col in filtered_df.columns if f"{date}" in col and "Balance As On" in col), None)
-                pending_col = next((col for col in filtered_df.columns if f"{date}" in col and "Pending Amount" in col), None)
+                balance_col = next((col for col in filtered_df.columns if date in col and "Balance As On" in col), None)
+                pending_col = next((col for col in filtered_df.columns if date in col and "Pending Amount" in col), None)
 
                 if balance_col and pending_col:
                     comparison_df[f'Balance_{date}'] = [
@@ -835,7 +842,7 @@ def show_collections_dashboard():
 
     # Export Options
     st.sidebar.markdown("---")
-    st.sidebar.subheader("Export Options")
+    st.sidebar("Export Options")
 
     if st.sidebar.button("Export Complete Analysis"):
         try:
