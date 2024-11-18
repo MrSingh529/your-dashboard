@@ -639,6 +639,7 @@ def show_collections_dashboard():
 
     # Debugging: Display columns to confirm the actual column names
     st.sidebar.write("Available columns in DataFrame:", list(df.columns))
+    st.write("Data preview after processing:", df.head())
 
     # If 'Branch Name' column is not found, handle gracefully
     if 'Branch Name' not in df.columns:
@@ -653,7 +654,7 @@ def show_collections_dashboard():
 
     # Sidebar Controls for Filtering
     st.sidebar.title("Analysis Controls")
-
+    
     # Branch Selection with Search
     all_branches = sorted(df['Branch Name'].unique().tolist())
     selected_branches = st.multiselect(
@@ -662,39 +663,35 @@ def show_collections_dashboard():
         default=all_branches[:5] if len(all_branches) >= 5 else all_branches
     )
 
-    # Extract unique date-based columns automatically
-    # Columns that have "Balance As On" or "Pending Amount" are used for date selection
-    balance_columns = [col for col in df.columns if "Balance As On" in col]
-    pending_columns = [col for col in df.columns if "Pending Amount" in col]
+    # Extract available dates from the "Date" column
+    if 'Date' in df.columns:
+        available_dates = df['Date'].dropna().unique()
+        available_dates = sorted(available_dates, reverse=True)  # Sort dates in descending order
+    else:
+        available_dates = []
 
-    available_dates = sorted(
-        list(set([re.findall(r'\d{4}-\d{2}-\d{2}', col)[0] for col in balance_columns if re.search(r'\d{4}-\d{2}-\d{2}', col)])),
-        reverse=True
-    )
-    st.sidebar.write("Available dates:", available_dates)
-
-    if not available_dates:
+    # Handle case when no valid dates are found
+    if len(available_dates) == 0:
         st.error("No valid dates found in the dataset for analysis.")
         return
 
-    selected_date = st.selectbox("Select Analysis Date", available_dates)
+    # Date Selection
+    selected_date = st.selectbox("Select Analysis Date", available_dates, format_func=lambda x: x.strftime('%Y-%m-%d') if pd.notna(x) else "Invalid Date")
 
-    # Filter Data based on Branches Selection
+    # Filter Data based on Branches Selection and Date Selection
     filtered_df = df.copy()
     if selected_branches:
         filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
+    filtered_df = filtered_df[filtered_df['Date'] == selected_date]
 
-    # Identify column names for Balance and Pending based on the selected date
-    balance_col = next((col for col in balance_columns if selected_date in col), None)
-    pending_col = next((col for col in pending_columns if selected_date in col), None)
-
-    # Check if the necessary columns are present in the data
-    if not balance_col or not pending_col:
-        st.error(f"Columns '{balance_col}' or '{pending_col}' not found for the selected date. Please check the available data.")
+    # Check if filtered data is empty
+    if filtered_df.empty:
+        st.warning("No data available for the selected branches and date.")
         return
 
     # Key Metrics Dashboard
     st.title("Branch Reco Trend")
+    
     metrics = calculate_branch_metrics(filtered_df, selected_date)
 
     col1, col2, col3, col4 = st.columns(4)
@@ -729,19 +726,15 @@ def show_collections_dashboard():
             # Prepare trend data safely
             trend_data = []
             for branch in selected_branches:
-                branch_data = filtered_df[filtered_df['Branch Name'] == branch]
+                branch_data = df[df['Branch Name'] == branch]
                 if not branch_data.empty:
                     for date in available_dates:
-                        balance_col = next((col for col in balance_columns if date in col), None)
-                        pending_col = next((col for col in pending_columns if date in col), None)
-
-                        if balance_col and pending_col:
-                            trend_data.append({
-                                'Branch': branch,
-                                'Date': date,
-                                'Balance': branch_data[balance_col].values[0],
-                                'Pending': branch_data[pending_col].values[0]
-                            })
+                        trend_data.append({
+                            'Branch': branch,
+                            'Date': date,
+                            'Balance': branch_data[branch_data['Date'] == date]['Balance As On'].values[0] if not branch_data[branch_data['Date'] == date].empty else 0,
+                            'Pending': branch_data[branch_data['Date'] == date]['Pending Amount'].values[0] if not branch_data[branch_data['Date'] == date].empty else 0
+                        })
 
             if trend_data:
                 trend_df = pd.DataFrame(trend_data)
@@ -786,17 +779,14 @@ def show_collections_dashboard():
         try:
             # Performance metrics
             performance_df = filtered_df.copy()
-
-            if balance_col in performance_df.columns and pending_col in performance_df.columns:
-                performance_df['Current Balance'] = performance_df[balance_col]
-                performance_df['Current Pending'] = performance_df[pending_col]
-                performance_df['Net Position'] = performance_df['Current Balance'] - performance_df['Current Pending']
+            if 'Balance As On' in performance_df.columns and 'Pending Amount' in performance_df.columns:
+                performance_df['Net Position'] = performance_df['Balance As On'] - performance_df['Pending Amount']
 
                 # Performance Chart
                 fig_perf = px.bar(
                     performance_df,
                     x='Branch Name',
-                    y=['Current Balance', 'Current Pending', 'Net Position'],
+                    y=['Balance As On', 'Pending Amount', 'Net Position'],
                     title="Branch Performance",
                     barmode='group'
                 )
@@ -804,7 +794,7 @@ def show_collections_dashboard():
 
                 # Metrics Table
                 st.dataframe(
-                    performance_df[['Branch Name', 'Current Balance', 'Current Pending', 'Net Position']]
+                    performance_df[['Branch Name', 'Balance As On', 'Pending Amount', 'Net Position']]
                     .sort_values('Net Position', ascending=False),
                     height=400
                 )
@@ -845,6 +835,7 @@ def show_collections_dashboard():
                 use_container_width=True
             )
 
+            st.write("Comparative analysis is being prepared...")
         except Exception as e:
             st.error(f"Error in comparative analysis: {str(e)}")
             st.write("Error details:", str(e))
