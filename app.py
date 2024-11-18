@@ -363,27 +363,51 @@ def load_tsg_trend():
     """Load TSG Payment Receivables Trend data from Google Drive"""
     try:
         # Load data from Google Drive using the appropriate file_id
-        df = load_data_from_drive(FILE_IDS['tsg_trend'])
-        
-        if df is None:
+        service = authenticate_drive()
+        if not service:
             return None
 
-        # Assign column names to the DataFrame
-        columns = [
-            'Ageing Category', '8-Nov-24', '25-Oct-24', '18-Oct-24', 
-            '4-Oct-24', '27-Sep-24', '13-Sep-24', '6-Sep-24', '2-Sep-24', '24-Aug-24',	'20-Aug-24',	'12-Aug-24',	'5-Aug-24'
-        ]
-        df.columns = columns[:len(df.columns)]
+        # Requesting the file from Google Drive
+        request = service.files().get_media(fileId=FILE_IDS['tsg_trend'])
+        file_buffer = io.BytesIO()
+        downloader = MediaIoBaseDownload(file_buffer, request)
 
-        # Convert amounts from string (with commas) to numeric, handling non-numeric values
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
+
+        file_buffer.seek(0)
+
+        # Attempt to read Excel file without assigning headers initially
+        df = pd.read_excel(file_buffer, header=None)
+
+        # Manually check and assign headers
+        initial_headers = df.iloc[0]  # Assume first row might be the actual headers
+        df.columns = initial_headers
+        df = df.drop(0).reset_index(drop=True)  # Drop the header row after reassignment
+
+        # Clean up the column names to ensure no extra spaces or formatting issues
+        df.columns = [str(col).strip() for col in df.columns]
+
+        # Check for the 'Ageing Category' or 'Branch Name' columns to confirm correct loading
+        if 'Ageing Category' not in df.columns:
+            st.error("Failed to find the 'Ageing Category' column. Please check the uploaded data format.")
+            return None
+
+        # Convert the date columns from `datetime` to proper strings for readability
+        date_columns = [col for col in df.columns if isinstance(col, pd.Timestamp)]
+        for col in date_columns:
+            df.rename(columns={col: col.strftime('%d-%b-%Y')}, inplace=True)
+
+        # Convert amounts from strings (with commas) to numeric, handling non-numeric values
         for col in df.columns:
             if col != 'Ageing Category':
                 df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
 
         return df
+
     except Exception as e:
         st.error(f"Error loading TSG data: {str(e)}")
-        st.write("Error details:", str(e))
         return None
         
 def clean_dataframe(df):
