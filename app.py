@@ -102,7 +102,7 @@ CREDENTIALS = {
 FILE_IDS = {
     'collections_data': '1zCSAx8jzOLewJXxOQlHjlUxXKoHbdopD',
     'itss_tender': '1o6SjeyNuvSyt9c5uCsq4MGFlZV1moC3V',
-    'sdr_data': '1PixxavAM29QrtjZUh-TMpa8gDSE7lg60',
+    'sdr_trend': '1PixxavAM29QrtjZUh-TMpa8gDSE7lg60',
     'tsg_trend': '1Kf8nHi1shw6q0oozXFEScyE0bmhhPDPo'
 }
 
@@ -278,11 +278,11 @@ def verify_excel_structure(file_path):
         return None
 
 @st.cache_data(ttl=300)
-def load_sdr_data():
+def load_sdr_trend():
     """Load CSD SDR Trend data from Google Drive"""
     try:
         # Load data from Google Drive using the appropriate file_id
-        df = load_data_from_drive(FILE_IDS['sdr_data'])
+        df = load_data_from_drive(FILE_IDS['sdr_trend'])
         
         if df is None:
             return None
@@ -906,7 +906,7 @@ def style_sdr_trend(df):
     return styled.format("{:.2f}", subset=numeric_columns)
 
 def show_sdr_dashboard():
-    df = load_sdr_data()
+    df = load_sdr_trend()
     if df is None:
         return
 
