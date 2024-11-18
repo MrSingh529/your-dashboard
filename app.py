@@ -810,25 +810,22 @@ def show_collections_dashboard():
                     for branch in selected_branches
                 ]
 
-                # Style the dataframe to highlight changes directly in 'Pending_2'
-                pending_col_1 = f'Pending ({selected_date_1.date()})'
-                pending_col_2 = f'Pending ({selected_date_2.date()})'
+                # Style the dataframe to highlight changes directly in the latest pending column
+                pending_col_1 = f'Pending ({selected_date_2.date()})'  # Previous date
+                pending_col_2 = f'Pending ({selected_date_1.date()})'  # Latest date
 
-                def highlight_changes(val, pending_1, pending_2):
-                    if val == pending_2:
-                        if pending_2 < pending_1:
-                            return 'background-color: #92D050'  # Green for decrease
-                        elif pending_2 > pending_1:
-                            return 'background-color: #FF7575'  # Red for increase
-                    return ''
+                def highlight_latest_pending(row):
+                    try:
+                        if row[pending_col_2] < row[pending_col_1]:
+                            return ['background-color: #92D050' if col == pending_col_2 else '' for col in row.index]  # Green for improvement
+                        elif row[pending_col_2] > row[pending_col_1]:
+                            return ['background-color: #FF7575' if col == pending_col_2 else '' for col in row.index]  # Red for deterioration
+                        else:
+                            return ['' for _ in row.index]
+                    except:
+                        return ['' for _ in row.index]
 
-                styled_df = comparison_df.style.apply(
-                    lambda x: [
-                        highlight_changes(val, x[pending_col_1], x[pending_col_2]) if col == pending_col_2 else '' 
-                        for col, val in zip(x.index, x.values)
-                    ],
-                    axis=1
-                )
+                styled_df = comparison_df.style.apply(highlight_latest_pending, axis=1)
 
                 # Display styled comparison table
                 st.markdown("### Balance and Pending Comparison")
