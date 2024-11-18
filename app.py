@@ -639,7 +639,10 @@ def show_collections_dashboard():
 
     # Debugging: Display columns to confirm the actual column names
     st.sidebar.write("Available columns in DataFrame:", list(df.columns))
-    st.write("Data preview after processing:", df.head())
+    
+    # Preview of the loaded data for better debugging
+    st.sidebar.write("Data preview after processing:")
+    st.sidebar.dataframe(df.head())
 
     # If 'Branch Name' column is not found, handle gracefully
     if 'Branch Name' not in df.columns:
@@ -663,59 +666,61 @@ def show_collections_dashboard():
         default=all_branches[:5] if len(all_branches) >= 5 else all_branches
     )
 
-    # Extract available dates from the "Date" column
-    if 'Date' in df.columns:
-        available_dates = df['Date'].dropna().unique()
-        available_dates = sorted(available_dates, reverse=True)  # Sort dates in descending order
-    else:
-        available_dates = []
+    # Extract all date-specific column headers automatically
+    # Columns that have "| Balance As On" or "| Pending Amount" are used for date selection
+    # Extract dates from the "Date" column directly instead of from other columns
+    available_dates = sorted(df['Date'].dropna().unique(), reverse=True)
+    selected_date = st.selectbox("Select Analysis Date", available_dates)
 
-    # Handle case when no valid dates are found
-    if len(available_dates) == 0:
+    if selected_date is None:
         st.error("No valid dates found in the dataset for analysis.")
         return
 
-    # Date Selection
-    selected_date = st.selectbox("Select Analysis Date", available_dates, format_func=lambda x: x.strftime('%Y-%m-%d') if pd.notna(x) else "Invalid Date")
-
-    # Filter Data based on Branches Selection and Date Selection
+    # Filter Data based on Branches Selection
     filtered_df = df.copy()
     if selected_branches:
         filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
-    filtered_df = filtered_df[filtered_df['Date'] == selected_date]
 
-    # Check if filtered data is empty
-    if filtered_df.empty:
-        st.warning("No data available for the selected branches and date.")
+    # Generate column names for Balance and Pending for the selected date
+    date_str = pd.to_datetime(selected_date).strftime('%Y-%m-%d')
+    balance_col = f'{date_str} | Balance As On'
+    pending_col = f'{date_str} | Pending Amount'
+
+    # Check if the necessary columns are present in the data
+    if balance_col not in filtered_df.columns or pending_col not in filtered_df.columns:
+        st.error(f"Columns '{balance_col}' or '{pending_col}' not found. Please check the available dates.")
         return
 
     # Key Metrics Dashboard
     st.title("Branch Reco Trend")
-    
-    metrics = calculate_branch_metrics(filtered_df, selected_date)
+    try:
+        metrics = calculate_branch_metrics(filtered_df, selected_date)
 
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric(
-            "Total Balance",
-            f"₹{metrics['total_balance']:,.2f}",
-            delta=metrics['total_reduced']
-        )
-    with col2:
-        st.metric(
-            "Total Pending",
-            f"₹{metrics['total_pending']:,.2f}"
-        )
-    with col3:
-        st.metric(
-            "Collection Ratio",
-            f"{metrics['collection_ratio']:.1f}%"
-        )
-    with col4:
-        st.metric(
-            "Best Performing Branch",
-            metrics['top_balance_branch']
-        )
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric(
+                "Total Balance",
+                f"₹{metrics['total_balance']:,.2f}",
+                delta=metrics['total_reduced']
+            )
+        with col2:
+            st.metric(
+                "Total Pending",
+                f"₹{metrics['total_pending']:,.2f}"
+            )
+        with col3:
+            st.metric(
+                "Collection Ratio",
+                f"{metrics['collection_ratio']:.1f}%"
+            )
+        with col4:
+            st.metric(
+                "Best Performing Branch",
+                metrics['top_balance_branch']
+            )
+    except KeyError as e:
+        st.error(f"Error calculating metrics: {str(e)}")
+        st.write("Please verify that the column names match the expected format.")
 
     # Analysis Tabs
     tab1, tab2, tab3 = st.tabs(["Trend Analysis", "Branch Performance", "Comparative Analysis"])
@@ -726,15 +731,18 @@ def show_collections_dashboard():
             # Prepare trend data safely
             trend_data = []
             for branch in selected_branches:
-                branch_data = df[df['Branch Name'] == branch]
+                branch_data = filtered_df[filtered_df['Branch Name'] == branch]
                 if not branch_data.empty:
                     for date in available_dates:
-                        trend_data.append({
-                            'Branch': branch,
-                            'Date': date,
-                            'Balance': branch_data[branch_data['Date'] == date]['Balance As On'].values[0] if not branch_data[branch_data['Date'] == date].empty else 0,
-                            'Pending': branch_data[branch_data['Date'] == date]['Pending Amount'].values[0] if not branch_data[branch_data['Date'] == date].empty else 0
-                        })
+                        balance_col = f"{pd.to_datetime(date).strftime('%Y-%m-%d')} | Balance As On"
+                        pending_col = f"{pd.to_datetime(date).strftime('%Y-%m-%d')} | Pending Amount"
+                        if balance_col in branch_data.columns and pending_col in branch_data.columns:
+                            trend_data.append({
+                                'Branch': branch,
+                                'Date': date,
+                                'Balance': branch_data[balance_col].values[0],
+                                'Pending': branch_data[pending_col].values[0]
+                            })
 
             if trend_data:
                 trend_df = pd.DataFrame(trend_data)
