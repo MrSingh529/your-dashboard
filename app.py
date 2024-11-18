@@ -136,15 +136,27 @@ def load_data_from_drive(file_id):
 
         file_buffer.seek(0)
         
-        # Load the Excel file with the header in the first row
-        df = pd.read_excel(file_buffer, engine='openpyxl', header=0)
+        # Load the Excel file with the first two rows as headers
+        df = pd.read_excel(file_buffer, engine='openpyxl', header=[0, 1])
+        
+        # Concatenate the headers to create multi-level column names
+        new_columns = []
+        for col in df.columns:
+            # Combine the two headers, handling NaN in case of empty cells
+            if pd.notna(col[0]) and pd.notna(col[1]):
+                new_columns.append(f"{col[0]} | {col[1]}")
+            elif pd.notna(col[0]):
+                new_columns.append(f"{col[0]}")
+            else:
+                new_columns.append(f"{col[1]}")
+
+        df.columns = new_columns
 
         # Deduplicate column names manually if duplicates are found
         df.columns = deduplicate_columns(df.columns)
 
-        # Debugging: Print out the initial state of the DataFrame after header assignment
-        st.write("Debug: DataFrame after assigning headers")
-        st.write(df.head())
+        # Skip the rows that were used as headers
+        df = df.reset_index(drop=True)
 
         # Convert amount columns to numeric (excluding 'Branch Name')
         for col in df.columns:
