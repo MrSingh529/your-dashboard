@@ -973,130 +973,136 @@ def show_sdr_dashboard():
 
     st.title("CSD SDR Trend Analysis")
 
-    # Adding tabs for better analysis switching
-    tab1, tab2, tab3, tab4 = st.tabs(["Highlights Trend", "SDR Ageing Analysis", "Trend Analysis", "Category-wise Analysis"])
-    
-    with tab1:
-        # Display Highlights Trend in a new tab
-        st.subheader("Highlights Trend")
-        st.markdown("A detailed analysis of the changes over different periods, indicating improvements and deteriorations.")
-        styled_df = style_sdr_trend(df)
-        st.dataframe(styled_df, height=400, use_container_width=True)
-
-        # Display Summary Metrics
-        st.markdown("### Summary Metrics")
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            total_reduced = df['Reduced OS'].sum()
-            st.metric(
-                "Total Reduced OS",
-                f"{total_reduced:,.2f}",
-                delta=total_reduced
-            )
-        
-        with col2:
-            latest_date = date_columns[0]
-            prev_date = date_columns[1]
-            latest_total = df[latest_date].sum()
-            prev_total = df[prev_date].sum()
-            change = latest_total - prev_total
-            st.metric(
-                f"Latest Total ({latest_date})",
-                f"{latest_total:,.2f}",
-                delta=-change  # Negative change is good
-            )
-        
-        with col3:
-            reduction_percent = ((prev_total - latest_total) / prev_total * 100)
-            st.metric(
-                "Week-on-Week Improvement",
-                f"{reduction_percent:.2f}%",
-                delta=reduction_percent
-            )
-
-    with tab2:
-        # Original SDR Ageing Analysis Section
-        st.subheader("SDR Ageing Analysis")
-        st.markdown("Aging Analysis for different SDR categories.")
-        st.dataframe(df, height=400, use_container_width=True)
-
-    with tab3:
-        # Trend Analysis
-        st.subheader("Trend Analysis")
-        
-        # Create trend data
+    # Define date columns at the start so they can be used in all tabs
+    try:
         date_columns = [col for col in df.columns if col not in ['Ageing Category', 'Reduced OS']]
         date_columns.sort(reverse=True)  # Most recent first
         
-        trend_data = []
-        for idx, row in df.iterrows():
-            for date in date_columns:
-                trend_data.append({
-                    'Ageing Category': row['Ageing Category'],
-                    'Date': date,
-                    'Amount': row[date]
-                })
+        # Adding tabs for better analysis switching
+        tab1, tab2, tab3, tab4 = st.tabs(["Highlights Trend", "SDR Ageing Analysis", "Trend Analysis", "Category-wise Analysis"])
         
-        trend_df = pd.DataFrame(trend_data)
-        
-        # Line chart for trends
-        fig = px.line(
-            trend_df,
-            x='Date',
-            y='Amount',
-            color='Ageing Category',
-            title="SDR Trends by Ageing Category"
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        with tab1:
+            # Display Highlights Trend in a new tab
+            st.subheader("Highlights Trend")
+            st.markdown("A detailed analysis of the changes over different periods, indicating improvements and deteriorations.")
+            styled_df = style_sdr_trend(df)
+            st.dataframe(styled_df, height=400, use_container_width=True)
 
-    with tab4:
-        # Category Analysis
-        st.subheader("Category-wise Analysis")
-        
-        latest_date = date_columns[0]
-        prev_date = date_columns[1]
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Pie chart for latest distribution
-            fig_pie = px.pie(
-                df,
-                values=latest_date,
-                names='Ageing Category',
-                title=f"Distribution as of {latest_date}"
-            )
-            st.plotly_chart(fig_pie, use_container_width=True)
-        
-        with col2:
-            # Bar chart for changes
-            df_changes = df.copy()
-            df_changes['Change'] = df_changes[latest_date] - df_changes[prev_date]
+            # Display Summary Metrics
+            st.markdown("### Summary Metrics")
+            col1, col2, col3 = st.columns(3)
             
-            fig_changes = px.bar(
-                df_changes,
-                x='Ageing Category',
-                y='Change',
-                title=f"Changes from {prev_date} to {latest_date}",
-                color='Change',
-                color_continuous_scale=['green', 'yellow', 'red']
-            )
-            st.plotly_chart(fig_changes)
+            with col1:
+                total_reduced = df['Reduced OS'].sum()
+                st.metric(
+                    "Total Reduced OS",
+                    f"{total_reduced:,.2f}",
+                    delta=total_reduced
+                )
+            
+            with col2:
+                latest_date = date_columns[0]
+                prev_date = date_columns[1]
+                latest_total = df[latest_date].sum()
+                prev_total = df[prev_date].sum()
+                change = latest_total - prev_total
+                st.metric(
+                    f"Latest Total ({latest_date})",
+                    f"{latest_total:,.2f}",
+                    delta=-change  # Negative change is good
+                )
+            
+            with col3:
+                reduction_percent = ((prev_total - latest_total) / prev_total * 100)
+                st.metric(
+                    "Week-on-Week Improvement",
+                    f"{reduction_percent:.2f}%",
+                    delta=reduction_percent
+                )
 
-    # Export Option
-    if st.sidebar.button("Export SDR Analysis"):
-        buffer = io.BytesIO()
-        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-            df.to_excel(writer, sheet_name='SDR Data', index=False)
-            trend_df.to_excel(writer, sheet_name='Trend Analysis', index=False)
-        
-        st.sidebar.download_button(
-            label="📥 Download SDR Report",
-            data=buffer.getvalue(),
-            file_name=f"sdr_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
-            mime="application/vnd.ms-excel"
-        )
+        with tab2:
+            # Original SDR Ageing Analysis Section
+            st.subheader("SDR Ageing Analysis")
+            st.markdown("Aging Analysis for different SDR categories.")
+            st.dataframe(df, height=400, use_container_width=True)
+
+        with tab3:
+            # Trend Analysis
+            st.subheader("Trend Analysis")
+            
+            # Create trend data
+            trend_data = []
+            for idx, row in df.iterrows():
+                for date in date_columns:
+                    trend_data.append({
+                        'Ageing Category': row['Ageing Category'],
+                        'Date': date,
+                        'Amount': row[date]
+                    })
+            
+            trend_df = pd.DataFrame(trend_data)
+            
+            # Line chart for trends
+            fig = px.line(
+                trend_df,
+                x='Date',
+                y='Amount',
+                color='Ageing Category',
+                title="SDR Trends by Ageing Category"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+        with tab4:
+            # Category Analysis
+            st.subheader("Category-wise Analysis")
+            
+            latest_date = date_columns[0]
+            prev_date = date_columns[1]
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Pie chart for latest distribution
+                fig_pie = px.pie(
+                    df,
+                    values=latest_date,
+                    names='Ageing Category',
+                    title=f"Distribution as of {latest_date}"
+                )
+                st.plotly_chart(fig_pie, use_container_width=True)
+            
+            with col2:
+                # Bar chart for changes
+                df_changes = df.copy()
+                df_changes['Change'] = df_changes[latest_date] - df_changes[prev_date]
+                
+                fig_changes = px.bar(
+                    df_changes,
+                    x='Ageing Category',
+                    y='Change',
+                    title=f"Changes from {prev_date} to {latest_date}",
+                    color='Change',
+                    color_continuous_scale=['green', 'yellow', 'red']
+                )
+                st.plotly_chart(fig_changes)
+
+        # Export Option
+        if st.sidebar.button("Export SDR Analysis"):
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                df.to_excel(writer, sheet_name='SDR Data', index=False)
+                trend_df.to_excel(writer, sheet_name='Trend Analysis', index=False)
+            
+            st.sidebar.download_button(
+                label="📥 Download SDR Report",
+                data=buffer.getvalue(),
+                file_name=f"sdr_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                mime="application/vnd.ms-excel"
+            )
+            
+    except Exception as e:
+        st.error(f"Error in SDR analysis: {str(e)}")
+        st.write("Error details:", str(e))
 
 def style_itss_data(df, aging_categories):
     """Style the ITSS dataframe"""
