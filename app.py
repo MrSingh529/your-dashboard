@@ -227,49 +227,27 @@ def load_itss_data():
         if df is None:
             return None
         
-        # Expected column names
-        expected_columns = [
-            'Account Name', 'Date', '61-90', '91-120', '121-180', 
-            '181-360', '361-720', 'More than 2 Yr'
-        ]
-        
-        # Assign columns if they don't match
-        if len(df.columns) != len(expected_columns):
-            st.error("Column mismatch detected. Current columns:")
-            st.write(df.columns.tolist())
-            st.write("Expected columns:")
-            st.write(expected_columns)
+        # Update the column name check to match your actual data
+        if 'Account Name' not in df.columns:
+            st.error("The column 'Account Name' is not available in the dataset. Please verify the column names.")
             return None
 
-        # Assign column names explicitly
-        df.columns = expected_columns
-
-        # Convert date column
+        # Convert 'Date' to datetime type after ensuring its values are suitable
         if 'Date' in df.columns:
-            # First, clean the date strings
-            df['Date'] = df['Date'].astype(str)
-            df['Date'] = df['Date'].replace('None', None)
-            df['Date'] = df['Date'].replace('', None)
-            
-            # Try to parse dates that are not None
+            df['Date'] = df['Date'].astype(str).replace(['None', ''], None)
             mask = df['Date'].notna()
             if mask.any():
                 try:
-                    df.loc[mask, 'Date'] = pd.to_datetime(df.loc[mask, 'Date'], format='%d-%m-%Y')
+                    df.loc[mask, 'Date'] = pd.to_datetime(df.loc[mask, 'Date'], format='%d-%m-%Y', errors='coerce')
                 except:
-                    try:
-                        df.loc[mask, 'Date'] = pd.to_datetime(df.loc[mask, 'Date'])
-                    except:
-                        st.error("Failed to parse dates")
-            
-            # For rows where Date is None or invalid, use current date
-            df.loc[df['Date'].isna(), 'Date'] = pd.Timestamp.now().floor('D')
+                    st.error("Failed to parse dates in the 'Date' column.")
 
-        # Convert numeric columns and handle '-' values
+        # Handle numeric columns safely, avoid using .str for numeric values
         numeric_columns = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         for col in numeric_columns:
-            df[col] = df[col].replace('-', '0')
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+            if col in df.columns:
+                df[col] = df[col].replace('-', '0')
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
         return df
 
