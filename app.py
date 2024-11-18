@@ -640,7 +640,7 @@ def show_collections_dashboard():
 
     # Debugging: Display columns to confirm the actual column names
     st.sidebar.write("Available columns in DataFrame:", list(df.columns))
-    
+
     # Preview of the loaded data for better debugging
     st.sidebar.write("Data preview after processing:")
     st.sidebar.dataframe(df.head())
@@ -658,7 +658,7 @@ def show_collections_dashboard():
 
     # Sidebar Controls for Filtering
     st.sidebar.title("Analysis Controls")
-    
+
     # Branch Selection with Search
     all_branches = sorted(df['Branch Name'].unique().tolist())
     selected_branches = st.multiselect(
@@ -667,8 +667,7 @@ def show_collections_dashboard():
         default=all_branches[:5] if len(all_branches) >= 5 else all_branches
     )
 
-    # Extract available dates from columns containing "Balance As On" or "Pending Amount"
-    available_dates = sorted(list(set(col.split(" | ")[0] for col in df.columns if "Balance As On" in col or "Pending Amount" in col)), reverse=True)
+    available_dates = sorted(df['Date'].dropna().unique(), reverse=True)
     selected_date = st.selectbox("Select Analysis Date", available_dates)
 
     if selected_date is None:
@@ -681,18 +680,21 @@ def show_collections_dashboard():
         filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
 
     # Generate column names for Balance and Pending for the selected date
-    balance_col = f"{selected_date} | Balance As On"
-    pending_col = f"{selected_date} | Pending Amount"
+    date_str = pd.to_datetime(selected_date).strftime('%Y-%m-%d')
+    
+    # Find the closest matching columns for Balance and Pending using regex
+    import re
+    balance_col = next((col for col in filtered_df.columns if re.search(f"{date_str}.*Balance As On", col)), None)
+    pending_col = next((col for col in filtered_df.columns if re.search(f"{date_str}.*Pending Amount", col)), None)
 
-    # Check if the columns exist in filtered_df
-    if balance_col not in filtered_df.columns or pending_col not in filtered_df.columns:
-        st.error(f"Columns '{balance_col}' or '{pending_col}' not found. Please check the available data.")
+    if not balance_col or not pending_col:
+        st.error(f"Columns for balance or pending amounts not found for the date {selected_date}. Please check the available data.")
         return
 
     # Key Metrics Dashboard
     st.title("Branch Reco Trend")
     try:
-        metrics = calculate_branch_metrics(filtered_df, balance_col, pending_col)
+        metrics = calculate_branch_metrics(filtered_df, selected_date)
 
         col1, col2, col3, col4 = st.columns(4)
         with col1:
@@ -714,12 +716,12 @@ def show_collections_dashboard():
         with col4:
             st.metric(
                 "Best Performing Branch",
-                metrics.get('top_balance_branch', "N/A")
+                metrics.get('top_balance_branch', 'N/A')
             )
     except KeyError as e:
         st.error(f"Error calculating metrics: {str(e)}")
         st.write("Please verify that the column names match the expected format.")
-
+    
     # Analysis Tabs
     tab1, tab2, tab3 = st.tabs(["Trend Analysis", "Branch Performance", "Comparative Analysis"])
 
@@ -732,9 +734,11 @@ def show_collections_dashboard():
                 branch_data = filtered_df[filtered_df['Branch Name'] == branch]
                 if not branch_data.empty:
                     for date in available_dates:
-                        balance_col = f"{date} | Balance As On"
-                        pending_col = f"{date} | Pending Amount"
-                        if balance_col in branch_data.columns and pending_col in branch_data.columns:
+                        date_str = pd.to_datetime(date).strftime('%Y-%m-%d')
+                        balance_col = next((col for col in branch_data.columns if re.search(f"{date_str}.*Balance As On", col)), None)
+                        pending_col = next((col for col in branch_data.columns if re.search(f"{date_str}.*Pending Amount", col)), None)
+
+                        if balance_col and pending_col:
                             trend_data.append({
                                 'Branch': branch,
                                 'Date': date,
