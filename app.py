@@ -642,20 +642,20 @@ def show_collections_dashboard():
 
     st.title("Collections Dashboard")
 
-    # Sidebar Controls for Filtering
+    # Sidebar Controls for Filtering - Moved to the Sidebar
     st.sidebar.title("Analysis Controls")
 
-    # Branch Selection with Search
+    # Branch Selection with Search (in sidebar)
     all_branches = sorted(df['Branch Name'].unique().tolist())
-    selected_branches = st.multiselect(
+    selected_branches = st.sidebar.multiselect(
         "Select Branches (Search/Select)",
         options=all_branches,
         default=all_branches
     )
 
-    # Date selection
+    # Date selection (in sidebar)
     available_dates = sorted(df['Date'].dropna().unique(), reverse=True)
-    selected_date = st.selectbox("Select Analysis Date", available_dates)
+    selected_date = st.sidebar.selectbox("Select Analysis Date", available_dates)
 
     if selected_date is None:
         st.error("No valid dates found in the dataset for analysis.")
