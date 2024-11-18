@@ -639,7 +639,7 @@ def show_collections_dashboard():
 
     # Debugging: Display columns to confirm the actual column names
     st.sidebar.write("Available columns in DataFrame:", list(df.columns))
-
+    
     # Preview of the loaded data for better debugging
     st.sidebar.write("Data preview after processing:")
     st.sidebar.dataframe(df.head())
@@ -666,17 +666,7 @@ def show_collections_dashboard():
         default=all_branches[:5] if len(all_branches) >= 5 else all_branches
     )
 
-    # Convert date column to datetime without time for consistency
-    if 'Date' in df.columns:
-        df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.date
-
-    # Get all unique dates from the dataset and remove any invalid entries
     available_dates = sorted(df['Date'].dropna().unique(), reverse=True)
-    if not available_dates:
-        st.error("No valid dates found in the dataset.")
-        return
-
-    # Select analysis date
     selected_date = st.selectbox("Select Analysis Date", available_dates)
 
     if selected_date is None:
@@ -684,23 +674,22 @@ def show_collections_dashboard():
         return
 
     # Filter Data based on Branches Selection
-    filtered_df = df[df['Branch Name'].isin(selected_branches)]
-    if filtered_df.empty:
-        st.warning("No data available for the selected branches.")
-        return
+    filtered_df = df.copy()
+    if selected_branches:
+        filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
 
     # Generate column names for Balance and Pending for the selected date
-    selected_date_str = selected_date.strftime('%Y-%m-%d')
-    balance_col = f"{selected_date_str} | Balance As On"
-    pending_col = f"{selected_date_str} | Pending Amount"
+    # Strip the time portion to ensure matching with the column names
+    date_str = pd.to_datetime(selected_date).strftime('%Y-%m-%d')
+    
+    # Find the closest matching columns for Balance and Pending using regex
+    import re
+    balance_col = next((col for col in filtered_df.columns if re.match(f"{date_str}.*Balance As On", col)), None)
+    pending_col = next((col for col in filtered_df.columns if re.match(f"{date_str}.*Pending Amount", col)), None)
 
-    # Debug: Display generated column names
-    st.sidebar.write("Generated Balance Column Name:", balance_col)
-    st.sidebar.write("Generated Pending Column Name:", pending_col)
-
-    # Check if the necessary columns are present in the filtered data
-    if balance_col not in filtered_df.columns or pending_col not in filtered_df.columns:
-        st.error(f"Columns '{balance_col}' or '{pending_col}' not found in the dataset. Please check the available dates.")
+    # Check if the necessary columns are present in the data
+    if not balance_col or not pending_col:
+        st.error(f"Columns matching '{date_str} | Balance As On' or '{date_str} | Pending Amount' not found. Please check the available dates.")
         return
 
     # Key Metrics Dashboard
