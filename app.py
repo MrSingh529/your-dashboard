@@ -1097,10 +1097,6 @@ def show_sdr_dashboard():
             file_name=f"sdr_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
             mime="application/vnd.ms-excel"
         )
-            
-    except Exception as e:
-        st.error(f"Error in SDR analysis: {str(e)}")
-        st.write("Error details:", str(e))
 
 def style_itss_data(df, aging_categories):
     """Style the ITSS dataframe"""
