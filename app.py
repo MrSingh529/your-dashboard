@@ -196,53 +196,32 @@ def load_itss_data():
         # Assign column names explicitly
         df.columns = expected_columns
 
-        # View raw date values
+        # Convert date column
         if 'Date' in df.columns:
-            st.write("Raw Date column data before conversion (first 10 values):")
-            st.write(df['Date'].head(10))
-
-            # Remove non-printable characters, leading/trailing whitespace
-            df['Date'] = df['Date'].astype(str).str.encode('ascii', 'ignore').str.decode('ascii').str.strip()
-
-            st.write("Cleaned Date column data (first 10 values):")
-            st.write(df['Date'].head(10))
-
-            # Attempt to parse dates with common formats
-            formats = ['%d-%m-%Y', '%d/%m/%Y', '%Y-%m-%d']
-            for fmt in formats:
+            # First, clean the date strings
+            df['Date'] = df['Date'].astype(str)
+            df['Date'] = df['Date'].replace('None', None)
+            df['Date'] = df['Date'].replace('', None)
+            
+            # Try to parse dates that are not None
+            mask = df['Date'].notna()
+            if mask.any():
                 try:
-                    df['Date'] = pd.to_datetime(df['Date'], format=fmt, errors='coerce')
-                    if df['Date'].notna().all():  # If all dates are successfully parsed, stop
-                        break
-                except ValueError:
-                    continue
+                    df.loc[mask, 'Date'] = pd.to_datetime(df.loc[mask, 'Date'], format='%d-%m-%Y')
+                except:
+                    try:
+                        df.loc[mask, 'Date'] = pd.to_datetime(df.loc[mask, 'Date'])
+                    except:
+                        st.error("Failed to parse dates")
+            
+            # For rows where Date is None or invalid, use current date
+            df.loc[df['Date'].isna(), 'Date'] = pd.Timestamp.now().floor('D')
 
-            # As a fallback, attempt a generic conversion
-            if df['Date'].isna().any():
-                df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-
-            st.write("Date column after conversion:")
-            st.write(df['Date'].head())
-
-            # Check for any failed conversions
-            failed_dates = df[df['Date'].isna()]
-            if not failed_dates.empty:
-                st.warning("Some dates failed to convert. Displaying failed rows:")
-                st.write(failed_dates[['Account Name', 'Date']].head(10))
-
-        # Convert numeric columns
+        # Convert numeric columns and handle '-' values
         numeric_columns = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         for col in numeric_columns:
-            df[col] = df[col].replace('-', 0)
+            df[col] = df[col].replace('-', '0')
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-
-        # Verify we have data
-        if df.empty:
-            st.error("No data found after processing")
-            return None
-
-        st.write("Final processed data:")
-        st.write(df.head())
 
         return df
 
@@ -1112,43 +1091,21 @@ def show_itss_dashboard():
             '61-90', '91-120', '121-180', '181-360',
             '361-720', 'More than 2 Yr'
         ]
-        
-        # Ensure Date column is properly parsed
-        if 'Date' in df.columns:
-            # Convert Date column to datetime, handling various formats
-            df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y', errors='coerce')
-            if df['Date'].isna().all():
-                # Try alternative format if first attempt fails
-                df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d', errors='coerce')
-        
-        # Drop rows where 'Date' is NaT
-        df = df.dropna(subset=['Date'])
-
-        # Debug: Print date range and format
-        st.write("Date Range:", 
-                f"From {df['Date'].min().strftime('%Y-%m-%d')} to {df['Date'].max().strftime('%Y-%m-%d')}" 
-                if not df['Date'].empty else "No dates available")
 
         # Date selection
-        valid_dates = df['Date'].unique()
+        valid_dates = sorted(df['Date'].unique(), reverse=True)
         if len(valid_dates) == 0:
-            st.error("No valid dates found for analysis. Please check the date format in your input data.")
+            st.error("No valid dates found for analysis.")
             return
-        
-        dates = sorted(valid_dates, reverse=True)
         
         selected_date = st.selectbox(
             "Select Date for Analysis",
-            dates,
+            valid_dates,
             format_func=lambda x: x.strftime('%Y-%m-%d') if pd.notna(x) else "Invalid Date"
         )
         
         # Filter data for selected date
         current_data = df[df['Date'] == selected_date].copy()
-        
-        # Convert numeric columns to float, replacing '-' with 0
-        for col in aging_categories:
-            current_data[col] = pd.to_numeric(current_data[col].replace('-', '0'), errors='coerce').fillna(0)
         
         # Summary metrics
         st.markdown("### Summary Metrics")
@@ -1227,7 +1184,7 @@ def show_itss_dashboard():
                 file_name=f"itss_analysis_{selected_date.strftime('%Y-%m-%d')}.xlsx",
                 mime="application/vnd.ms-excel"
             )
-        
+            
     except Exception as e:
         st.error(f"Error in ITSS analysis: {str(e)}")
         st.write("Error details:", str(e))
