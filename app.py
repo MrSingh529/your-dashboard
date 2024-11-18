@@ -640,7 +640,7 @@ def show_collections_dashboard():
 
     # Sidebar Controls for Filtering
     st.sidebar.title("Analysis Controls")
-    
+
     # Branch Selection with Search
     all_branches = sorted(df['Branch Name'].unique().tolist())
     selected_branches = st.multiselect(
@@ -650,11 +650,17 @@ def show_collections_dashboard():
     )
 
     # Extract all date-specific column headers automatically
-    # Columns that have "| Balance As On" or "| Pending Amount" are used for date selection
+    # Columns that have "Balance As On" or "Pending Amount" are used for date selection
     available_dates = sorted(
         list(set([col.split(" | ")[0] for col in df.columns if "Balance As On" in col or "Pending Amount" in col])),
         reverse=True
     )
+    st.sidebar.write("Available dates:", available_dates)
+
+    if not available_dates:
+        st.error("No valid dates found in the dataset for analysis.")
+        return
+
     selected_date = st.selectbox("Select Analysis Date", available_dates)
 
     # Filter Data based on Branches Selection
@@ -662,13 +668,13 @@ def show_collections_dashboard():
     if selected_branches:
         filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
 
-    # Generate column names for Balance and Pending for the selected date
-    balance_col = f'{selected_date} | Balance As On'
-    pending_col = f'{selected_date} | Pending Amount'
+    # Identify column names for Balance and Pending based on the selected date
+    balance_col = next((col for col in df.columns if f"{selected_date}" in col and "Balance As On" in col), None)
+    pending_col = next((col for col in df.columns if f"{selected_date}" in col and "Pending Amount" in col), None)
 
     # Check if the necessary columns are present in the data
-    if balance_col not in df.columns or pending_col not in df.columns:
-        st.error(f"Columns '{balance_col}' or '{pending_col}' not found. Please check the available dates.")
+    if not balance_col or not pending_col:
+        st.error(f"Columns '{balance_col}' or '{pending_col}' not found for the selected date. Please check the available data.")
         return
 
     # Key Metrics Dashboard
@@ -710,9 +716,10 @@ def show_collections_dashboard():
                 branch_data = filtered_df[filtered_df['Branch Name'] == branch]
                 if not branch_data.empty:
                     for date in available_dates:
-                        balance_col = f'{date} | Balance As On'
-                        pending_col = f'{date} | Pending Amount'
-                        if balance_col in branch_data.columns and pending_col in branch_data.columns:
+                        balance_col = next((col for col in branch_data.columns if f"{date}" in col and "Balance As On" in col), None)
+                        pending_col = next((col for col in branch_data.columns if f"{date}" in col and "Pending Amount" in col), None)
+
+                        if balance_col and pending_col:
                             trend_data.append({
                                 'Branch': branch,
                                 'Date': date,
@@ -763,7 +770,7 @@ def show_collections_dashboard():
         try:
             # Performance metrics
             performance_df = filtered_df.copy()
-            
+
             if balance_col in performance_df.columns and pending_col in performance_df.columns:
                 performance_df['Current Balance'] = performance_df[balance_col]
                 performance_df['Current Pending'] = performance_df[pending_col]
@@ -800,16 +807,18 @@ def show_collections_dashboard():
 
             # Add data for all dates
             for date in available_dates:
-                balance_col = f'{date} | Balance As On'
-                pending_col = f'{date} | Pending Amount'
-                comparison_df[f'Balance_{date}'] = [
-                    filtered_df[filtered_df['Branch Name'] == branch][balance_col].iloc[0] if balance_col in filtered_df.columns else 0
-                    for branch in selected_branches
-                ]
-                comparison_df[f'Pending_{date}'] = [
-                    filtered_df[filtered_df['Branch Name'] == branch][pending_col].iloc[0] if pending_col in filtered_df.columns else 0
-                    for branch in selected_branches
-                ]
+                balance_col = next((col for col in filtered_df.columns if f"{date}" in col and "Balance As On" in col), None)
+                pending_col = next((col for col in filtered_df.columns if f"{date}" in col and "Pending Amount" in col), None)
+
+                if balance_col and pending_col:
+                    comparison_df[f'Balance_{date}'] = [
+                        filtered_df[filtered_df['Branch Name'] == branch][balance_col].iloc[0]
+                        for branch in selected_branches
+                    ]
+                    comparison_df[f'Pending_{date}'] = [
+                        filtered_df[filtered_df['Branch Name'] == branch][pending_col].iloc[0]
+                        for branch in selected_branches
+                    ]
 
             # Display styled comparison table
             st.markdown("### Weekly Pending Amount Comparison")
