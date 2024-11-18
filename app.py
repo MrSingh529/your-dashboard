@@ -716,35 +716,35 @@ def show_collections_dashboard():
         best_performing_branch = max(performance_records, key=lambda x: performance_records[x]['decreasing_count'], default="N/A")
         poor_performing_branch = max(performance_records, key=lambda x: performance_records[x]['increasing_count'], default="N/A")
         
-        # Display Metrics
+        # Display Metrics for the first selected date
         col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
             st.metric(
                 "Total Balance",
-                f"₹{total_balance:,.2f}",
-                delta=f"₹{total_reduced:,.2f}"
+                f"₹{total_balance_1:,.2f}",
+                delta=f"₹{total_reduced_1:,.2f}"
             )
         with col2:
             st.metric(
                 "Total Pending",
-                f"₹{total_pending:,.2f}"
+                f"₹{total_pending_1:,.2f}"
             )
         with col3:
             st.metric(
                 "Collection Ratio",
-                f"{collection_ratio:.1f}%"
+                f"{collection_ratio_1:.1f}%"
             )
         with col4:
             st.metric(
                 "Best Performing Branch",
-                best_performing_branch
+                top_balance_branch_1
             )
         with col5:
             st.metric(
                 "Poor Performing Branch",
                 poor_performing_branch
             )
-
+        
     except KeyError as e:
         st.error(f"Error calculating metrics: {str(e)}")
         st.write("Please verify that the column names match the expected format.")
