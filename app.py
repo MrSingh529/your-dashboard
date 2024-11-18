@@ -632,33 +632,28 @@ def show_comparative_analysis(filtered_df, dates, selected_branches):
 
 # Enhanced dashboard display
 def show_collections_dashboard():
-    # Load data from Google Drive
     df = load_data_from_drive(FILE_IDS['collections_data'])
     if df is None:
         return
 
     # Debugging: Display columns to confirm the actual column names
     st.sidebar.write("Available columns in DataFrame:", list(df.columns))
-    
-    # Preview of the loaded data for better debugging
-    st.sidebar.write("Data preview after processing:")
-    st.sidebar.dataframe(df.head())
 
-    # If 'Branch Name' column is not found, handle gracefully
+    # Ensure 'Branch Name' column is present
     if 'Branch Name' not in df.columns:
         st.error("The column 'Branch Name' is not available in the dataset. Please verify the column names.")
         return
 
     st.title("Collections Dashboard")
 
-    # Display data info for verification
+    # Display Data for verification
     st.sidebar.write("Data loaded successfully")
     st.sidebar.write("Number of branches:", len(df['Branch Name'].unique()))
 
-    # Sidebar Controls for Filtering
+    # Sidebar Controls
     st.sidebar.title("Analysis Controls")
-    
-    # Branch Selection with Search
+
+    # Branch Selection
     all_branches = sorted(df['Branch Name'].unique().tolist())
     selected_branches = st.multiselect(
         "Select Branches (Search/Select)",
@@ -666,58 +661,59 @@ def show_collections_dashboard():
         default=all_branches[:5] if len(all_branches) >= 5 else all_branches
     )
 
-    # Extract all date-specific column headers automatically
-    # Columns that have "| Balance As On" or "| Pending Amount" are used for date selection
-    # Extract dates from the "Date" column directly instead of from other columns
-    available_dates = sorted(df['Date'].dropna().unique(), reverse=True)
+    # Extract all available dates
+    df['Date'] = pd.to_datetime(df['Date']).dt.date  # Remove timestamp
+    available_dates = sorted(df['Date'].unique(), reverse=True)
     selected_date = st.selectbox("Select Analysis Date", available_dates)
 
-    if selected_date is None:
-        st.error("No valid dates found in the dataset for analysis.")
+    # Filter Data
+    filtered_df = df[df['Branch Name'].isin(selected_branches)]
+    
+    if filtered_df.empty:
+        st.warning("No data available for the selected branches.")
         return
 
-    # Filter Data based on Branches Selection
-    filtered_df = df.copy()
-    if selected_branches:
-        filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
+    # Generate proper column names
+    selected_date_str = selected_date.strftime('%Y-%m-%d')
+    balance_col = f"{selected_date_str} | Balance As On"
+    pending_col = f"{selected_date_str} | Pending Amount"
 
-    # Generate column names for Balance and Pending for the selected date
-    date_str = pd.to_datetime(selected_date).strftime('%Y-%m-%d')
-    balance_col = f'{date_str} | Balance As On'
-    pending_col = f'{date_str} | Pending Amount'
+    # Debug: Display generated column names
+    st.sidebar.write("Generated Balance Column Name:", balance_col)
+    st.sidebar.write("Generated Pending Column Name:", pending_col)
 
-    # Check if the necessary columns are present in the data
-    if balance_col not in filtered_df.columns or pending_col not in filtered_df.columns:
+    # Check if the generated column names are in the DataFrame
+    if balance_col not in df.columns or pending_col not in df.columns:
         st.error(f"Columns '{balance_col}' or '{pending_col}' not found. Please check the available dates.")
         return
 
+    # Proceed with metrics calculations
+    metrics = calculate_branch_metrics(filtered_df, selected_date)
+
     # Key Metrics Dashboard
     st.title("Branch Reco Trend")
-    try:
-        metrics = calculate_branch_metrics(filtered_df, selected_date)
-
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric(
-                "Total Balance",
-                f"₹{metrics['total_balance']:,.2f}",
-                delta=metrics['total_reduced']
-            )
-        with col2:
-            st.metric(
-                "Total Pending",
-                f"₹{metrics['total_pending']:,.2f}"
-            )
-        with col3:
-            st.metric(
-                "Collection Ratio",
-                f"{metrics['collection_ratio']:.1f}%"
-            )
-        with col4:
-            st.metric(
-                "Best Performing Branch",
-                metrics['top_balance_branch']
-            )
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric(
+            "Total Balance",
+            f"₹{metrics['total_balance']:,.2f}",
+            delta=metrics['total_reduced']
+        )
+    with col2:
+        st.metric(
+            "Total Pending",
+            f"₹{metrics['total_pending']:,.2f}"
+        )
+    with col3:
+        st.metric(
+            "Collection Ratio",
+            f"{metrics['collection_ratio']:.1f}%"
+        )
+    with col4:
+        st.metric(
+            "Best Performing Branch",
+            metrics['top_balance_branch']
+        )
     except KeyError as e:
         st.error(f"Error calculating metrics: {str(e)}")
         st.write("Please verify that the column names match the expected format.")
