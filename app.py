@@ -308,8 +308,8 @@ def load_sdr_trend():
         # Read Excel and automatically assign headers
         df = pd.read_excel(file_buffer, engine='openpyxl', header=0)
 
-        # Rename columns if duplicates are found
-        df.columns = pd.io.parsers.ParserBase({'names': df.columns})._maybe_dedup_names(df.columns)
+        # Deduplicate column names manually if duplicates are found
+        df.columns = deduplicate_columns(df.columns)
 
         # Debugging: Show the columns after deduplication
         st.write("Debug: DataFrame after reading and renaming columns if duplicates are found")
@@ -336,6 +336,21 @@ def load_sdr_trend():
         st.error(f"Error loading SDR data: {str(e)}")
         st.write("Error details:", str(e))
         return None
+
+def deduplicate_columns(columns):
+    """Function to deduplicate column names."""
+    new_columns = []
+    seen = {}
+
+    for col in columns:
+        if col not in seen:
+            seen[col] = 0
+            new_columns.append(col)
+        else:
+            seen[col] += 1
+            new_columns.append(f"{col}_{seen[col]}")
+
+    return new_columns
 
 @st.cache_data(ttl=300)
 def load_tsg_trend():
