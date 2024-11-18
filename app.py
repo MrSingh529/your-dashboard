@@ -632,6 +632,7 @@ def show_comparative_analysis(filtered_df, dates, selected_branches):
 
 # Enhanced dashboard display
 def show_collections_dashboard():
+    # Load data from Google Drive
     df = load_data_from_drive(FILE_IDS['collections_data'])
     if df is None:
         return
@@ -639,21 +640,25 @@ def show_collections_dashboard():
     # Debugging: Display columns to confirm the actual column names
     st.sidebar.write("Available columns in DataFrame:", list(df.columns))
 
-    # Ensure 'Branch Name' column is present
+    # Preview of the loaded data for better debugging
+    st.sidebar.write("Data preview after processing:")
+    st.sidebar.dataframe(df.head())
+
+    # If 'Branch Name' column is not found, handle gracefully
     if 'Branch Name' not in df.columns:
         st.error("The column 'Branch Name' is not available in the dataset. Please verify the column names.")
         return
 
     st.title("Collections Dashboard")
 
-    # Display Data for verification
+    # Display data info for verification
     st.sidebar.write("Data loaded successfully")
     st.sidebar.write("Number of branches:", len(df['Branch Name'].unique()))
 
-    # Sidebar Controls
+    # Sidebar Controls for Filtering
     st.sidebar.title("Analysis Controls")
-
-    # Branch Selection
+    
+    # Branch Selection with Search
     all_branches = sorted(df['Branch Name'].unique().tolist())
     selected_branches = st.multiselect(
         "Select Branches (Search/Select)",
@@ -661,19 +666,30 @@ def show_collections_dashboard():
         default=all_branches[:5] if len(all_branches) >= 5 else all_branches
     )
 
-    # Extract all available dates
-    df['Date'] = pd.to_datetime(df['Date']).dt.date  # Remove timestamp
-    available_dates = sorted(df['Date'].unique(), reverse=True)
+    # Convert date column to datetime without time for consistency
+    if 'Date' in df.columns:
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.date
+
+    # Get all unique dates from the dataset and remove any invalid entries
+    available_dates = sorted(df['Date'].dropna().unique(), reverse=True)
+    if not available_dates:
+        st.error("No valid dates found in the dataset.")
+        return
+
+    # Select analysis date
     selected_date = st.selectbox("Select Analysis Date", available_dates)
 
-    # Filter Data
+    if selected_date is None:
+        st.error("No valid dates found in the dataset for analysis.")
+        return
+
+    # Filter Data based on Branches Selection
     filtered_df = df[df['Branch Name'].isin(selected_branches)]
-    
     if filtered_df.empty:
         st.warning("No data available for the selected branches.")
         return
 
-    # Generate proper column names
+    # Generate column names for Balance and Pending for the selected date
     selected_date_str = selected_date.strftime('%Y-%m-%d')
     balance_col = f"{selected_date_str} | Balance As On"
     pending_col = f"{selected_date_str} | Pending Amount"
@@ -682,38 +698,38 @@ def show_collections_dashboard():
     st.sidebar.write("Generated Balance Column Name:", balance_col)
     st.sidebar.write("Generated Pending Column Name:", pending_col)
 
-    # Check if the generated column names are in the DataFrame
-    if balance_col not in df.columns or pending_col not in df.columns:
-        st.error(f"Columns '{balance_col}' or '{pending_col}' not found. Please check the available dates.")
+    # Check if the necessary columns are present in the filtered data
+    if balance_col not in filtered_df.columns or pending_col not in filtered_df.columns:
+        st.error(f"Columns '{balance_col}' or '{pending_col}' not found in the dataset. Please check the available dates.")
         return
-
-    # Proceed with metrics calculations
-    metrics = calculate_branch_metrics(filtered_df, selected_date)
 
     # Key Metrics Dashboard
     st.title("Branch Reco Trend")
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric(
-            "Total Balance",
-            f"₹{metrics['total_balance']:,.2f}",
-            delta=metrics['total_reduced']
-        )
-    with col2:
-        st.metric(
-            "Total Pending",
-            f"₹{metrics['total_pending']:,.2f}"
-        )
-    with col3:
-        st.metric(
-            "Collection Ratio",
-            f"{metrics['collection_ratio']:.1f}%"
-        )
-    with col4:
-        st.metric(
-            "Best Performing Branch",
-            metrics['top_balance_branch']
-        )
+    try:
+        metrics = calculate_branch_metrics(filtered_df, selected_date)
+
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric(
+                "Total Balance",
+                f"₹{metrics['total_balance']:,.2f}",
+                delta=metrics['total_reduced']
+            )
+        with col2:
+            st.metric(
+                "Total Pending",
+                f"₹{metrics['total_pending']:,.2f}"
+            )
+        with col3:
+            st.metric(
+                "Collection Ratio",
+                f"{metrics['collection_ratio']:.1f}%"
+            )
+        with col4:
+            st.metric(
+                "Best Performing Branch",
+                metrics['top_balance_branch']
+            )
     except KeyError as e:
         st.error(f"Error calculating metrics: {str(e)}")
         st.write("Please verify that the column names match the expected format.")
@@ -730,8 +746,9 @@ def show_collections_dashboard():
                 branch_data = filtered_df[filtered_df['Branch Name'] == branch]
                 if not branch_data.empty:
                     for date in available_dates:
-                        balance_col = f"{pd.to_datetime(date).strftime('%Y-%m-%d')} | Balance As On"
-                        pending_col = f"{pd.to_datetime(date).strftime('%Y-%m-%d')} | Pending Amount"
+                        date_str = date.strftime('%Y-%m-%d')
+                        balance_col = f"{date_str} | Balance As On"
+                        pending_col = f"{date_str} | Pending Amount"
                         if balance_col in branch_data.columns and pending_col in branch_data.columns:
                             trend_data.append({
                                 'Branch': branch,
@@ -782,15 +799,14 @@ def show_collections_dashboard():
         st.subheader("Branch Performance")
         try:
             # Performance metrics
-            performance_df = filtered_df.copy()
-            if 'Balance As On' in performance_df.columns and 'Pending Amount' in performance_df.columns:
-                performance_df['Net Position'] = performance_df['Balance As On'] - performance_df['Pending Amount']
+            if balance_col in filtered_df.columns and pending_col in filtered_df.columns:
+                filtered_df['Net Position'] = filtered_df[balance_col] - filtered_df[pending_col]
 
                 # Performance Chart
                 fig_perf = px.bar(
-                    performance_df,
+                    filtered_df,
                     x='Branch Name',
-                    y=['Balance As On', 'Pending Amount', 'Net Position'],
+                    y=[balance_col, pending_col, 'Net Position'],
                     title="Branch Performance",
                     barmode='group'
                 )
@@ -798,7 +814,7 @@ def show_collections_dashboard():
 
                 # Metrics Table
                 st.dataframe(
-                    performance_df[['Branch Name', 'Balance As On', 'Pending Amount', 'Net Position']]
+                    filtered_df[['Branch Name', balance_col, pending_col, 'Net Position']]
                     .sort_values('Net Position', ascending=False),
                     height=400
                 )
@@ -817,15 +833,16 @@ def show_collections_dashboard():
 
             # Add data for all dates
             for date in available_dates:
-                balance_col = next((col for col in filtered_df.columns if date in col and "Balance As On" in col), None)
-                pending_col = next((col for col in filtered_df.columns if date in col and "Pending Amount" in col), None)
+                date_str = date.strftime('%Y-%m-%d')
+                balance_col = f"{date_str} | Balance As On"
+                pending_col = f"{date_str} | Pending Amount"
 
-                if balance_col and pending_col:
-                    comparison_df[f'Balance_{date}'] = [
+                if balance_col in filtered_df.columns and pending_col in filtered_df.columns:
+                    comparison_df[f'Balance_{date_str}'] = [
                         filtered_df[filtered_df['Branch Name'] == branch][balance_col].iloc[0]
                         for branch in selected_branches
                     ]
-                    comparison_df[f'Pending_{date}'] = [
+                    comparison_df[f'Pending_{date_str}'] = [
                         filtered_df[filtered_df['Branch Name'] == branch][pending_col].iloc[0]
                         for branch in selected_branches
                     ]
@@ -839,14 +856,13 @@ def show_collections_dashboard():
                 use_container_width=True
             )
 
-            st.write("Comparative analysis is being prepared...")
         except Exception as e:
             st.error(f"Error in comparative analysis: {str(e)}")
             st.write("Error details:", str(e))
 
     # Export Options
     st.sidebar.markdown("---")
-    st.sidebar("Export Options")
+    st.sidebar.subheader("Export Options")
 
     if st.sidebar.button("Export Complete Analysis"):
         try:
@@ -855,15 +871,15 @@ def show_collections_dashboard():
                 filtered_df.to_excel(writer, sheet_name='Raw Data', index=False)
                 if 'trend_df' in locals():
                     trend_df.to_excel(writer, sheet_name='Trends', index=False)
-                if 'performance_df' in locals():
-                    performance_df.to_excel(writer, sheet_name='Performance', index=False)
+                if 'filtered_df' in locals():
+                    filtered_df.to_excel(writer, sheet_name='Performance', index=False)
                 if 'comparison_df' in locals():
                     comparison_df.to_excel(writer, sheet_name='Comparison', index=False)
 
             st.sidebar.download_button(
                 label="📥 Download Full Report",
                 data=output.getvalue(),
-                file_name=f"collection_analysis_{selected_date}.xlsx",
+                file_name=f"collection_analysis_{selected_date_str}.xlsx",
                 mime="application/vnd.ms-excel"
             )
         except Exception as e:
