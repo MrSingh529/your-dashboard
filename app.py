@@ -729,7 +729,7 @@ def show_collections_dashboard():
                             x=branch_data['Date'],
                             y=branch_data['Pending Amount'],
                             name=f"{branch} - Pending",
-                            line=dict(dash='dot')
+                            line=dict(dash='lines+markers')
                         ))
 
                 fig.update_layout(
