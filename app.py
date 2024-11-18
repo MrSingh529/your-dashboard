@@ -301,11 +301,20 @@ def load_sdr_trend():
         df = df[1:]  # Remove the first row which is now the header
         df.reset_index(drop=True, inplace=True)
 
+        # Debugging: Print out the initial state of the DataFrame after header assignment
+        st.write("Debug: DataFrame after assigning headers")
+        st.write(df.head())
+
         # Convert amount columns to numeric (excluding 'Ageing Category' and 'Reduced OS')
         for col in df.columns:
             if col not in ['Ageing Category', 'Reduced OS']:
-                # Removing commas, converting to numeric, and filling NaNs with 0
-                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+                try:
+                    # Removing commas, converting to numeric, and filling NaNs with 0
+                    df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+                except Exception as e:
+                    # Debugging: If there's an error converting this column, print the column name and error
+                    st.error(f"Error converting column '{col}' to numeric: {str(e)}")
+                    st.write(df[col].head())  # Display problematic column values for analysis
 
         # Display the loaded data columns in the sidebar for verification
         st.sidebar.write("SDR Data Columns:", list(df.columns))
