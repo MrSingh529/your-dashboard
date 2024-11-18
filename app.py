@@ -135,22 +135,29 @@ def load_data_from_drive(file_id):
             status, done = downloader.next_chunk()
 
         file_buffer.seek(0)
-        
+
         # Load the Excel file with the first two rows as headers
         df = pd.read_excel(file_buffer, engine='openpyxl', header=[0, 1])
         
         # Concatenate the headers to create multi-level column names
         new_columns = []
         for col in df.columns:
-            # Combine the two headers, handling NaN in case of empty cells
+            # Handle merged headers
             if pd.notna(col[0]) and pd.notna(col[1]):
                 new_columns.append(f"{col[0]} | {col[1]}")
             elif pd.notna(col[0]):
-                new_columns.append(f"{col[0]}")
+                new_columns.append(col[0])
+            elif pd.notna(col[1]):
+                new_columns.append(col[1])
             else:
-                new_columns.append(f"{col[1]}")
+                new_columns.append("Unnamed")
 
         df.columns = new_columns
+
+        # Rename 'Branch Name' column if it exists differently
+        branch_column_names = [name for name in df.columns if 'Branch Name' in name or 'Branch' in name]
+        if branch_column_names:
+            df.rename(columns={branch_column_names[0]: 'Branch Name'}, inplace=True)
 
         # Deduplicate column names manually if duplicates are found
         df.columns = deduplicate_columns(df.columns)
@@ -165,11 +172,9 @@ def load_data_from_drive(file_id):
                     # Removing commas, converting to numeric, and filling NaNs with 0
                     df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
                 except Exception as e:
-                    # Debugging: If there's an error converting this column, print the column name and error
                     st.error(f"Error converting column '{col}' to numeric: {str(e)}")
                     st.write(df[col].head())  # Display problematic column values for analysis
 
-        # Remove debug information for the final version
         return df
 
     except Exception as e:
@@ -641,6 +646,15 @@ def show_collections_dashboard():
     if df is None:
         return
 
+    # Debugging: Display columns to confirm the actual column names
+    st.sidebar.write("Available columns in DataFrame:", list(df.columns))
+
+    # If the Branch Name column is not found, handle gracefully
+    if 'Branch Name' not in df.columns:
+        st.error("The column 'Branch Name' is not available in the dataset. Please verify the column names.")
+        return
+
+    # Continue with the rest of the dashboard
     st.title("Collections Dashboard")
     
     # Display data info for verification
@@ -664,16 +678,22 @@ def show_collections_dashboard():
         )
         
         # Date Selection
-        dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
-        selected_date = st.selectbox("Select Analysis Date", dates)
+        available_dates = [col.split(" | ")[0] for col in df.columns if "Balance" in col or "Pending" in col]
+        available_dates = sorted(list(set(available_dates)), reverse=True)
+        selected_date = st.selectbox("Select Analysis Date", available_dates)
 
     # Filter Data
     filtered_df = df.copy()
     if selected_branches:
         filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
     
-    balance_col = f'Balance_{selected_date}'
-    pending_col = f'Pending_{selected_date}'
+    # Generate column names for Balance and Pending
+    balance_col = f'{selected_date} | Balance As On'
+    pending_col = f'{selected_date} | Pending Amount'
+    
+    if balance_col not in df.columns or pending_col not in df.columns:
+        st.error(f"Columns '{balance_col}' or '{pending_col}' not found. Please check the available dates.")
+        return
     
     # Main Dashboard
     st.title("Branch Reco Trend")
