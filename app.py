@@ -724,12 +724,19 @@ def show_collections_dashboard():
                 for branch in selected_branches:
                     branch_data = filtered_df[filtered_df['Branch Name'] == branch]
                     if not branch_data.empty:
+                        # Balance line
+                        fig.add_trace(go.Scatter(
+                            x=branch_data['Date'],
+                            y=branch_data['Balance As On'],
+                            name=f"{branch} - Balance",
+                            mode='lines+markers'
+                        ))
                         # Pending line
                         fig.add_trace(go.Scatter(
                             x=branch_data['Date'],
                             y=branch_data['Pending Amount'],
                             name=f"{branch} - Pending",
-                            line=dict(dash='lines+markers')
+                            line=dict(dash='dot')
                         ))
 
                 fig.update_layout(
