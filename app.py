@@ -291,23 +291,34 @@ def load_sdr_trend():
     """Load CSD SDR Trend data from Google Drive"""
     try:
         # Load data from Google Drive using the appropriate file_id
-        df = load_data_from_drive(FILE_IDS['sdr_trend'])
-        
-        if df is None:
+        service = authenticate_drive()
+        if not service:
             return None
 
-        # Automatically assign the existing headers to avoid hardcoding
-        df.columns = df.iloc[0].tolist()  # Set the first row as headers
-        df = df[1:]  # Remove the first row which is now the header
-        df.reset_index(drop=True, inplace=True)
+        request = service.files().get_media(fileId=FILE_IDS['sdr_trend'])
+        file_buffer = io.BytesIO()
+        downloader = MediaIoBaseDownload(file_buffer, request)
 
-        # Debugging: Print out the initial state of the DataFrame after header assignment
-        st.write("Debug: DataFrame after assigning headers")
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
+
+        file_buffer.seek(0)
+
+        # Read Excel and automatically assign headers
+        df = pd.read_excel(file_buffer, engine='openpyxl', header=0)
+
+        # Rename columns if duplicates are found
+        df.columns = pd.io.parsers.ParserBase({'names': df.columns})._maybe_dedup_names(df.columns)
+
+        # Debugging: Show the columns after deduplication
+        st.write("Debug: DataFrame after reading and renaming columns if duplicates are found")
         st.write(df.head())
 
         # Convert amount columns to numeric (excluding 'Ageing Category' and 'Reduced OS')
+        static_columns = ['Ageing Category', 'Reduced OS']
         for col in df.columns:
-            if col not in ['Ageing Category', 'Reduced OS']:
+            if col not in static_columns:
                 try:
                     # Removing commas, converting to numeric, and filling NaNs with 0
                     df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
@@ -320,6 +331,7 @@ def load_sdr_trend():
         st.sidebar.write("SDR Data Columns:", list(df.columns))
         
         return df
+
     except Exception as e:
         st.error(f"Error loading SDR data: {str(e)}")
         st.write("Error details:", str(e))
