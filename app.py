@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from sklearn.cluster import KMeans
 from datetime import datetime
 import numpy as np
 import io
@@ -89,29 +88,28 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Enhanced security with password hashing
-import hashlib
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# Credentials for Google Drive
+# Credentials for Google Drive (use Streamlit secrets to keep them secure)
 CREDENTIALS = {
-    "admin": hashlib.sha256("admin123".encode()).hexdigest(),
-    "ceo": hashlib.sha256("ceo123".encode()).hexdigest(),
-    "manager": hashlib.sha256("manager123".encode()).hexdigest()
+    "admin": hash_password(st.secrets["users"]["admin"]),
+    "ceo": hash_password(st.secrets["users"]["ceo"]),
+    "manager": hash_password(st.secrets["users"]["manager"])
 }
 
 FILE_IDS = {
-    'collections_data': '1zCSAx8jzOLewJXxOQlHjlUxXKoHbdopD',
-    'itss_tender': '1o6SjeyNuvSyt9c5uCsq4MGFlZV1moC3V',
-    'sdr_trend': '1PixxavAM29QrtjZUh-TMpa8gDSE7lg60',
-    'tsg_trend': '1Kf8nHi1shw6q0oozXFEScyE0bmhhPDPo'
+    'collections_data': st.secrets["google_drive"]["collections_data"],
+    'itss_tender': st.secrets["google_drive"]["itss_tender"],
+    'sdr_trend': st.secrets["google_drive"]["sdr_trend"],
+    'tsg_trend': st.secrets["google_drive"]["tsg_trend"]
 }
 
 @st.cache_resource(ttl=3600)  # Cache authentication for 1 hour
 def authenticate_drive():
     try:
         credentials = service_account.Credentials.from_service_account_info(
-            st.secrets["google_drive"],
+            st.secrets["google_drive_credentials"],
             scopes=['https://www.googleapis.com/auth/drive.readonly']
         )
         service = build('drive', 'v3', credentials=credentials)
@@ -168,6 +166,37 @@ def load_data_from_drive(file_id):
         st.write("Data sample:")
         st.write(df.head())
         return None
+
+# Enhanced authentication
+def check_password():
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+        st.session_state.login_attempts = 0
+
+    if not st.session_state.authenticated:
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown("<div class='login-container'>", unsafe_allow_html=True)
+            st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>", unsafe_allow_html=True)
+            username = st.text_input("Username").lower()
+            password = st.text_input("Password", type="password")
+
+            if st.button("Login"):
+                if st.session_state.login_attempts >= 3:
+                    st.error("Too many failed attempts. Please try again later.")
+                    time.sleep(5)
+                    return False
+
+                if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
+                    st.session_state.authenticated = True
+                    st.session_state.username = username
+                    st.rerun()
+                else:
+                    st.session_state.login_attempts += 1
+                    st.error("Invalid credentials")
+            st.markdown("</div>", unsafe_allow_html=True)
+        return False
+    return True
         
 # Specific functions to load each dataset
 @st.cache_data(ttl=300)
@@ -431,37 +460,6 @@ def calculate_metrics(df):
             'collection_efficiency': 0,
             'top_branch': "N/A"
         }
-
-# Enhanced authentication
-def check_password():
-    if 'authenticated' not in st.session_state:
-        st.session_state.authenticated = False
-        st.session_state.login_attempts = 0
-
-    if not st.session_state.authenticated:
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-            st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>", unsafe_allow_html=True)
-            username = st.text_input("Username").lower()
-            password = st.text_input("Password", type="password")
-
-            if st.button("Login"):
-                if st.session_state.login_attempts >= 3:
-                    st.error("Too many failed attempts. Please try again later.")
-                    time.sleep(5)
-                    return False
-
-                if username in CREDENTIALS and CREDENTIALS[username] == hashlib.sha256(password.encode()).hexdigest():
-                    st.session_state.authenticated = True
-                    st.session_state.username = username
-                    st.rerun()
-                else:
-                    st.session_state.login_attempts += 1
-                    st.error("Invalid credentials")
-            st.markdown("</div>", unsafe_allow_html=True)
-        return False
-    return True
 
 def style_comparison_df(df, dates):
     """
@@ -1346,148 +1344,6 @@ def show_tsg_dashboard():
         st.error(f"Error in TSG analysis: {str(e)}")
         st.write("Error details:", str(e))
 
-def calculate_overall_trend_metrics(df, date_cols):
-    metrics = {}
-    try:
-        # Assuming date_cols is sorted from latest to oldest
-        latest_date = date_cols[0]
-        prev_date = date_cols[1]
-        
-        latest_total = df[latest_date].sum()
-        prev_total = df[prev_date].sum()
-        
-        # Calculating month-on-month change
-        change = latest_total - prev_total
-        change_pct = (change / prev_total) * 100 if prev_total != 0 else 0
-        
-        metrics['latest_total'] = latest_total
-        metrics['change'] = change
-        metrics['change_pct'] = change_pct
-        metrics['prev_total'] = prev_total
-    
-    except Exception as e:
-        st.error(f"Error calculating trend metrics: {str(e)}")
-    return metrics
-
-# Function to perform Cluster Analysis for Risk Assessment
-def perform_cluster_analysis(df, columns, num_clusters=3):
-    try:
-        # Selecting only the relevant columns for clustering
-        data = df[columns].dropna()
-        kmeans = KMeans(n_clusters=num_clusters, random_state=42)
-        clusters = kmeans.fit_predict(data)
-        df['Risk Cluster'] = clusters
-        
-        return df, kmeans
-    except Exception as e:
-        st.error(f"Error performing cluster analysis: {str(e)}")
-        return df, None
-
-# Adding Interactive Filters and Drill-Down Analysis
-@st.cache_data(ttl=300)
-def load_and_filter_data(selected_branches=None, selected_date_range=None):
-    df = load_data_from_drive(FILE_IDS['collections_data'])
-    if df is None:
-        return None
-    
-    # Filtering by selected branches
-    if selected_branches:
-        df = df[df['Branch Name'].isin(selected_branches)]
-    
-    # Filtering by date range if specified
-    if selected_date_range:
-        date_cols = [col for col in df.columns if 'Balance_' in col or 'Pending_' in col]
-        filtered_cols = [col for col in date_cols if selected_date_range[0] <= col.split('_')[1] <= selected_date_range[1]]
-        df = df[['Branch Name'] + filtered_cols]
-    
-    return df
-
-# Main Dashboard Update
-def show_collections_dashboard():
-    df = load_data_from_drive(FILE_IDS['collections_data'])
-    if df is None:
-        return
-
-    st.title("Enhanced Collections Dashboard")
-    
-    # Sidebar Controls
-    st.sidebar.title("Advanced Analysis Controls")
-    
-    # Branch Selection with Search
-    all_branches = sorted(df['Branch Name'].unique().tolist())
-    selected_branches = st.sidebar.multiselect(
-        "Select Branches for Analysis (Search/Select)",
-        options=all_branches,
-        default=all_branches[:5] if len(all_branches) >= 5 else all_branches
-    )
-    
-    # Date Range Selection
-    dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
-    selected_date_range = st.sidebar.slider(
-        "Select Date Range for Analysis",
-        min_value=dates[-1],
-        max_value=dates[0],
-        value=(dates[-1], dates[0])
-    )
-    
-    # Filtering Data
-    filtered_df = load_and_filter_data(selected_branches, selected_date_range)
-    if filtered_df is None:
-        return
-
-    # Overall Trend Metrics
-    st.subheader("Overall Trend Metrics")
-    trend_metrics = calculate_overall_trend_metrics(filtered_df, dates)
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("Total Balance (Latest)", f"₹{trend_metrics['latest_total']:,.2f}")
-    with col2:
-        st.metric("Change from Previous Period", f"₹{trend_metrics['change']:,.2f}", delta=f"{trend_metrics['change_pct']:.2f}%")
-
-    # Cluster Analysis for Risk Assessment
-    st.subheader("Cluster Analysis for Risk Assessment")
-    columns_for_clustering = [col for col in filtered_df.columns if 'Pending_' in col or 'Balance_' in col]
-    filtered_df, kmeans_model = perform_cluster_analysis(filtered_df, columns_for_clustering)
-    if kmeans_model:
-        st.write("Risk Clusters assigned successfully.")
-        st.dataframe(filtered_df[['Branch Name', 'Risk Cluster']])
-        
-        # Visualize clusters
-        fig_cluster = px.scatter(
-            filtered_df,
-            x='Pending_03-Nov-24',
-            y='Balance_03-Nov-24',
-            color='Risk Cluster',
-            title="Branch Clusters Based on Risk",
-            hover_name='Branch Name'
-        )
-        st.plotly_chart(fig_cluster, use_container_width=True)
-
-    # Drill-Down Analysis
-    st.subheader("Branch-Level Drill-Down Analysis")
-    selected_branch = st.selectbox("Select a Branch for Detailed Analysis", options=selected_branches)
-    if selected_branch:
-        branch_data = filtered_df[filtered_df['Branch Name'] == selected_branch]
-        if not branch_data.empty:
-            st.write(f"Detailed Data for Branch: {selected_branch}")
-            st.dataframe(branch_data)
-
-            # Branch Trend Analysis
-            branch_trend_data = branch_data.melt(
-                id_vars=['Branch Name'],
-                value_vars=[col for col in branch_data.columns if 'Balance_' in col or 'Pending_' in col],
-                var_name='Date',
-                value_name='Amount'
-            )
-            fig_branch_trend = px.line(
-                branch_trend_data,
-                x='Date',
-                y='Amount',
-                title=f"Trend Analysis for Branch: {selected_branch}",
-                labels={'Amount': 'Amount (₹)'}
-            )
-            st.plotly_chart(fig_branch_trend, use_container_width=True)
-
 # Define menu structure
 DEPARTMENT_REPORTS = {
     "CSD": {
@@ -1597,6 +1453,4 @@ def main():
         st.rerun()
 
 if __name__ == "__main__":
-    if not check_password():
-        st.stop()
-    show_collections_dashboard()
+    main()
