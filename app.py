@@ -640,6 +640,8 @@ def show_collections_dashboard():
         st.error("The column 'Branch Name' is not available in the dataset. Please verify the column names.")
         return
 
+    st.title("Collections Dashboard")
+
     # Sidebar Controls for Filtering - Moved to the Sidebar
     st.sidebar.title("Analysis Controls")
 
@@ -716,36 +718,60 @@ def show_collections_dashboard():
 
     with tab1:
         st.subheader("Balance & Pending Trends")
+
+        # Interactive Selector to Show Balance, Pending, or Both
+        analysis_type = st.radio("Select Analysis Type", options=["Balance Amount", "Pending Amount", "Both"], index=0)
+
         try:
             # Prepare trend data safely
             if not filtered_df.empty:
-                fig = go.Figure()
+                if analysis_type == "Balance Amount" or analysis_type == "Both":
+                    # Balance Amount Trend Chart
+                    fig_balance = go.Figure()
 
-                for branch in selected_branches:
-                    branch_data = filtered_df[filtered_df['Branch Name'] == branch]
-                    if not branch_data.empty:
-                        # Balance line
-                        fig.add_trace(go.Scatter(
-                            x=branch_data['Date'],
-                            y=branch_data['Balance As On'],
-                            name=f"{branch} - Balance",
-                            mode='lines+markers'
-                        ))
-                        # Pending line
-                        fig.add_trace(go.Scatter(
-                            x=branch_data['Date'],
-                            y=branch_data['Pending Amount'],
-                            name=f"{branch} - Pending",
-                            line=dict(dash='dot')
-                        ))
+                    for branch in selected_branches:
+                        branch_data = filtered_df[filtered_df['Branch Name'] == branch]
+                        if not branch_data.empty:
+                            # Balance line
+                            fig_balance.add_trace(go.Scatter(
+                                x=branch_data['Date'],
+                                y=branch_data['Balance As On'],
+                                name=f"{branch} - Balance",
+                                mode='lines+markers'
+                            ))
 
-                fig.update_layout(
-                    title="Balance and Pending Trends",
-                    xaxis_title="Date",
-                    yaxis_title="Amount (₹)",
-                    hovermode='x unified'
-                )
-                st.plotly_chart(fig, use_container_width=True)
+                    fig_balance.update_layout(
+                        title="Balance Amount Trend",
+                        xaxis_title="Date",
+                        yaxis_title="Amount (₹)",
+                        hovermode='x unified'
+                    )
+                    st.plotly_chart(fig_balance, use_container_width=True)
+
+                if analysis_type == "Pending Amount" or analysis_type == "Both":
+                    # Pending Amount Trend Chart
+                    fig_pending = go.Figure()
+
+                    for branch in selected_branches:
+                        branch_data = filtered_df[filtered_df['Branch Name'] == branch]
+                        if not branch_data.empty:
+                            # Pending line
+                            fig_pending.add_trace(go.Scatter(
+                                x=branch_data['Date'],
+                                y=branch_data['Pending Amount'],
+                                name=f"{branch} - Pending",
+                                mode='lines+markers',
+                                line=dict(dash='dot')
+                            ))
+
+                    fig_pending.update_layout(
+                        title="Pending Amount Trend",
+                        xaxis_title="Date",
+                        yaxis_title="Amount (₹)",
+                        hovermode='x unified'
+                    )
+                    st.plotly_chart(fig_pending, use_container_width=True)
+
             else:
                 st.warning("No trend data available for selected branches")
 
