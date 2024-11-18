@@ -121,7 +121,7 @@ def authenticate_drive():
 
 @st.cache_data(ttl=300)
 def load_data_from_drive(file_id):
-    """Load Branch Reco Dashboard data from Google Drive"""
+    """Load data from Google Drive."""
     try:
         service = authenticate_drive()
         if not service:
@@ -137,13 +137,13 @@ def load_data_from_drive(file_id):
 
         # Read the data as a DataFrame
         file_buffer.seek(0)
-        
+
         # Read the Excel file with explicit header selection
         df = pd.read_excel(file_buffer, header=0)  # Assuming the first row is the header
-        
+
         # Verify the columns to ensure correct headers
-        if df.columns[0] != "Branch Name":
-            # If the first column isn't "Branch Name", assume that we may need to reassign columns
+        if df.columns[0] not in ["Branch Name", "Account Name"]:
+            # If the first column isn't "Branch Name" or "Account Name", assume that we may need to reassign columns
             st.write("Initial columns identified: ", df.columns.tolist())
             df.columns = df.iloc[0]  # Assign the first row as the header
             df = df.drop(0).reset_index(drop=True)  # Drop the first row from the data
@@ -151,16 +151,17 @@ def load_data_from_drive(file_id):
         # Clean up the column names to remove any potential issues
         df.columns = [str(col).strip() for col in df.columns]
 
-        # Ensure the expected 'Branch Name' column is present
-        if 'Branch Name' not in df.columns:
-            st.error("Failed to find the 'Branch Name' column. Please check the uploaded data format.")
+        # Ensure the expected 'Account Name' or 'Branch Name' column is present
+        if 'Account Name' not in df.columns and 'Branch Name' not in df.columns:
+            st.error("Failed to find the 'Account Name' or 'Branch Name' column. Please check the uploaded data format.")
+            return None
 
         # Convert the 'Date' column to datetime if it exists
         if 'Date' in df.columns:
             df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
 
         # Convert numeric columns to the correct type
-        numeric_cols = df.columns.difference(['Branch Name', 'Date'])
+        numeric_cols = df.columns.difference(['Branch Name', 'Account Name', 'Date'])
         for col in numeric_cols:
             df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', '').replace('-', '0'), errors='coerce')
 
@@ -219,14 +220,17 @@ def check_password():
 # Specific functions to load each dataset
 @st.cache_data(ttl=300)
 def load_itss_data():
-    """Load ITSS Tender data from Google Drive with fixed column separation"""
+    """Load ITSS Tender data from Google Drive with fixed column separation."""
     try:
+        # Load data from Google Drive using the appropriate file_id
         df = load_data_from_drive(FILE_IDS['itss_tender'])
+
         if df is None:
             return None
 
+        # Expected column names
         expected_columns = [
-            'Account Name', 'Date', '61-90', '91-120', '121-180',
+            'Account Name', 'Date', '61-90', '91-120', '121-180', 
             '181-360', '361-720', 'More than 2 Yr'
         ]
 
@@ -238,15 +242,35 @@ def load_itss_data():
             st.write(expected_columns)
             return None
 
+        # Assign column names explicitly
         df.columns = expected_columns
 
         # Convert date column
         if 'Date' in df.columns:
-            df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+            # First, clean the date strings
+            df['Date'] = df['Date'].astype(str)
+            df['Date'] = df['Date'].replace('None', None)
+            df['Date'] = df['Date'].replace('', None)
 
+            # Try to parse dates that are not None
+            mask = df['Date'].notna()
+            if mask.any():
+                try:
+                    df.loc[mask, 'Date'] = pd.to_datetime(df.loc[mask, 'Date'], format='%d-%m-%Y')
+                except:
+                    try:
+                        df.loc[mask, 'Date'] = pd.to_datetime(df.loc[mask, 'Date'])
+                    except:
+                        st.error("Failed to parse dates")
+
+            # For rows where Date is None or invalid, use current date
+            df.loc[df['Date'].isna(), 'Date'] = pd.Timestamp.now().floor('D')
+
+        # Convert numeric columns and handle '-' values
         numeric_columns = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
         for col in numeric_columns:
-            df[col] = pd.to_numeric(df[col].replace('-', '0'), errors='coerce').fillna(0)
+            df[col] = df[col].replace('-', '0')
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
         return df
 
