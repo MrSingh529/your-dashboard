@@ -638,13 +638,6 @@ def show_collections_dashboard():
     if df is None:
         return
 
-    # Debugging: Display columns to confirm the actual column names
-    st.sidebar.write("Available columns in DataFrame:", list(df.columns))
-
-    # Preview of the loaded data for better debugging
-    st.sidebar.write("Data preview after processing:")
-    st.sidebar.dataframe(df.head())
-
     # If 'Branch Name' column is not found, handle gracefully
     if 'Branch Name' not in df.columns:
         st.error("The column 'Branch Name' is not available in the dataset. Please verify the column names.")
