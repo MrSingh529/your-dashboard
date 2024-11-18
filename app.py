@@ -667,7 +667,8 @@ def show_collections_dashboard():
         default=all_branches[:5] if len(all_branches) >= 5 else all_branches
     )
 
-    available_dates = sorted(df['Date'].dropna().unique(), reverse=True)
+    # Extract available dates from columns containing "Balance As On" or "Pending Amount"
+    available_dates = sorted(list(set(col.split(" | ")[0] for col in df.columns if "Balance As On" in col or "Pending Amount" in col)), reverse=True)
     selected_date = st.selectbox("Select Analysis Date", available_dates)
 
     if selected_date is None:
@@ -680,20 +681,18 @@ def show_collections_dashboard():
         filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
 
     # Generate column names for Balance and Pending for the selected date
-    date_str = pd.to_datetime(selected_date).strftime('%Y-%m-%d')
-    
-    # Use existing columns directly instead of generating names (ensures matching)
-    balance_col = next((col for col in filtered_df.columns if re.search(r"Balance As On", col)), None)
-    pending_col = next((col for col in filtered_df.columns if re.search(r"Pending Amount", col)), None)
+    balance_col = f"{selected_date} | Balance As On"
+    pending_col = f"{selected_date} | Pending Amount"
 
-    if not balance_col or not pending_col:
-        st.error(f"Columns for balance or pending amounts not found. Please check the available data.")
+    # Check if the columns exist in filtered_df
+    if balance_col not in filtered_df.columns or pending_col not in filtered_df.columns:
+        st.error(f"Columns '{balance_col}' or '{pending_col}' not found. Please check the available data.")
         return
 
     # Key Metrics Dashboard
     st.title("Branch Reco Trend")
     try:
-        metrics = calculate_branch_metrics(filtered_df, selected_date)
+        metrics = calculate_branch_metrics(filtered_df, balance_col, pending_col)
 
         col1, col2, col3, col4 = st.columns(4)
         with col1:
@@ -733,9 +732,8 @@ def show_collections_dashboard():
                 branch_data = filtered_df[filtered_df['Branch Name'] == branch]
                 if not branch_data.empty:
                     for date in available_dates:
-                        date_str = pd.to_datetime(date).strftime('%Y-%m-%d')
-                        balance_col = f"{date_str} | Balance As On"
-                        pending_col = f"{date_str} | Pending Amount"
+                        balance_col = f"{date} | Balance As On"
+                        pending_col = f"{date} | Pending Amount"
                         if balance_col in branch_data.columns and pending_col in branch_data.columns:
                             trend_data.append({
                                 'Branch': branch,
@@ -820,16 +818,15 @@ def show_collections_dashboard():
 
             # Add data for all dates
             for date in available_dates:
-                date_str = pd.to_datetime(date).strftime('%Y-%m-%d')
-                balance_col = f"{date_str} | Balance As On"
-                pending_col = f"{date_str} | Pending Amount"
+                balance_col = f"{date} | Balance As On"
+                pending_col = f"{date} | Pending Amount"
 
                 if balance_col in filtered_df.columns and pending_col in filtered_df.columns:
-                    comparison_df[f'Balance_{date_str}'] = [
+                    comparison_df[f'Balance_{date}'] = [
                         filtered_df[filtered_df['Branch Name'] == branch][balance_col].iloc[0]
                         for branch in selected_branches
                     ]
-                    comparison_df[f'Pending_{date_str}'] = [
+                    comparison_df[f'Pending_{date}'] = [
                         filtered_df[filtered_df['Branch Name'] == branch][pending_col].iloc[0]
                         for branch in selected_branches
                     ]
@@ -858,15 +855,13 @@ def show_collections_dashboard():
                 filtered_df.to_excel(writer, sheet_name='Raw Data', index=False)
                 if 'trend_df' in locals():
                     trend_df.to_excel(writer, sheet_name='Trends', index=False)
-                if 'filtered_df' in locals():
-                    filtered_df.to_excel(writer, sheet_name='Performance', index=False)
                 if 'comparison_df' in locals():
                     comparison_df.to_excel(writer, sheet_name='Comparison', index=False)
 
             st.sidebar.download_button(
                 label="📥 Download Full Report",
                 data=output.getvalue(),
-                file_name=f"collection_analysis_{date_str}.xlsx",
+                file_name=f"collection_analysis_{selected_date}.xlsx",
                 mime="application/vnd.ms-excel"
             )
         except Exception as e:
