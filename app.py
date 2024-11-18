@@ -136,29 +136,40 @@ def load_data_from_drive(file_id):
 
         # Read the data as a DataFrame
         file_buffer.seek(0)
-        df = pd.read_excel(file_buffer)
+        
+        # Read the Excel file with explicit header selection
+        df = pd.read_excel(file_buffer, header=0)  # Assuming the first row is the header
+        
+        # Verify the columns to ensure correct headers
+        if df.columns[0] != "Branch Name":
+            # If the first column isn't "Branch Name", assume that we may need to reassign columns
+            st.write("Initial columns identified: ", df.columns.tolist())
+            df.columns = df.iloc[0]  # Assign the first row as the header
+            df = df.drop(0).reset_index(drop=True)  # Drop the first row from the data
 
-        # Clean and assign column headers properly
-        df.columns = df.iloc[0]  # Use the first row as column names
-        df = df.drop(0).reset_index(drop=True)  # Drop the first row and reset index
+        # Clean up the column names to remove any potential issues
+        df.columns = [str(col).strip() for col in df.columns]
 
-        # Ensure the headers do not contain extraneous values by renaming them appropriately
-        df.columns = [str(col).split('|')[0].strip() for col in df.columns]
+        # Ensure the expected 'Branch Name' column is present
+        if 'Branch Name' not in df.columns:
+            st.error("Failed to find the 'Branch Name' column. Please check the uploaded data format.")
 
-        # Convert date column to datetime type if necessary
+        # Convert the 'Date' column to datetime if it exists
         if 'Date' in df.columns:
             df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
 
-        # Convert amount columns to numeric (excluding 'Branch Name' and 'Date')
+        # Convert numeric columns to the correct type
         numeric_cols = df.columns.difference(['Branch Name', 'Date'])
         for col in numeric_cols:
-            df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
+            df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', '').replace('-', '0'), errors='coerce')
+
+        # Display the first few rows for debugging purposes
+        st.write("Data preview after processing:", df.head())
 
         return df
+
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
-        # Debugging information if something goes wrong
-        st.write("Available columns:", list(df.columns))
         return None
 
 def deduplicate_columns(columns):
