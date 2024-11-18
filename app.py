@@ -310,11 +310,11 @@ def load_sdr_trend():
         return None
 
 @st.cache_data(ttl=300)
-def load_tsg_data():
+def load_tsg_trend():
     """Load TSG Payment Receivables Trend data from Google Drive"""
     try:
         # Load data from Google Drive using the appropriate file_id
-        df = load_data_from_drive(FILE_IDS['tsg_data'])
+        df = load_data_from_drive(FILE_IDS['tsg_trend'])
         
         if df is None:
             return None
@@ -1258,7 +1258,7 @@ def style_tsg_trend(df):
     return styled.format(lambda x: '{:,.0f}'.format(x) if pd.notna(x) and isinstance(x, (int, float)) else x)
 
 def show_tsg_dashboard():
-    df = load_tsg_data()
+    df = load_tsg_trend()
     if df is None:
         return
 
