@@ -619,6 +619,7 @@ def show_comparative_analysis(filtered_df, dates, selected_branches):
 
 # Enhanced dashboard display
 def show_collections_dashboard():
+    # Load data from Google Drive
     df = load_data_from_drive(FILE_IDS['collections_data'])
     if df is None:
         return
@@ -626,58 +627,54 @@ def show_collections_dashboard():
     # Debugging: Display columns to confirm the actual column names
     st.sidebar.write("Available columns in DataFrame:", list(df.columns))
 
-    # If the Branch Name column is not found, handle gracefully
+    # If 'Branch Name' column is not found, handle gracefully
     if 'Branch Name' not in df.columns:
         st.error("The column 'Branch Name' is not available in the dataset. Please verify the column names.")
         return
 
-    # Continue with the rest of the dashboard
     st.title("Collections Dashboard")
-    
+
     # Display data info for verification
     st.sidebar.write("Data loaded successfully")
     st.sidebar.write("Number of branches:", len(df['Branch Name'].unique()))
-    
-    # Sidebar Controls
+
+    # Sidebar Controls for Filtering
     st.sidebar.title("Analysis Controls")
     
-    # Advanced Filtering
-    filter_container = st.sidebar.container()
-    with filter_container:
-        st.subheader("Filters")
-        
-        # Branch Selection with Search
-        all_branches = sorted(df['Branch Name'].unique().tolist())
-        selected_branches = st.multiselect(
-            "Select Branches (Search/Select)",
-            options=all_branches,
-            default=all_branches[:5] if len(all_branches) >= 5 else all_branches
-        )
-        
-        # Date Selection
-        available_dates = [col.split(" | ")[0] for col in df.columns if "Balance" in col or "Pending" in col]
-        available_dates = sorted(list(set(available_dates)), reverse=True)
-        selected_date = st.selectbox("Select Analysis Date", available_dates)
+    # Branch Selection with Search
+    all_branches = sorted(df['Branch Name'].unique().tolist())
+    selected_branches = st.multiselect(
+        "Select Branches (Search/Select)",
+        options=all_branches,
+        default=all_branches[:5] if len(all_branches) >= 5 else all_branches
+    )
 
-    # Filter Data
+    # Extract all date-specific column headers automatically
+    # Columns that have "| Balance As On" or "| Pending Amount" are used for date selection
+    available_dates = sorted(
+        list(set([col.split(" | ")[0] for col in df.columns if "Balance As On" in col or "Pending Amount" in col])),
+        reverse=True
+    )
+    selected_date = st.selectbox("Select Analysis Date", available_dates)
+
+    # Filter Data based on Branches Selection
     filtered_df = df.copy()
     if selected_branches:
         filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
-    
-    # Generate column names for Balance and Pending
+
+    # Generate column names for Balance and Pending for the selected date
     balance_col = f'{selected_date} | Balance As On'
     pending_col = f'{selected_date} | Pending Amount'
-    
+
+    # Check if the necessary columns are present in the data
     if balance_col not in df.columns or pending_col not in df.columns:
         st.error(f"Columns '{balance_col}' or '{pending_col}' not found. Please check the available dates.")
         return
-    
-    # Main Dashboard
-    st.title("Branch Reco Trend")
-    
+
     # Key Metrics Dashboard
+    st.title("Branch Reco Trend")
     metrics = calculate_branch_metrics(filtered_df, selected_date)
-    
+
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric(
@@ -703,19 +700,18 @@ def show_collections_dashboard():
 
     # Analysis Tabs
     tab1, tab2, tab3 = st.tabs(["Trend Analysis", "Branch Performance", "Comparative Analysis"])
-    
+
     with tab1:
         st.subheader("Balance & Pending Trends")
-        
         try:
             # Prepare trend data safely
             trend_data = []
             for branch in selected_branches:
                 branch_data = filtered_df[filtered_df['Branch Name'] == branch]
                 if not branch_data.empty:
-                    for date in dates:
-                        balance_col = f'Balance_{date}'
-                        pending_col = f'Pending_{date}'
+                    for date in available_dates:
+                        balance_col = f'{date} | Balance As On'
+                        pending_col = f'{date} | Pending Amount'
                         if balance_col in branch_data.columns and pending_col in branch_data.columns:
                             trend_data.append({
                                 'Branch': branch,
@@ -723,13 +719,13 @@ def show_collections_dashboard():
                                 'Balance': branch_data[balance_col].values[0],
                                 'Pending': branch_data[pending_col].values[0]
                             })
-            
+
             if trend_data:
                 trend_df = pd.DataFrame(trend_data)
-                
+
                 # Create interactive plot
                 fig = go.Figure()
-                
+
                 for branch in selected_branches:
                     branch_trend = trend_df[trend_df['Branch'] == branch]
                     if not branch_trend.empty:
@@ -747,7 +743,7 @@ def show_collections_dashboard():
                             name=f"{branch} - Pending",
                             line=dict(dash='dot')
                         ))
-                
+
                 fig.update_layout(
                     title="Balance and Pending Trends",
                     xaxis_title="Date",
@@ -757,24 +753,22 @@ def show_collections_dashboard():
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.warning("No trend data available for selected branches")
-                
+
         except Exception as e:
             st.error(f"Error in trend analysis: {str(e)}")
             st.write("Please check the data structure and selected filters")
-    
+
     with tab2:
         st.subheader("Branch Performance")
         try:
             # Performance metrics
             performance_df = filtered_df.copy()
-            current_balance = f'Balance_{selected_date}'
-            current_pending = f'Pending_{selected_date}'
             
-            if current_balance in performance_df.columns and current_pending in performance_df.columns:
-                performance_df['Current Balance'] = performance_df[current_balance]
-                performance_df['Current Pending'] = performance_df[current_pending]
+            if balance_col in performance_df.columns and pending_col in performance_df.columns:
+                performance_df['Current Balance'] = performance_df[balance_col]
+                performance_df['Current Pending'] = performance_df[pending_col]
                 performance_df['Net Position'] = performance_df['Current Balance'] - performance_df['Current Pending']
-                
+
                 # Performance Chart
                 fig_perf = px.bar(
                     performance_df,
@@ -784,7 +778,7 @@ def show_collections_dashboard():
                     barmode='group'
                 )
                 st.plotly_chart(fig_perf, use_container_width=True)
-                
+
                 # Metrics Table
                 st.dataframe(
                     performance_df[['Branch Name', 'Current Balance', 'Current Pending', 'Net Position']]
@@ -793,61 +787,39 @@ def show_collections_dashboard():
                 )
             else:
                 st.warning("Performance data not available for selected date")
-                
+
         except Exception as e:
             st.error(f"Error in performance analysis: {str(e)}")
-    
+
     with tab3:
         st.subheader("Comparative Analysis")
         try:
-            # Get all dates for comparison
-            dates = ['03-Nov-24', '27-Oct-24', '20-Oct-24', '12-Oct-24', '06-Oct-24', '30-Sep-24', '21-Sep-24']
-            
             # Create comparison DataFrame
             comparison_df = pd.DataFrame()
             comparison_df['Branch Name'] = selected_branches
-            
+
             # Add data for all dates
-            for date in dates:
+            for date in available_dates:
+                balance_col = f'{date} | Balance As On'
+                pending_col = f'{date} | Pending Amount'
                 comparison_df[f'Balance_{date}'] = [
-                    filtered_df[filtered_df['Branch Name'] == branch][f'Balance_{date}'].iloc[0]
+                    filtered_df[filtered_df['Branch Name'] == branch][balance_col].iloc[0] if balance_col in filtered_df.columns else 0
                     for branch in selected_branches
                 ]
                 comparison_df[f'Pending_{date}'] = [
-                    filtered_df[filtered_df['Branch Name'] == branch][f'Pending_{date}'].iloc[0]
+                    filtered_df[filtered_df['Branch Name'] == branch][pending_col].iloc[0] if pending_col in filtered_df.columns else 0
                     for branch in selected_branches
                 ]
-            
+
             # Display styled comparison table
             st.markdown("### Weekly Pending Amount Comparison")
-            styled_df = style_comparison_df(comparison_df, dates)
+            styled_df = style_comparison_df(comparison_df, available_dates)
             st.dataframe(
                 styled_df,
                 height=400,
                 use_container_width=True
             )
-            
-            # Add insights about pending amount trends
-            st.markdown("### Pending Amount Trends")
-            for branch in selected_branches:
-                branch_data = comparison_df[comparison_df['Branch Name'] == branch]
-                pending_trend = []
-                
-                # Compare pending amounts across dates
-                for i in range(len(dates)-1):
-                    current = branch_data[f'Pending_{dates[i]}'].iloc[0]
-                    previous = branch_data[f'Pending_{dates[i+1]}'].iloc[0]
-                    if current < previous:
-                        pending_trend.append(f"Decreased from ₹{previous:,.2f} to ₹{current:,.2f}")
-                    elif current > previous:
-                        pending_trend.append(f"Increased from ₹{previous:,.2f} to ₹{current:,.2f}")
-                
-                if pending_trend:
-                    st.markdown(f"**{branch}**:")
-                    for trend in pending_trend[:3]:  # Show last 3 changes
-                        st.markdown(f"- {trend}")
-                    st.markdown("---")
-            
+
         except Exception as e:
             st.error(f"Error in comparative analysis: {str(e)}")
             st.write("Error details:", str(e))
@@ -855,7 +827,7 @@ def show_collections_dashboard():
     # Export Options
     st.sidebar.markdown("---")
     st.sidebar.subheader("Export Options")
-    
+
     if st.sidebar.button("Export Complete Analysis"):
         try:
             output = io.BytesIO()
@@ -865,9 +837,9 @@ def show_collections_dashboard():
                     trend_df.to_excel(writer, sheet_name='Trends', index=False)
                 if 'performance_df' in locals():
                     performance_df.to_excel(writer, sheet_name='Performance', index=False)
-                if 'compare_df' in locals():
-                    compare_df.to_excel(writer, sheet_name='Comparison', index=False)
-            
+                if 'comparison_df' in locals():
+                    comparison_df.to_excel(writer, sheet_name='Comparison', index=False)
+
             st.sidebar.download_button(
                 label="📥 Download Full Report",
                 data=output.getvalue(),
