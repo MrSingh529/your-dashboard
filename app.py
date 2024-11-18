@@ -681,15 +681,10 @@ def show_collections_dashboard():
 
     # Generate column names for Balance and Pending for the selected date
     date_str = pd.to_datetime(selected_date).strftime('%Y-%m-%d')
-
-    # Find the closest matching columns for Balance and Pending using dynamic matching
-    balance_candidates = [col for col in df.columns if "Balance As On" in col]
-    balance_col = get_close_matches(f"{date_str} | Balance As On", balance_candidates, n=1)
-    balance_col = balance_col[0] if balance_col else None
-
-    pending_candidates = [col for col in df.columns if "Pending Amount" in col]
-    pending_col = get_close_matches(f"{date_str} | Pending Amount", pending_candidates, n=1)
-    pending_col = pending_col[0] if pending_col else None
+    
+    # Use existing columns directly instead of generating names (ensures matching)
+    balance_col = next((col for col in filtered_df.columns if re.search(r"Balance As On", col)), None)
+    pending_col = next((col for col in filtered_df.columns if re.search(r"Pending Amount", col)), None)
 
     if not balance_col or not pending_col:
         st.error(f"Columns for balance or pending amounts not found. Please check the available data.")
@@ -704,23 +699,23 @@ def show_collections_dashboard():
         with col1:
             st.metric(
                 "Total Balance",
-                f"₹{metrics['total_balance']:,.2f}",
-                delta=metrics['total_reduced']
+                f"₹{metrics.get('total_balance', 0):,.2f}",
+                delta=metrics.get('total_reduced', 0)
             )
         with col2:
             st.metric(
                 "Total Pending",
-                f"₹{metrics['total_pending']:,.2f}"
+                f"₹{metrics.get('total_pending', 0):,.2f}"
             )
         with col3:
             st.metric(
                 "Collection Ratio",
-                f"{metrics['collection_ratio']:.1f}%"
+                f"{metrics.get('collection_ratio', 0):.1f}%"
             )
         with col4:
             st.metric(
                 "Best Performing Branch",
-                metrics['top_balance_branch']
+                metrics.get('top_balance_branch', "N/A")
             )
     except KeyError as e:
         st.error(f"Error calculating metrics: {str(e)}")
@@ -826,10 +821,10 @@ def show_collections_dashboard():
             # Add data for all dates
             for date in available_dates:
                 date_str = pd.to_datetime(date).strftime('%Y-%m-%d')
-                balance_col = next((col for col in filtered_df.columns if date_str in col and "Balance As On" in col), None)
-                pending_col = next((col for col in filtered_df.columns if date_str in col and "Pending Amount" in col), None)
+                balance_col = f"{date_str} | Balance As On"
+                pending_col = f"{date_str} | Pending Amount"
 
-                if balance_col and pending_col:
+                if balance_col in filtered_df.columns and pending_col in filtered_df.columns:
                     comparison_df[f'Balance_{date_str}'] = [
                         filtered_df[filtered_df['Branch Name'] == branch][balance_col].iloc[0]
                         for branch in selected_branches
