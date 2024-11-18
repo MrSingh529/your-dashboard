@@ -972,14 +972,13 @@ def show_sdr_dashboard():
         return
 
     st.title("CSD SDR Trend Analysis")
+
+    # Adding tabs for better analysis switching
+    tab1, tab2, tab3, tab4 = st.tabs(["Highlights Trend", "SDR Ageing Analysis", "Trend Analysis", "Category-wise Analysis"])
     
-    try:
-        # Get date columns in correct order
-        date_columns = [col for col in df.columns if col not in ['Ageing Category', 'Reduced OS']]
-        date_columns.sort(reverse=True)  # Most recent first
-        
-        # Display Highlights Trend in a New Section
-        st.markdown("### Highlights Trend")
+    with tab1:
+        # Display Highlights Trend in a new tab
+        st.subheader("Highlights Trend")
         st.markdown("A detailed analysis of the changes over different periods, indicating improvements and deteriorations.")
         styled_df = style_sdr_trend(df)
         st.dataframe(styled_df, height=400, use_container_width=True)
@@ -1015,16 +1014,21 @@ def show_sdr_dashboard():
                 f"{reduction_percent:.2f}%",
                 delta=reduction_percent
             )
-        
-        # Original SDR Ageing Analysis Section (moved down)
-        st.markdown("### SDR Ageing Analysis")
+
+    with tab2:
+        # Original SDR Ageing Analysis Section
+        st.subheader("SDR Ageing Analysis")
         st.markdown("Aging Analysis for different SDR categories.")
         st.dataframe(df, height=400, use_container_width=True)
-        
+
+    with tab3:
         # Trend Analysis
-        st.markdown("### Trend Analysis")
+        st.subheader("Trend Analysis")
         
         # Create trend data
+        date_columns = [col for col in df.columns if col not in ['Ageing Category', 'Reduced OS']]
+        date_columns.sort(reverse=True)  # Most recent first
+        
         trend_data = []
         for idx, row in df.iterrows():
             for date in date_columns:
@@ -1046,8 +1050,9 @@ def show_sdr_dashboard():
         )
         st.plotly_chart(fig, use_container_width=True)
 
+    with tab4:
         # Category Analysis
-        st.markdown("### Category-wise Analysis")
+        st.subheader("Category-wise Analysis")
         
         latest_date = date_columns[0]
         prev_date = date_columns[1]
@@ -1078,20 +1083,20 @@ def show_sdr_dashboard():
                 color_continuous_scale=['green', 'yellow', 'red']
             )
             st.plotly_chart(fig_changes)
+
+    # Export Option
+    if st.sidebar.button("Export SDR Analysis"):
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+            df.to_excel(writer, sheet_name='SDR Data', index=False)
+            trend_df.to_excel(writer, sheet_name='Trend Analysis', index=False)
         
-        # Export Option
-        if st.sidebar.button("Export SDR Analysis"):
-            buffer = io.BytesIO()
-            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-                df.to_excel(writer, sheet_name='SDR Data', index=False)
-                trend_df.to_excel(writer, sheet_name='Trend Analysis', index=False)
-            
-            st.sidebar.download_button(
-                label="📥 Download SDR Report",
-                data=buffer.getvalue(),
-                file_name=f"sdr_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                mime="application/vnd.ms-excel"
-            )
+        st.sidebar.download_button(
+            label="📥 Download SDR Report",
+            data=buffer.getvalue(),
+            file_name=f"sdr_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
+            mime="application/vnd.ms-excel"
+        )
             
     except Exception as e:
         st.error(f"Error in SDR analysis: {str(e)}")
