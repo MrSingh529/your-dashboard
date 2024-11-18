@@ -642,10 +642,10 @@ def show_collections_dashboard():
 
     st.title("Collections Dashboard")
 
-    # Sidebar Controls for Filtering - Moved to the Sidebar
+    # Sidebar Controls for Filtering
     st.sidebar.title("Analysis Controls")
 
-    # Branch Selection with Search (in sidebar)
+    # Branch Selection with Search
     all_branches = sorted(df['Branch Name'].unique().tolist())
     selected_branches = st.sidebar.multiselect(
         "Select Branches (Search/Select)",
@@ -653,22 +653,19 @@ def show_collections_dashboard():
         default=all_branches
     )
 
-    # Date selection (in sidebar)
+    # Date selection
     available_dates = sorted(df['Date'].dropna().unique(), reverse=True)
-    selected_date_1 = st.sidebar.selectbox("Select Analysis Date 1", available_dates, index=0)
-    selected_date_2 = st.sidebar.selectbox("Select Analysis Date 2 (for comparison)", available_dates, index=1)
+    selected_date = st.sidebar.selectbox("Select Analysis Date", available_dates)
 
-    if selected_date_1 is None or selected_date_2 is None:
+    if selected_date is None:
         st.error("No valid dates found in the dataset for analysis.")
         return
 
-    # Filter Data based on Branches Selection and Analysis Dates
+    # Filter Data based on Branches Selection and Analysis Date
     filtered_df = df.copy()
     if selected_branches:
         filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
-
-    filtered_df_1 = filtered_df[filtered_df['Date'] == selected_date_1]
-    filtered_df_2 = filtered_df[filtered_df['Date'] == selected_date_2]
+    filtered_df = filtered_df[filtered_df['Date'] == selected_date]
 
     # Key Metrics Dashboard
     st.title("Branch Reco Trend")
@@ -678,35 +675,70 @@ def show_collections_dashboard():
             st.error(f"Required columns 'Balance As On' or 'Pending Amount' are missing from the dataset. Please check the available data.")
             return
 
-        # Calculate Metrics for the first selected date
-        total_balance_1 = filtered_df_1['Balance As On'].sum()
-        total_pending_1 = filtered_df_1['Pending Amount'].sum()
-        total_reduced_1 = filtered_df_1['Reduced Pending Amount'].sum() if 'Reduced Pending Amount' in filtered_df_1.columns else 0
-        collection_ratio_1 = (total_balance_1 / (total_balance_1 + total_pending_1) * 100) if (total_balance_1 + total_pending_1) != 0 else 0
-        top_balance_branch_1 = filtered_df_1.loc[filtered_df_1['Balance As On'].idxmax()]['Branch Name'] if not filtered_df_1.empty else "N/A"
+        # Calculate Metrics
+        total_balance = filtered_df['Balance As On'].sum()
+        total_pending = filtered_df['Pending Amount'].sum()
+        total_reduced = filtered_df['Reduced Pending Amount'].sum() if 'Reduced Pending Amount' in filtered_df.columns else 0
+        collection_ratio = (total_balance / (total_balance + total_pending) * 100) if (total_balance + total_pending) != 0 else 0
 
-        # Display Metrics for the first selected date
-        col1, col2, col3, col4 = st.columns(4)
+        # Best Performing Branch based on Decreasing Pending Amount Continuously
+        available_dates_sorted = sorted(available_dates)  # Earliest to latest
+        performance_records = {}
+
+        for branch in selected_branches:
+            branch_data = df[df['Branch Name'] == branch].sort_values(by='Date')
+            decreasing_count = 0
+            increasing_count = 0
+
+            for i in range(1, len(available_dates_sorted)):
+                current_date = available_dates_sorted[i]
+                previous_date = available_dates_sorted[i - 1]
+
+                if (previous_date in branch_data['Date'].values) and (current_date in branch_data['Date'].values):
+                    current_pending = branch_data.loc[branch_data['Date'] == current_date, 'Pending Amount'].values[0]
+                    previous_pending = branch_data.loc[branch_data['Date'] == previous_date, 'Pending Amount'].values[0]
+
+                    if current_pending < previous_pending:
+                        decreasing_count += 1
+                    elif current_pending > previous_pending:
+                        increasing_count += 1
+
+            performance_records[branch] = {
+                "decreasing_count": decreasing_count,
+                "increasing_count": increasing_count
+            }
+
+        # Determine Best and Poor Performing Branch
+        best_performing_branch = max(performance_records, key=lambda x: performance_records[x]['decreasing_count'], default="N/A")
+        poor_performing_branch = max(performance_records, key=lambda x: performance_records[x]['increasing_count'], default="N/A")
+
+        # Display Metrics
+        col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
             st.metric(
                 "Total Balance",
-                f"₹{total_balance_1:,.2f}",
-                delta=f"₹{total_reduced_1:,.2f}"
+                f"₹{total_balance:,.2f}",
+                delta=f"₹{total_reduced:,.2f}"
             )
         with col2:
             st.metric(
                 "Total Pending",
-                f"₹{total_pending_1:,.2f}"
+                f"₹{total_pending:,.2f}"
             )
         with col3:
             st.metric(
                 "Collection Ratio",
-                f"{collection_ratio_1:.1f}%"
+                f"{collection_ratio:.1f}%"
             )
         with col4:
             st.metric(
                 "Best Performing Branch",
-                top_balance_branch_1
+                best_performing_branch
+            )
+        with col5:
+            st.metric(
+                "Poor Performing Branch",
+                poor_performing_branch
             )
 
     except KeyError as e:
