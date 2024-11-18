@@ -311,21 +311,12 @@ def load_sdr_trend():
         # Deduplicate column names manually if duplicates are found
         df.columns = deduplicate_columns(df.columns)
 
-        # Debugging: Show the columns after deduplication
-        st.write("Debug: DataFrame after reading and renaming columns if duplicates are found")
-        st.write(df.head())
-
         # Convert amount columns to numeric (excluding 'Ageing Category' and 'Reduced OS')
         static_columns = ['Ageing Category', 'Reduced OS']
         for col in df.columns:
             if col not in static_columns:
-                try:
-                    # Removing commas, converting to numeric, and filling NaNs with 0
-                    df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-                except Exception as e:
-                    # Debugging: If there's an error converting this column, print the column name and error
-                    st.error(f"Error converting column '{col}' to numeric: {str(e)}")
-                    st.write(df[col].head())  # Display problematic column values for analysis
+                # Removing commas, converting to numeric, and filling NaNs with 0
+                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
 
         # Display the loaded data columns in the sidebar for verification
         st.sidebar.write("SDR Data Columns:", list(df.columns))
