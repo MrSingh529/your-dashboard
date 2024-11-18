@@ -296,17 +296,17 @@ def load_sdr_trend():
         if df is None:
             return None
 
-        # Assign column names to the DataFrame
-        columns = [
-            'Ageing Category', 'Reduced OS', '8-Nov-24', '25-Oct-24', 
-            '18-Oct-24', '4-Oct-24', '27-Sep-24', '13-Sep-24', '6-Sep-24'
-        ]
-        df.columns = columns[:len(df.columns)]
+        # Static columns
+        static_columns = ['Ageing Category', 'Reduced OS']
+
+        # Automatically assign the existing headers to avoid hardcoding
+        df.columns = df.iloc[0]  # Assume the first row has headers
+        df = df[1:]  # Remove the first row which is now the header
+        df.reset_index(drop=True, inplace=True)
 
         # Convert amount columns to numeric (excluding 'Ageing Category')
         for col in df.columns:
-            if col not in ['Ageing Category']:
-                # Removing commas, converting to numeric, and filling NaNs with 0
+            if col not in static_columns:
                 df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
 
         # Display the loaded data columns in the sidebar for verification
