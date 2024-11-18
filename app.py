@@ -684,12 +684,11 @@ def show_collections_dashboard():
     
     # Find the closest matching columns for Balance and Pending using regex
     import re
-    balance_col = "Balance As On"
-    pending_col = "Pending Amount"
+    balance_col = next((col for col in df.columns if "Balance As On" in col), None)
+    pending_col = next((col for col in df.columns if "Pending Amount" in col), None)
 
-    # Check if the necessary columns are present in the data
     if not balance_col or not pending_col:
-        st.error(f"Columns matching '{date_str} | Balance As On' or '{date_str} | Pending Amount' not found. Please check the available dates.")
+        st.error(f"Columns for balance or pending amounts not found. Please check the available data.")
         return
 
     # Key Metrics Dashboard
