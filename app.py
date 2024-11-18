@@ -655,17 +655,20 @@ def show_collections_dashboard():
 
     # Date selection (in sidebar)
     available_dates = sorted(df['Date'].dropna().unique(), reverse=True)
-    selected_date = st.sidebar.selectbox("Select Analysis Date", available_dates)
+    selected_date_1 = st.sidebar.selectbox("Select Analysis Date 1", available_dates, index=0)
+    selected_date_2 = st.sidebar.selectbox("Select Analysis Date 2 (for comparison)", available_dates, index=1)
 
-    if selected_date is None:
+    if selected_date_1 is None or selected_date_2 is None:
         st.error("No valid dates found in the dataset for analysis.")
         return
 
-    # Filter Data based on Branches Selection and Analysis Date
+    # Filter Data based on Branches Selection and Analysis Dates
     filtered_df = df.copy()
     if selected_branches:
         filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
-    filtered_df = filtered_df[filtered_df['Date'] == selected_date]
+
+    filtered_df_1 = filtered_df[filtered_df['Date'] == selected_date_1]
+    filtered_df_2 = filtered_df[filtered_df['Date'] == selected_date_2]
 
     # Key Metrics Dashboard
     st.title("Branch Reco Trend")
@@ -675,35 +678,35 @@ def show_collections_dashboard():
             st.error(f"Required columns 'Balance As On' or 'Pending Amount' are missing from the dataset. Please check the available data.")
             return
 
-        # Calculate Metrics
-        total_balance = filtered_df['Balance As On'].sum()
-        total_pending = filtered_df['Pending Amount'].sum()
-        total_reduced = filtered_df['Reduced Pending Amount'].sum() if 'Reduced Pending Amount' in filtered_df.columns else 0
-        collection_ratio = (total_balance / (total_balance + total_pending) * 100) if (total_balance + total_pending) != 0 else 0
-        top_balance_branch = filtered_df.loc[filtered_df['Balance As On'].idxmax()]['Branch Name'] if not filtered_df.empty else "N/A"
+        # Calculate Metrics for the first selected date
+        total_balance_1 = filtered_df_1['Balance As On'].sum()
+        total_pending_1 = filtered_df_1['Pending Amount'].sum()
+        total_reduced_1 = filtered_df_1['Reduced Pending Amount'].sum() if 'Reduced Pending Amount' in filtered_df_1.columns else 0
+        collection_ratio_1 = (total_balance_1 / (total_balance_1 + total_pending_1) * 100) if (total_balance_1 + total_pending_1) != 0 else 0
+        top_balance_branch_1 = filtered_df_1.loc[filtered_df_1['Balance As On'].idxmax()]['Branch Name'] if not filtered_df_1.empty else "N/A"
 
-        # Display Metrics
+        # Display Metrics for the first selected date
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric(
                 "Total Balance",
-                f"₹{total_balance:,.2f}",
-                delta=f"₹{total_reduced:,.2f}"
+                f"₹{total_balance_1:,.2f}",
+                delta=f"₹{total_reduced_1:,.2f}"
             )
         with col2:
             st.metric(
                 "Total Pending",
-                f"₹{total_pending:,.2f}"
+                f"₹{total_pending_1:,.2f}"
             )
         with col3:
             st.metric(
                 "Collection Ratio",
-                f"{collection_ratio:.1f}%"
+                f"{collection_ratio_1:.1f}%"
             )
         with col4:
             st.metric(
                 "Best Performing Branch",
-                top_balance_branch
+                top_balance_branch_1
             )
 
     except KeyError as e:
