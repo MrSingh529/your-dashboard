@@ -640,8 +640,6 @@ def show_collections_dashboard():
         st.error("The column 'Branch Name' is not available in the dataset. Please verify the column names.")
         return
 
-    st.title("Collections Dashboard")
-
     # Sidebar Controls for Filtering - Moved to the Sidebar
     st.sidebar.title("Analysis Controls")
 
@@ -726,13 +724,6 @@ def show_collections_dashboard():
                 for branch in selected_branches:
                     branch_data = filtered_df[filtered_df['Branch Name'] == branch]
                     if not branch_data.empty:
-                        # Balance line
-                        fig.add_trace(go.Scatter(
-                            x=branch_data['Date'],
-                            y=branch_data['Balance As On'],
-                            name=f"{branch} - Balance",
-                            mode='lines+markers'
-                        ))
                         # Pending line
                         fig.add_trace(go.Scatter(
                             x=branch_data['Date'],
