@@ -664,7 +664,7 @@ def show_collections_dashboard():
     selected_branches = st.multiselect(
         "Select Branches (Search/Select)",
         options=all_branches,
-        default=all_branches[:5] if len(all_branches) >= 5 else all_branches
+        default=all_branches
     )
 
     # Date selection
