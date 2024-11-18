@@ -120,66 +120,43 @@ def authenticate_drive():
 
 @st.cache_data(ttl=300)
 def load_data_from_drive(file_id):
+    """Load Collections Dashboard data from Google Drive"""
     try:
-        # Authenticate and download the file from Google Drive
         service = authenticate_drive()
         if not service:
             return None
 
+        # Download the file from Google Drive
         request = service.files().get_media(fileId=file_id)
         file_buffer = io.BytesIO()
         downloader = MediaIoBaseDownload(file_buffer, request)
-
         done = False
         while not done:
             status, done = downloader.next_chunk()
 
+        # Read the data as a DataFrame
         file_buffer.seek(0)
+        df = pd.read_excel(file_buffer)
 
-        # Load the Excel file with the first two rows as headers
-        df = pd.read_excel(file_buffer, engine='openpyxl', header=[0, 1])
-        
-        # Concatenate the headers to create multi-level column names
-        new_columns = []
-        for col in df.columns:
-            # Handle merged headers
-            if pd.notna(col[0]) and pd.notna(col[1]):
-                new_columns.append(f"{col[0]} | {col[1]}")
-            elif pd.notna(col[0]):
-                new_columns.append(col[0])
-            elif pd.notna(col[1]):
-                new_columns.append(col[1])
-            else:
-                new_columns.append("Unnamed")
+        # Automatically set column headers based on the Google Sheets structure
+        df.columns = df.iloc[0]  # Assuming the first row is the header
+        df = df[1:]  # Remove the header row from the data
+        df.reset_index(drop=True, inplace=True)
 
-        df.columns = new_columns
+        # Convert date column to datetime type if necessary
+        if 'Date' in df.columns:
+            df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
 
-        # Rename 'Branch Name' column if it exists differently
-        branch_column_names = [name for name in df.columns if 'Branch Name' in name or 'Branch' in name]
-        if branch_column_names:
-            df.rename(columns={branch_column_names[0]: 'Branch Name'}, inplace=True)
-
-        # Deduplicate column names manually if duplicates are found
-        df.columns = deduplicate_columns(df.columns)
-
-        # Skip the rows that were used as headers
-        df = df.reset_index(drop=True)
-
-        # Convert amount columns to numeric (excluding 'Branch Name')
-        for col in df.columns:
-            if col != 'Branch Name':
-                try:
-                    # Removing commas, converting to numeric, and filling NaNs with 0
-                    df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-                except Exception as e:
-                    st.error(f"Error converting column '{col}' to numeric: {str(e)}")
-                    st.write(df[col].head())  # Display problematic column values for analysis
+        # Convert amount columns to numeric (excluding 'Branch Name' and 'Date')
+        numeric_cols = df.columns.difference(['Branch Name', 'Date'])
+        for col in numeric_cols:
+            df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce')
 
         return df
-
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
-        st.write("Error details:", str(e))
+        # Debugging information if something goes wrong
+        st.write("Available columns:", list(df.columns))
         return None
 
 def deduplicate_columns(columns):
