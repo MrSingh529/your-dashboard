@@ -936,7 +936,7 @@ def style_sdr_trend(df):
                 else:
                     return 'background-color: #FFFF00'  # Yellow
             else:
-                # Get the date columns in order
+                # Logic for date columns
                 date_cols = [col for col in df.columns if col not in ['Ageing Category', 'Reduced OS']]
                 date_cols.sort(reverse=True)  # Most recent first
                 
@@ -959,10 +959,10 @@ def style_sdr_trend(df):
         except:
             return ''
     
-    # Apply styling
+    # Apply styling to the DataFrame.
     styled = df.style.apply(lambda x: [color_values(val, col) for val, col in zip(x, x.index)], axis=1)
     
-    # Format numbers
+    # Format numbers with two decimal places.
     numeric_columns = df.select_dtypes(include=['float64', 'int64']).columns
     return styled.format("{:.2f}", subset=numeric_columns)
 
@@ -975,16 +975,16 @@ def show_sdr_dashboard():
     
     try:
         # Get date columns in correct order
-        date_columns = [col for col in df.columns 
-                       if col not in ['Ageing Category', 'Reduced OS']]
+        date_columns = [col for col in df.columns if col not in ['Ageing Category', 'Reduced OS']]
         date_columns.sort(reverse=True)  # Most recent first
         
-        # Display current data
-        st.markdown("### SDR Ageing Analysis")
+        # Display Highlights Trend in a New Section
+        st.markdown("### Highlights Trend")
+        st.markdown("A detailed analysis of the changes over different periods, indicating improvements and deteriorations.")
         styled_df = style_sdr_trend(df)
         st.dataframe(styled_df, height=400, use_container_width=True)
-        
-        # Summary metrics
+
+        # Display Summary Metrics
         st.markdown("### Summary Metrics")
         col1, col2, col3 = st.columns(3)
         
@@ -1016,6 +1016,11 @@ def show_sdr_dashboard():
                 delta=reduction_percent
             )
         
+        # Original SDR Ageing Analysis Section (moved down)
+        st.markdown("### SDR Ageing Analysis")
+        st.markdown("Aging Analysis for different SDR categories.")
+        st.dataframe(df, height=400, use_container_width=True)
+        
         # Trend Analysis
         st.markdown("### Trend Analysis")
         
@@ -1040,7 +1045,7 @@ def show_sdr_dashboard():
             title="SDR Trends by Ageing Category"
         )
         st.plotly_chart(fig, use_container_width=True)
-        
+
         # Category Analysis
         st.markdown("### Category-wise Analysis")
         
@@ -1057,7 +1062,7 @@ def show_sdr_dashboard():
                 names='Ageing Category',
                 title=f"Distribution as of {latest_date}"
             )
-            st.plotly_chart(fig_pie)
+            st.plotly_chart(fig_pie, use_container_width=True)
         
         with col2:
             # Bar chart for changes
