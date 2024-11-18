@@ -810,22 +810,24 @@ def show_collections_dashboard():
                     for branch in selected_branches
                 ]
 
-                # Add a column for Pending Amount difference and highlight accordingly
-                comparison_df['Pending Change'] = comparison_df['Pending_2'] - comparison_df['Pending_1']
+                # Style the dataframe to highlight changes directly in 'Pending_2'
+                def highlight_changes(val, pending_1, pending_2):
+                    if val == pending_2:
+                        if pending_2 < pending_1:
+                            return 'background-color: #92D050'  # Green for decrease
+                        elif pending_2 > pending_1:
+                            return 'background-color: #FF7575'  # Red for increase
+                    return ''
 
-                def highlight_pending_changes(row):
-                    styles = []
-                    for pending_change in row:
-                        if pending_change < 0:
-                            styles.append('background-color: #92D050')  # Green for decrease
-                        elif pending_change > 0:
-                            styles.append('background-color: #FF7575')  # Red for increase
-                        else:
-                            styles.append('')
-                    return styles
+                styled_df = comparison_df.style.apply(
+                    lambda x: [
+                        highlight_changes(val, x['Pending_1'], x['Pending_2']) if col == 'Pending_2' else '' 
+                        for col, val in zip(x.index, x.values)
+                    ],
+                    axis=1
+                )
 
                 # Display styled comparison table
-                styled_df = comparison_df.style.apply(highlight_pending_changes, subset=['Pending Change'], axis=1)
                 st.markdown("### Balance and Pending Comparison")
                 st.dataframe(styled_df, height=400, use_container_width=True)
 
