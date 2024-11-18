@@ -11,6 +11,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from functools import lru_cache
 import time
+from difflib import get_close_matches
 import hashlib
 from functools import lru_cache
 
@@ -679,13 +680,16 @@ def show_collections_dashboard():
         filtered_df = filtered_df[filtered_df['Branch Name'].isin(selected_branches)]
 
     # Generate column names for Balance and Pending for the selected date
-    # Strip the time portion to ensure matching with the column names
     date_str = pd.to_datetime(selected_date).strftime('%Y-%m-%d')
-    
-    # Find the closest matching columns for Balance and Pending using regex
-    import re
-    balance_col = next((col for col in df.columns if "Balance As On" in col), None)
-    pending_col = next((col for col in df.columns if "Pending Amount" in col), None)
+
+    # Find the closest matching columns for Balance and Pending using dynamic matching
+    balance_candidates = [col for col in df.columns if "Balance As On" in col]
+    balance_col = get_close_matches(f"{date_str} | Balance As On", balance_candidates, n=1)
+    balance_col = balance_col[0] if balance_col else None
+
+    pending_candidates = [col for col in df.columns if "Pending Amount" in col]
+    pending_col = get_close_matches(f"{date_str} | Pending Amount", pending_candidates, n=1)
+    pending_col = pending_col[0] if pending_col else None
 
     if not balance_col or not pending_col:
         st.error(f"Columns for balance or pending amounts not found. Please check the available data.")
@@ -734,7 +738,7 @@ def show_collections_dashboard():
                 branch_data = filtered_df[filtered_df['Branch Name'] == branch]
                 if not branch_data.empty:
                     for date in available_dates:
-                        date_str = date.strftime('%Y-%m-%d')
+                        date_str = pd.to_datetime(date).strftime('%Y-%m-%d')
                         balance_col = f"{date_str} | Balance As On"
                         pending_col = f"{date_str} | Pending Amount"
                         if balance_col in branch_data.columns and pending_col in branch_data.columns:
@@ -821,11 +825,11 @@ def show_collections_dashboard():
 
             # Add data for all dates
             for date in available_dates:
-                date_str = date.strftime('%Y-%m-%d')
-                balance_col = f"{date_str} | Balance As On"
-                pending_col = f"{date_str} | Pending Amount"
+                date_str = pd.to_datetime(date).strftime('%Y-%m-%d')
+                balance_col = next((col for col in filtered_df.columns if date_str in col and "Balance As On" in col), None)
+                pending_col = next((col for col in filtered_df.columns if date_str in col and "Pending Amount" in col), None)
 
-                if balance_col in filtered_df.columns and pending_col in filtered_df.columns:
+                if balance_col and pending_col:
                     comparison_df[f'Balance_{date_str}'] = [
                         filtered_df[filtered_df['Branch Name'] == branch][balance_col].iloc[0]
                         for branch in selected_branches
@@ -867,7 +871,7 @@ def show_collections_dashboard():
             st.sidebar.download_button(
                 label="📥 Download Full Report",
                 data=output.getvalue(),
-                file_name=f"collection_analysis_{selected_date_str}.xlsx",
+                file_name=f"collection_analysis_{date_str}.xlsx",
                 mime="application/vnd.ms-excel"
             )
         except Exception as e:
