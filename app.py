@@ -7,6 +7,8 @@ import numpy as np
 import io
 import re
 from google.oauth2 import service_account
+from streamlit_lottie import st_lottie
+import requests
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from functools import lru_cache
@@ -1623,10 +1625,15 @@ def main():
         """)
     else:
         # Display loading animation while processing the report
-        with st.spinner("Loading report, please wait..."):
-            st_lottie(lottie_loading, speed=1, height=100, key="loading")
-            time.sleep(2)  # Simulate data processing time
-            
+        loading_placeholder = st.empty()  # Placeholder to manage the animation
+        loading_placeholder_lottie = loading_placeholder.st_lottie(lottie_loading, speed=1, height=100, key="loading")
+
+        # Simulate report loading (consider replacing this with actual report loading logic)
+        time.sleep(2)  
+
+        # Remove the loading animation
+        loading_placeholder.empty()
+
         # Display the selected report if both department and report are chosen
         selected_report_function()
 
