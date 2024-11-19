@@ -1539,8 +1539,12 @@ def show_department_menu():
         index=0
     )
 
+    # Update department selection
     if selected_department != "Select a Department":
-        st.session_state.selected_department = selected_department
+        # Check if department has changed
+        if st.session_state.selected_department != selected_department:
+            st.session_state.selected_department = selected_department
+            st.session_state.selected_report = None  # Reset report selection when department changes
 
     # Show reports for selected department
     if st.session_state.selected_department:
@@ -1553,9 +1557,11 @@ def show_department_menu():
         if selected_report != "Select a Report":
             st.session_state.selected_report = selected_report
 
+    # Return the selected report function, if both department and report are selected
     if st.session_state.selected_department and st.session_state.selected_report:
         report_function = DEPARTMENT_REPORTS[st.session_state.selected_department][st.session_state.selected_report]
         return report_function
+
     return None
 
 # Main function
