@@ -7,8 +7,6 @@ import numpy as np
 import io
 import re
 from google.oauth2 import service_account
-from streamlit_lottie import st_lottie
-import requests
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from functools import lru_cache
@@ -25,21 +23,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# Function to load Lottie animations from a URL
-def load_lottie_url(url: str):
-    response = requests.get(url)
-    if response.status_code != 200:
-        return None
-    return response.json()
-
-# URLs for Lottie Animations
-WELCOME_ANIMATION_URL = "https://assets9.lottiefiles.com/packages/lf20_tzoyh72v.json"  # Replace with an appropriate Lottie URL
-LOADING_ANIMATION_URL = "https://assets3.lottiefiles.com/packages/lf20_Cc8Bpg.json"
-
-# Load Lottie Animations
-lottie_welcome = load_lottie_url(WELCOME_ANIMATION_URL)
-lottie_loading = load_lottie_url(LOADING_ANIMATION_URL)
 
 # Enhanced CSS with loading animation
 st.markdown("""
@@ -1611,10 +1594,6 @@ def main():
     # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
         st.title(get_greeting())
-
-        # Display the Lottie Welcome Animation
-        st_lottie(lottie_welcome, speed=1, height=300, key="welcome")
-
         st.markdown("""
             ### You've successfully logged in to your reports dashboard! 🚀
 
@@ -1624,16 +1603,6 @@ def main():
             Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
         """)
     else:
-        # Display loading animation while processing the report
-        loading_placeholder = st.empty()  # Placeholder to manage the animation
-        loading_placeholder_lottie = loading_placeholder.st_lottie(lottie_loading, speed=1, height=100, key="loading")
-
-        # Simulate report loading (consider replacing this with actual report loading logic)
-        time.sleep(2)  
-
-        # Remove the loading animation
-        loading_placeholder.empty()
-
         # Display the selected report if both department and report are chosen
         selected_report_function()
 
