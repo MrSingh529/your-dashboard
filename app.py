@@ -11,6 +11,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from functools import lru_cache
 import time
+import pytz
 from difflib import get_close_matches
 import hashlib
 from functools import lru_cache
@@ -1564,6 +1565,24 @@ def show_department_menu():
 
     return None
 
+def get_greeting():
+    # Get the current time in IST (Indian Standard Time)
+    ist = pytz.timezone('Asia/Kolkata')
+    current_time = datetime.now(ist)
+    current_hour = current_time.hour
+
+    # Determine the greeting based on the current hour
+    if 5 <= current_hour < 12:
+        greeting = "Good Morning"
+    elif 12 <= current_hour < 17:
+        greeting = "Good Afternoon"
+    elif 17 <= current_hour < 21:
+        greeting = "Good Evening"
+    else:
+        greeting = "Good Night"
+
+    return f"Hey there! {greeting} 👋"
+
 # Main function
 def main():
     if not check_password():
@@ -1574,15 +1593,14 @@ def main():
 
     # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
-        st.title("Welcome to Your Reports Dashboard")
+        st.title(get_greeting())
         st.markdown("""
-            ### Hey there! 👋
-            You've successfully logged in to your reports dashboard. 
-            
-            - To get started, please choose a department from the **Select Department** dropdown on the left.
-            - After that, pick the report you'd like to explore.
+            ### You've successfully logged in to your reports dashboard! 🚀
 
-            We have several insightful reports available to help you make informed decisions. 😊
+            - **To get started**, please choose a department from the **Select Department** dropdown on the left.
+            - After that, **pick the report** you'd like to explore. 📊
+
+            Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
         """)
     else:
         # Display the selected report if both department and report are chosen
