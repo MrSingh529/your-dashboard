@@ -23,12 +23,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Enhanced CSS with animations and styles for a cooler, more engaging UI
+# Enhanced CSS with loading animation
 st.markdown("""
     <style>
-    body {
-        background-color: #f0f2f6;
-    }
     .main {
         padding: 20px;
     }
@@ -36,27 +33,25 @@ st.markdown("""
         background-color: white;
         padding: 20px;
         border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        margin: 15px 0;
-        transition: transform 0.3s, box-shadow 0.3s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin: 10px 0;
+        transition: transform 0.2s;
     }
     .metric-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        transform: translateY(-2px);
     }
     .filter-container {
-        background-color: #ffffff;
-        padding: 25px;
+        background-color: #f8f9fa;
+        padding: 20px;
         border-radius: 10px;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
         margin-bottom: 20px;
     }
     .comparison-card {
         background-color: #ffffff;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-        margin: 20px 0;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin: 10px 0;
     }
     .trend-positive {
         color: #2ecc71;
@@ -69,31 +64,23 @@ st.markdown("""
     .login-container {
         max-width: 400px;
         margin: auto;
-        padding: 30px;
+        padding: 20px;
         background-color: white;
         border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        animation: fadeIn 1s ease-in-out;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     .stButton>button {
         width: 100%;
-        margin-top: 15px;
-        background-color: #2ecc71;
-        color: white;
-        font-weight: bold;
+        margin-top: 10px;
     }
     .loading {
         display: inline-block;
-        width: 30px;
-        height: 30px;
-        border: 4px solid rgba(0,0,0,.1);
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(0,0,0,.1);
         border-radius: 50%;
-        border-top-color: #3498db;
-        animation: spin 1s linear infinite;
-    }
-    @keyframes fadeIn {
-        0% { opacity: 0; }
-        100% { opacity: 1; }
+        border-top-color: #2ecc71;
+        animation: spin 1s ease-in-out infinite;
     }
     @keyframes spin {
         to { transform: rotate(360deg); }
@@ -210,6 +197,19 @@ def check_password():
         with col2:
             st.markdown(
                 """
+                <style>
+                .logo-container {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    margin-bottom: 20px;
+                }
+                </style>
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown(
+                """
                 <div class="logo-container">
                     <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
                 </div>
@@ -229,7 +229,7 @@ def check_password():
                 if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
                     st.session_state.authenticated = True
                     st.session_state.username = username
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     st.session_state.login_attempts += 1
                     st.error("Invalid credentials")
@@ -1520,50 +1520,42 @@ def define_department_structure():
 
 def show_department_menu():
     """Display hierarchical department menu"""
-    # Department selection
-    st.sidebar.title("Select Department")
-    
+    st.sidebar.title("Select Department and Report")
+
     # Get department structure
     DEPARTMENT_REPORTS = define_department_structure()
-    
+
     # Initialize session state for menu
     if 'selected_department' not in st.session_state:
         st.session_state.selected_department = None
     if 'selected_report' not in st.session_state:
         st.session_state.selected_report = None
-    
+
     # Department selection
     departments = list(DEPARTMENT_REPORTS.keys())
-    
-    # Create department buttons
-    for dept in departments:
-        if st.sidebar.button(
-            dept,
-            key=f"dept_{dept}",
-            help=f"View {dept} department reports"
-        ):
-            st.session_state.selected_department = dept
-            st.session_state.selected_report = None
-            st.rerun()
-    
+    selected_department = st.sidebar.selectbox(
+        "Select Department",
+        ["Select a Department"] + departments,
+        index=0
+    )
+
+    if selected_department != "Select a Department":
+        st.session_state.selected_department = selected_department
+
     # Show reports for selected department
     if st.session_state.selected_department:
-        st.sidebar.markdown("---")
-        st.sidebar.subheader(f"{st.session_state.selected_department} Reports")
-        
         reports = list(DEPARTMENT_REPORTS[st.session_state.selected_department].keys())
-        
-        for report in reports:
-            if st.sidebar.radio(
-                "",
-                [report],
-                key=f"report_{report}",
-                index=0 if st.session_state.selected_report == report else None,
-                label_visibility="collapsed"
-            ):
-                st.session_state.selected_report = report
-                return DEPARTMENT_REPORTS[st.session_state.selected_department][report]
-    
+        selected_report = st.sidebar.selectbox(
+            f"Select Report for {st.session_state.selected_department}",
+            ["Select a Report"] + reports,
+            index=0
+        )
+        if selected_report != "Select a Report":
+            st.session_state.selected_report = selected_report
+
+    if st.session_state.selected_department and st.session_state.selected_report:
+        report_function = DEPARTMENT_REPORTS[st.session_state.selected_department][st.session_state.selected_report]
+        return report_function
     return None
 
 # Main function
@@ -1571,25 +1563,15 @@ def main():
     if not check_password():
         return
 
-    st.sidebar.title("Navigation")
-    report_option = st.sidebar.radio(
-        "Choose a Report",
-        ["Branch Reco Dashboard", "CSD SDR Trend Analysis", "TSG Payment Receivables", "ITSS Tender Analysis"]
-    )
-
-    if report_option == "Branch Reco Dashboard":
-        show_collections_dashboard()
-    elif report_option == "CSD SDR Trend Analysis":
-        show_sdr_dashboard()
-    elif report_option == "TSG Payment Receivables":
-        show_tsg_dashboard()
-    elif report_option == "ITSS Tender Analysis":
-        show_itss_dashboard()
+    # Display the department and report menu
+    selected_report_function = show_department_menu()
+    if selected_report_function:
+        selected_report_function()
 
     st.sidebar.markdown("---")
     if st.sidebar.button("Logout"):
         st.session_state.clear()
-        st.experimental_rerun()
+        st.rerun()
 
 if __name__ == "__main__":
     main()
