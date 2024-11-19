@@ -193,32 +193,10 @@ def check_password():
         st.session_state.login_attempts = 0
 
     if not st.session_state.authenticated:
-        # Create a centered layout
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            # Center the logo and adjust margins
-            st.markdown(
-                """
-                <style>
-                .logo-container {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    margin-bottom: 20px;
-                }
-                </style>
-                """,
-                unsafe_allow_html=True
-            )
-            st.markdown(
-                """
-                <div class="logo-container">
-                    <img src="https://github.com/MrSingh529/your-dashboard/blob/main/assets/logo.png" style="width: 150px;">
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            # Login form
+            st.markdown("<div class='login-container'>", unsafe_allow_html=True)
+            st.image("https://github.com/MrSingh529/your-dashboard/blob/main/assets/logo.png", width=150)
             st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>", unsafe_allow_html=True)
             username = st.text_input("Username").lower()
             password = st.text_input("Password", type="password")
@@ -236,6 +214,7 @@ def check_password():
                 else:
                     st.session_state.login_attempts += 1
                     st.error("Invalid credentials")
+            st.markdown("</div>", unsafe_allow_html=True)
         return False
     return True
         
