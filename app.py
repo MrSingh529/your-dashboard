@@ -18,43 +18,44 @@ from functools import lru_cache
 # Configure page settings
 st.set_page_config(
     page_title="TSG Payment Receivables Dashboard",
-    page_icon="📊",
+    page_icon="\U0001F4C8",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Enhanced CSS with loading animation
+# Enhanced CSS with loading animation and smoother UI interactions
 st.markdown("""
     <style>
     .main {
         padding: 20px;
     }
     .metric-card {
-        background-color: white;
+        background-color: #ffffff;
         padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin: 10px 0;
-        transition: transform 0.2s;
+        border-radius: 15px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        margin: 15px 0;
+        transition: transform 0.2s, box-shadow 0.2s;
     }
     .metric-card:hover {
-        transform: translateY(-2px);
+        transform: translateY(-4px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.25);
     }
     .filter-container {
         background-color: #f8f9fa;
         padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
+        border-radius: 15px;
+        margin-bottom: 25px;
     }
     .comparison-card {
         background-color: #ffffff;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        margin: 10px 0;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin: 15px 0;
     }
     .trend-positive {
-        color: #2ecc71;
+        color: #27ae60;
         font-weight: bold;
     }
     .trend-negative {
@@ -64,14 +65,17 @@ st.markdown("""
     .login-container {
         max-width: 400px;
         margin: auto;
-        padding: 20px;
+        padding: 25px;
         background-color: white;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
     .stButton>button {
         width: 100%;
         margin-top: 10px;
+        background-color: #2c3e50;
+        color: white;
+        font-weight: bold;
     }
     .loading {
         display: inline-block;
@@ -79,13 +83,26 @@ st.markdown("""
         height: 20px;
         border: 3px solid rgba(0,0,0,.1);
         border-radius: 50%;
-        border-top-color: #2ecc71;
+        border-top-color: #2980b9;
         animation: spin 1s ease-in-out infinite;
     }
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
     </style>
+""", unsafe_allow_html=True)
+
+# Enhanced metrics visualization
+st.markdown("""
+    <script>
+    function animateMetric(delta) {
+        delta.style.transition = "all 0.3s ease-in-out";
+        delta.style.transform = "scale(1.05)";
+        setTimeout(() => {
+            delta.style.transform = "scale(1)";
+        }, 300);
+    }
+    </script>
 """, unsafe_allow_html=True)
 
 # Enhanced security with password hashing
