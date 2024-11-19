@@ -79,6 +79,30 @@ st.markdown("""
         color: #e74c3c;
         font-weight: bold;
     }
+    .login-container {
+        max-width: 400px;
+        margin: auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .stButton>button {
+        width: 100%;
+        margin-top: 10px;
+    }
+    .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(0,0,0,.1);
+        border-radius: 50%;
+        border-top-color: #2ecc71;
+        animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
     </style>
 """, unsafe_allow_html=True)
 
