@@ -758,7 +758,8 @@ def show_collections_dashboard():
 
         # Determine Best and Poor Performing Branch
         best_performing_branch = max(performance_records, key=lambda x: performance_records[x]['decreasing_count'], default="N/A")
-        poor_performing_branch = max(performance_records, key=lambda x: performance_records[x]['increasing_count'], default="N/A")
+        filtered_performance_records = {k: v for k, v in performance_records.items() if k != best_performing_branch}
+        poor_performing_branch = max(filtered_performance_records, key=lambda x: filtered_performance_records[x]['increasing_count'], default="N/A")
         
         # Display Metrics for the first selected date
         col1, col2, col3, col4, col5 = st.columns(5)
