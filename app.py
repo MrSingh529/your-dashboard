@@ -196,7 +196,7 @@ def check_password():
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-            st.image(r"C:\Users\RVS\Documents\Automation Files\your-dashboard\assets\logo.png", width=150)  # Add your company logo here
+            st.image("assets/logo.png", width=150)  # Add your company logo here
             st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>", unsafe_allow_html=True)
             username = st.text_input("Username").lower()
             password = st.text_input("Password", type="password")
