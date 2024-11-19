@@ -1571,7 +1571,21 @@ def main():
 
     # Display the department and report menu
     selected_report_function = show_department_menu()
-    if selected_report_function:
+
+    # Show a greeting message when no department or report is selected
+    if not st.session_state.selected_department or not st.session_state.selected_report:
+        st.title("Welcome to Your Reports Dashboard")
+        st.markdown("""
+            ### Hey there! 👋
+            You've successfully logged in to your reports dashboard. 
+            
+            - To get started, please choose a department from the **Select Department** dropdown on the left.
+            - After that, pick the report you'd like to explore.
+
+            We have several insightful reports available to help you make informed decisions. 😊
+        """)
+    else:
+        # Display the selected report if both department and report are chosen
         selected_report_function()
 
     st.sidebar.markdown("---")
