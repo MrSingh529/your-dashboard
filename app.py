@@ -213,7 +213,7 @@ def check_password():
             st.markdown(
                 """
                 <div class="logo-container">
-                    <img src="https://github.com/MrSingh529/your-dashboard/blob/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
+                    <img src="https://github.com/MrSingh529/your-dashboard/blob/main/assets/logo.png" style="width: 150px;">
                 </div>
                 """,
                 unsafe_allow_html=True
