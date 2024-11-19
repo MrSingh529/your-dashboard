@@ -96,7 +96,7 @@ def hash_password(password):
 # Credentials for Google Drive (use Streamlit secrets to keep them secure)
 CREDENTIALS = {
     "admin": hash_password(st.secrets["users"]["admin"]),
-    "RVCEO": hash_password(st.secrets["users"]["RVCEO"]),
+    "ceo": hash_password(st.secrets["users"]["ceo"]),
     "manager": hash_password(st.secrets["users"]["manager"])
 }
 
