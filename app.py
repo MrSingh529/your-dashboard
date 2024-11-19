@@ -18,44 +18,48 @@ from functools import lru_cache
 # Configure page settings
 st.set_page_config(
     page_title="TSG Payment Receivables Dashboard",
-    page_icon="\U0001F4C8",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Enhanced CSS with loading animation and smoother UI interactions
+# Enhanced CSS with animations and styles for a cooler, more engaging UI
 st.markdown("""
     <style>
+    body {
+        background-color: #f0f2f6;
+    }
     .main {
         padding: 20px;
     }
     .metric-card {
-        background-color: #ffffff;
+        background-color: white;
         padding: 20px;
-        border-radius: 15px;
+        border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         margin: 15px 0;
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: transform 0.3s, box-shadow 0.3s;
     }
     .metric-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
     .filter-container {
-        background-color: #f8f9fa;
-        padding: 20px;
-        border-radius: 15px;
-        margin-bottom: 25px;
+        background-color: #ffffff;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
     }
     .comparison-card {
         background-color: #ffffff;
         padding: 20px;
         border-radius: 12px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        margin: 15px 0;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+        margin: 20px 0;
     }
     .trend-positive {
-        color: #27ae60;
+        color: #2ecc71;
         font-weight: bold;
     }
     .trend-negative {
@@ -65,44 +69,36 @@ st.markdown("""
     .login-container {
         max-width: 400px;
         margin: auto;
-        padding: 25px;
+        padding: 30px;
         background-color: white;
-        border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        animation: fadeIn 1s ease-in-out;
     }
     .stButton>button {
         width: 100%;
-        margin-top: 10px;
-        background-color: #2c3e50;
+        margin-top: 15px;
+        background-color: #2ecc71;
         color: white;
         font-weight: bold;
     }
     .loading {
         display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 3px solid rgba(0,0,0,.1);
+        width: 30px;
+        height: 30px;
+        border: 4px solid rgba(0,0,0,.1);
         border-radius: 50%;
-        border-top-color: #2980b9;
-        animation: spin 1s ease-in-out infinite;
+        border-top-color: #3498db;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes fadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
     }
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
     </style>
-""", unsafe_allow_html=True)
-
-# Enhanced metrics visualization
-st.markdown("""
-    <script>
-    function animateMetric(delta) {
-        delta.style.transition = "all 0.3s ease-in-out";
-        delta.style.transform = "scale(1.05)";
-        setTimeout(() => {
-            delta.style.transform = "scale(1)";
-        }, 300);
-    }
-    </script>
 """, unsafe_allow_html=True)
 
 # Enhanced security with password hashing
@@ -214,19 +210,6 @@ def check_password():
         with col2:
             st.markdown(
                 """
-                <style>
-                .logo-container {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    margin-bottom: 20px;
-                }
-                </style>
-                """,
-                unsafe_allow_html=True
-            )
-            st.markdown(
-                """
                 <div class="logo-container">
                     <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
                 </div>
@@ -246,7 +229,7 @@ def check_password():
                 if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
                     st.session_state.authenticated = True
                     st.session_state.username = username
-                    st.rerun()
+                    st.experimental_rerun()
                 else:
                     st.session_state.login_attempts += 1
                     st.error("Invalid credentials")
@@ -1606,7 +1589,7 @@ def main():
     st.sidebar.markdown("---")
     if st.sidebar.button("Logout"):
         st.session_state.clear()
-        st.rerun()
+        st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
