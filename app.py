@@ -705,42 +705,15 @@ def show_collections_dashboard():
     if df is None:
         return
 
-    # CSS for animated loading and fade-in effects
-    st.markdown("""
-        <style>
-        .metric-card {
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-        }
-        .metric-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        .chart-container {
-            transition: opacity 0.5s ease-in-out;
-        }
-        .chart-container.loading {
-            opacity: 0.5;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    # If 'Branch Name' column is not found, handle gracefully
+    if 'Branch Name' not in df.columns:
+        st.error("The column 'Branch Name' is not available in the dataset. Please verify the column names.")
+        return
 
     st.title("Branch Reco Dashboard")
 
     # Sidebar Controls for Filtering - Moved to the Sidebar
     st.sidebar.title("Analysis Controls")
-
-    # Adding animations using JavaScript for better UX
-    components.html("""
-        <script>
-            function fadeOutEffect(element) {
-                var fadeTarget = document.getElementById(element);
-                fadeTarget.classList.add("loading");
-                setTimeout(function() {
-                    fadeTarget.classList.remove("loading");
-                }, 1000); // You can adjust this time for longer animations.
-            }
-        </script>
-    """, height=0)
 
     # Branch Selection with Search (in sidebar)
     all_branches = sorted(df['Branch Name'].unique().tolist())
@@ -755,7 +728,6 @@ def show_collections_dashboard():
     selected_date_1 = st.sidebar.selectbox("Select Analysis Date 1", available_dates, index=0)
     selected_date_2 = st.sidebar.selectbox("Select Analysis Date 2 (for comparison)", available_dates, index=1)
 
-    # Check for valid dates
     if selected_date_1 is None or selected_date_2 is None:
         st.error("No valid dates found in the dataset for analysis.")
         return
@@ -775,25 +747,77 @@ def show_collections_dashboard():
             st.error(f"Required columns 'Balance As On' or 'Pending Amount' are missing from the dataset. Please check the available data.")
             return
 
-        # Metric Cards
+        # Calculate Metrics for the first selected date
+        total_balance_1 = filtered_df_1['Balance As On'].sum()
+        total_pending_1 = filtered_df_1['Pending Amount'].sum()
+        total_reduced_1 = filtered_df_1['Reduced Pending Amount'].sum() if 'Reduced Pending Amount' in filtered_df_1.columns else 0
+        collection_ratio_1 = (total_balance_1 / (total_balance_1 + total_pending_1) * 100) if (total_balance_1 + total_pending_1) != 0 else 0
+        top_balance_branch_1 = filtered_df_1.loc[filtered_df_1['Balance As On'].idxmax()]['Branch Name'] if not filtered_df_1.empty else "N/A"
+        
+        # Best Performing Branch based on Decreasing Pending Amount Continuously
+        available_dates_sorted = sorted(available_dates)  # Earliest to latest
+        performance_records = {}
+
+        for branch in selected_branches:
+            branch_data = df[df['Branch Name'] == branch].sort_values(by='Date')
+            decreasing_count = 0
+            increasing_count = 0
+
+            for i in range(1, len(available_dates_sorted)):
+                current_date = available_dates_sorted[i]
+                previous_date = available_dates_sorted[i - 1]
+
+                if (previous_date in branch_data['Date'].values) and (current_date in branch_data['Date'].values):
+                    current_pending = branch_data.loc[branch_data['Date'] == current_date, 'Pending Amount'].values[0]
+                    previous_pending = branch_data.loc[branch_data['Date'] == previous_date, 'Pending Amount'].values[0]
+
+                    if current_pending < previous_pending:
+                        decreasing_count += 1
+                    elif current_pending > previous_pending:
+                        increasing_count += 1
+
+            performance_records[branch] = {
+                "decreasing_count": decreasing_count,
+                "increasing_count": increasing_count
+            }
+
+        # Determine Best and Poor Performing Branch
+        best_performing_branch = max(performance_records, key=lambda x: performance_records[x]['decreasing_count'], default="N/A")
+        filtered_performance_records = {k: v for k, v in performance_records.items() if k != best_performing_branch}
+        poor_performing_branch = max(filtered_performance_records, key=lambda x: filtered_performance_records[x]['increasing_count'], default="N/A")
+        
+        # Display Metrics for the first selected date
         col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
-            st.metric("Total Balance", f"₹{filtered_df_1['Balance As On'].sum():,.2f}")
+            st.metric(
+                "Total Balance",
+                f"₹{total_balance_1:,.2f}",
+                delta=f"₹{total_reduced_1:,.2f}"
+            )
         with col2:
-            st.metric("Total Pending", f"₹{filtered_df_1['Pending Amount'].sum():,.2f}")
+            st.metric(
+                "Total Pending",
+                f"₹{total_pending_1:,.2f}"
+            )
         with col3:
-            total_balance = filtered_df_1['Balance As On'].sum()
-            total_pending = filtered_df_1['Pending Amount'].sum()
-            collection_ratio = (total_balance / (total_balance + total_pending) * 100) if (total_balance + total_pending) != 0 else 0
-            st.metric("Collection Ratio", f"{collection_ratio:.1f}%")
+            st.metric(
+                "Collection Ratio",
+                f"{collection_ratio_1:.1f}%"
+            )
         with col4:
-            st.metric("Best Performing Branch", filtered_df_1.loc[filtered_df_1['Balance As On'].idxmax()]['Branch Name'])
+            st.metric(
+                "Best Performing Branch",
+                top_balance_branch_1
+            )
         with col5:
-            poor_performance_branch = filtered_df_1.loc[filtered_df_1['Pending Amount'].idxmax()]['Branch Name']
-            st.metric("Worst Performing Branch", poor_performance_branch)
-
+            st.metric(
+                "Poor Performing Branch",
+                poor_performing_branch
+            )
+        
     except KeyError as e:
         st.error(f"Error calculating metrics: {str(e)}")
+        st.write("Please verify that the column names match the expected format.")
 
     # Analysis Tabs
     tab1, tab2, tab3 = st.tabs(["Trend Analysis", "Branch Performance", "Comparative Analysis"])
@@ -804,17 +828,17 @@ def show_collections_dashboard():
         # Interactive Selector to Show Balance, Pending, or Both
         analysis_type = st.radio("Select Analysis Type", options=["Balance Amount", "Pending Amount", "Both"], index=0)
 
-        st.markdown('<div class="chart-container" id="chart-container">', unsafe_allow_html=True)
-        
         try:
             # Prepare trend data safely
             if not filtered_df.empty:
                 if analysis_type == "Balance Amount" or analysis_type == "Both":
                     # Balance Amount Trend Chart
                     fig_balance = go.Figure()
+
                     for branch in selected_branches:
                         branch_data = filtered_df[filtered_df['Branch Name'] == branch]
                         if not branch_data.empty:
+                            # Balance line
                             fig_balance.add_trace(go.Scatter(
                                 x=branch_data['Date'],
                                 y=branch_data['Balance As On'],
@@ -833,9 +857,11 @@ def show_collections_dashboard():
                 if analysis_type == "Pending Amount" or analysis_type == "Both":
                     # Pending Amount Trend Chart
                     fig_pending = go.Figure()
+
                     for branch in selected_branches:
                         branch_data = filtered_df[filtered_df['Branch Name'] == branch]
                         if not branch_data.empty:
+                            # Pending line
                             fig_pending.add_trace(go.Scatter(
                                 x=branch_data['Date'],
                                 y=branch_data['Pending Amount'],
@@ -851,14 +877,13 @@ def show_collections_dashboard():
                         hovermode='x unified'
                     )
                     st.plotly_chart(fig_pending, use_container_width=True)
-                
-                # Add the loading effect script
-                components.html('<script>fadeOutEffect("chart-container")</script>', height=0)
 
             else:
                 st.warning("No trend data available for selected branches")
+
         except Exception as e:
             st.error(f"Error in trend analysis: {str(e)}")
+            st.write("Please check the data structure and selected filters")
 
     with tab2:
         st.subheader("Branch Performance")
