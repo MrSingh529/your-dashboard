@@ -1408,7 +1408,7 @@ def show_tsg_dashboard():
                 f"Total Receivables (as of {date_cols[0]})",
                 f"₹{latest_total:,.0f}",
                 delta=f"₹{abs(total_change):,.0f}",
-                delta_color="inverse" if total_change < 0 else "normal"  # Green if negative change (reduction)
+                delta_color="normal" if total_change > 0 else "inverse"  # Green for reduction (improvement)
             )
 
         with col2:
@@ -1417,7 +1417,7 @@ def show_tsg_dashboard():
                 "Week-on-Week Change",
                 f"{abs(week_change_pct):.2f}%",
                 delta=f"{abs(week_change_pct):.2f}%",
-                delta_color="inverse" if week_change_pct < 0 else "normal"  # Green if negative percentage change
+                delta_color="normal" if week_change_pct > 0 else "inverse"  # Green if negative percentage change
             )
 
         with col3:
@@ -1426,7 +1426,7 @@ def show_tsg_dashboard():
                 "Month-to-Date Change",
                 f"{abs(month_change_pct):.2f}%",
                 delta=f"{abs(month_change_pct):.2f}%",
-                delta_color="inverse" if month_change_pct < 0 else "normal"  # Green if negative percentage change
+                delta_color="normal" if month_change_pct > 0 else "inverse"  # Green if negative percentage change
             )
         
         # Main trend table
