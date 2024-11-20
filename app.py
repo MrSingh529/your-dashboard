@@ -32,12 +32,14 @@ st.markdown("""
         font-weight: 400;
         src: local('SF Pro Display'), url('https://fonts.cdnfonts.com/s/59278/SFPRODISPLAYREGULAR.woff') format('woff');
     }
-    html, body, .main, input, select, textarea, button {
-        font-family: 'SFUIDisplay', sans-serif;
+        html, body, .main, .css-10trblm, .css-12oz5g7, .stTextInput > div > input, .stButton > button, .stMarkdown, label {
+        font-family: 'SFUIDisplay', sans-serif !important;
     }
+
     .main {
         padding: 20px;
     }
+
     .metric-card {
         background-color: white;
         padding: 20px;
@@ -46,15 +48,18 @@ st.markdown("""
         margin: 10px 0;
         transition: transform 0.2s;
     }
+
     .metric-card:hover {
         transform: translateY(-2px);
     }
+
     .filter-container {
         background-color: #f8f9fa;
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 20px;
     }
+
     .comparison-card {
         background-color: #ffffff;
         padding: 15px;
@@ -62,14 +67,17 @@ st.markdown("""
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         margin: 10px 0;
     }
+
     .trend-positive {
         color: #2ecc71;
         font-weight: bold;
     }
+
     .trend-negative {
         color: #e74c3c;
         font-weight: bold;
     }
+
     .login-container {
         max-width: 400px;
         margin: auto;
@@ -78,10 +86,12 @@ st.markdown("""
         border-radius: 10px;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
+
     .stButton>button {
         width: 100%;
         margin-top: 10px;
     }
+
     .loading {
         display: inline-block;
         width: 20px;
@@ -91,6 +101,7 @@ st.markdown("""
         border-top-color: #2ecc71;
         animation: spin 1s ease-in-out infinite;
     }
+
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
