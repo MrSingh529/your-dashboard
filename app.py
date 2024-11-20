@@ -28,11 +28,11 @@ st.markdown("""
     <style>
     @font-face {
         font-family: 'SFUIDisplay';
-        src: url('assets/fonts/SFUIDisplay-Regular.otf') format('opentype');
+        src: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/fonts/SFUIDisplay-Regular.otf') format('opentype');
         font-weight: normal;
         font-style: normal;
     }
-    html, body, .main {
+    html, body, .main, input, select, textarea, button {
         font-family: 'SFUIDisplay', sans-serif;
     }
     .main {
