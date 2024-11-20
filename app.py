@@ -1405,36 +1405,54 @@ def show_tsg_dashboard():
 
         with col1:
             # Adjusting to explicitly control the arrows and coloring
-            total_change_arrow = "↓" if total_change < 0 else "↑"
-            total_change_color = "inverse" if total_change < 0 else "normal"
-            st.metric(
-                f"Total Receivables (as of {date_cols[0]})",
-                f"₹{latest_total:,.0f}",
-                delta=f"{total_change_arrow} ₹{abs(total_change):,.0f}",
-                delta_color=total_change_color
-            )
+            if total_change < 0:
+                st.metric(
+                    f"Total Receivables (as of {date_cols[0]})",
+                    f"₹{latest_total:,.0f}",
+                    delta=f"↓ ₹{abs(total_change):,.0f}",
+                    delta_color="inverse"  # Green color indicating improvement
+                )
+            else:
+                st.metric(
+                    f"Total Receivables (as of {date_cols[0]})",
+                    f"₹{latest_total:,.0f}",
+                    delta=f"↑ ₹{abs(total_change):,.0f}",
+                    delta_color="normal"  # Red color indicating worsening
+                )
 
         with col2:
             # Week-on-Week Change logic
-            week_change_arrow = "↓" if week_change_pct < 0 else "↑"
-            week_change_color = "inverse" if week_change_pct < 0 else "normal"
-            st.metric(
-                "Week-on-Week Change",
-                f"{abs(week_change_pct):.2f}%",
-                delta=f"{week_change_arrow} {abs(week_change_pct):.2f}%",
-                delta_color=week_change_color
-            )
+            if week_change_pct < 0:
+                st.metric(
+                    "Week-on-Week Change",
+                    f"{abs(week_change_pct):.2f}%",
+                    delta=f"↓ {abs(week_change_pct):.2f}%",
+                    delta_color="inverse"  # Green color indicating improvement
+                )
+            else:
+                st.metric(
+                    "Week-on-Week Change",
+                    f"{abs(week_change_pct):.2f}%",
+                    delta=f"↑ {abs(week_change_pct):.2f}%",
+                    delta_color="normal"  # Red color indicating worsening
+                )
 
         with col3:
             # Month-to-Date Change logic
-            month_change_arrow = "↓" if month_change_pct < 0 else "↑"
-            month_change_color = "inverse" if month_change_pct < 0 else "normal"
-            st.metric(
-                "Month-to-Date Change",
-                f"{abs(month_change_pct):.2f}%",
-                delta=f"{month_change_arrow} {abs(month_change_pct):.2f}%",
-                delta_color=month_change_color
-            )
+            if month_change_pct < 0:
+                st.metric(
+                    "Month-to-Date Change",
+                    f"{abs(month_change_pct):.2f}%",
+                    delta=f"↓ {abs(month_change_pct):.2f}%",
+                    delta_color="inverse"  # Green color indicating improvement
+                )
+            else:
+                st.metric(
+                    "Month-to-Date Change",
+                    f"{abs(month_change_pct):.2f}%",
+                    delta=f"↑ {abs(month_change_pct):.2f}%",
+                    delta_color="normal"  # Red color indicating worsening
+                )
 
         # Main trend table
         st.markdown("### Ageing-wise Trend Analysis")
