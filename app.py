@@ -1383,32 +1383,42 @@ def show_tsg_dashboard():
         # Summary metrics
         st.markdown("### Summary Metrics")
         col1, col2, col3 = st.columns(3)
-        
+
         with col1:
             latest_total = df[date_cols[0]].sum()
             prev_total = df[date_cols[1]].sum()
-            change = latest_total - prev_total
+            total_change = latest_total - prev_total
+
+            # Arrow logic reversed: negative (reduction in receivables) is good
             st.metric(
                 f"Total Receivables ({date_cols[0]})",
                 f"₹{latest_total:,.0f}",
-                delta=f"₹{-change:,.0f}"
+                delta=f"₹{-total_change:,.0f}" if total_change > 0 else f"₹{total_change:,.0f}",
+                delta_color="inverse"  # Inverse to show reduction as positive (green)
             )
-        
+
         with col2:
-            week_change_pct = ((prev_total - latest_total) / prev_total * 100)
+            week_change_pct = ((prev_total - latest_total) / prev_total * 100) if prev_total != 0 else 0
+
+            # Arrow logic reversed: positive percentage is good if receivables decrease
             st.metric(
                 "Week-on-Week Change",
                 f"{week_change_pct:.2f}%",
-                delta=week_change_pct
+                delta=week_change_pct,
+                delta_color="inverse"  # Inverse to show reduction as positive (green)
             )
-            
+
         with col3:
+            # Calculate month-to-date change from the earliest date to the latest
             month_start = df[date_cols[-1]].sum()
-            month_change = ((month_start - latest_total) / month_start * 100)
+            month_change_pct = ((month_start - latest_total) / month_start * 100) if month_start != 0 else 0
+
+            # Arrow logic reversed: positive percentage is good if receivables decrease
             st.metric(
                 "Month-to-Date Change",
-                f"{month_change:.2f}%",
-                delta=month_change
+                f"{month_change_pct:.2f}%",
+                delta=month_change_pct,
+                delta_color="inverse"  # Inverse to show reduction as positive (green)
             )
         
         # Main trend table
