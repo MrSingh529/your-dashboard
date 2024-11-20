@@ -1380,31 +1380,36 @@ def show_tsg_dashboard():
         date_cols = [col for col in df.columns if col != 'Ageing Category']
         date_cols.sort(reverse=True)  # Most recent first
 
-        # Summary metrics
-        st.markdown("### Summary Metrics")
-        col1, col2, col3 = st.columns(3)
+        # Extract Grand Total row
+        grand_total_row = df[df['Ageing Category'] == 'Grand Total']
 
-        # Calculate total and change metrics
-        latest_total = df[date_cols[0]].sum()  # Most recent total receivables (Grand Total)
-        prev_total = df[date_cols[1]].sum()    # Previous total receivables
+        if grand_total_row.empty:
+            st.error("Grand Total row is missing from the data.")
+            return
+
+        # Get the most recent total and the previous total for comparison
+        latest_total = grand_total_row[date_cols[0]].values[0]  # Most recent total receivables (Grand Total)
+        prev_total = grand_total_row[date_cols[1]].values[0]  # Previous total receivables
         total_change = latest_total - prev_total
 
         # Calculate the week-on-week percentage change
         week_change_pct = ((latest_total - prev_total) / prev_total * 100) if prev_total != 0 else 0
 
         # Calculate the month-to-date percentage change
-        month_start = df[date_cols[-1]].sum()  # Oldest date available
+        month_start = grand_total_row[date_cols[-1]].values[0]  # Oldest date available (Month Start)
         month_change_pct = ((latest_total - month_start) / month_start * 100) if month_start != 0 else 0
 
-        # Display the metrics with correct coloring and labels
+        # Display the summary metrics with correct colors and arrows
+        st.markdown("### Summary Metrics")
+        col1, col2, col3 = st.columns(3)
+
         with col1:
             st.metric(
                 f"Total Receivables (as of {date_cols[0]})",
                 f"₹{latest_total:,.0f}",
                 delta=f"₹{total_change:,.0f}",
-                delta_color="inverse" if total_change < 0 else "normal"  # Show green if the change is negative
+                delta_color="inverse" if total_change < 0 else "normal"  # Green if negative change (reduction)
             )
-            st.caption("Total Receivables are derived from the 'Grand Total' row in the Ageing-wise Trend Analysis.")
 
         with col2:
             # Week-on-Week Change logic
@@ -1412,7 +1417,7 @@ def show_tsg_dashboard():
                 "Week-on-Week Change",
                 f"{week_change_pct:.2f}%",
                 delta=f"{week_change_pct:.2f}%",
-                delta_color="inverse" if week_change_pct < 0 else "normal"  # Green if week_change_pct < 0 (improvement)
+                delta_color="inverse" if week_change_pct < 0 else "normal"  # Green if negative percentage change
             )
 
         with col3:
@@ -1421,14 +1426,14 @@ def show_tsg_dashboard():
                 "Month-to-Date Change",
                 f"{month_change_pct:.2f}%",
                 delta=f"{month_change_pct:.2f}%",
-                delta_color="inverse" if month_change_pct < 0 else "normal"  # Green if month_change_pct < 0 (improvement)
+                delta_color="inverse" if month_change_pct < 0 else "normal"  # Green if negative percentage change
             )
         
         # Main trend table
         st.markdown("### Ageing-wise Trend Analysis")
         styled_df = style_tsg_trend(df)
         st.dataframe(styled_df, height=400, use_container_width=True)
-        
+
         # Trend Analysis
         st.markdown("### Trend Visualization")
         
@@ -1450,7 +1455,7 @@ def show_tsg_dashboard():
         )
         fig_line.update_layout(yaxis_title="Amount (₹)")
         st.plotly_chart(fig_line, use_container_width=True)
-        
+
         # Category Analysis
         st.markdown("### Category-wise Analysis")
         col1, col2 = st.columns(2)
@@ -1464,9 +1469,9 @@ def show_tsg_dashboard():
                 title=f"Distribution as of {date_cols[0]}"
             )
             st.plotly_chart(fig_pie)
-        
+
         with col2:
-            # Week-on-week changes
+            # Week-on-week changes by category
             changes_df = pd.DataFrame({
                 'Category': df['Ageing Category'],
                 'Change': df[date_cols[0]] - df[date_cols[1]]
@@ -1480,20 +1485,20 @@ def show_tsg_dashboard():
                 color_continuous_scale=['green', 'yellow', 'red']
             )
             st.plotly_chart(fig_changes)
-        
+
         # Export Option
         if st.sidebar.button("Export TSG Analysis"):
             buffer = io.BytesIO()
             with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
                 df.to_excel(writer, sheet_name='TSG Trend', index=False)
-            
+
             st.sidebar.download_button(
                 label="📥 Download TSG Report",
                 data=buffer.getvalue(),
                 file_name=f"tsg_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
                 mime="application/vnd.ms-excel"
             )
-            
+        
     except Exception as e:
         st.error(f"Error in TSG analysis: {str(e)}")
         st.write("Error details:", str(e))
