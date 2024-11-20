@@ -1223,7 +1223,7 @@ def show_itss_dashboard():
     if df is None:
         return
 
-    st.title("ITSS Tender Analysis")
+    st.title("ITSS SDR Analysis")
     
     try:
         # Define aging categories
