@@ -1404,31 +1404,55 @@ def show_tsg_dashboard():
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            st.metric(
-                f"Total Receivables (as of {date_cols[0]})",
-                f"₹{latest_total:,.0f}",
-                delta=f"₹{abs(total_change):,.0f}",
-                delta_color="normal" if total_change > 0 else "inverse"  # Green for reduction (improvement)
-            )
+            if total_change < 0:
+                st.metric(
+                    f"Total Receivables (as of {date_cols[0]})",
+                    f"₹{latest_total:,.0f}",
+                    delta=f"↓ ₹{abs(total_change):,.0f}",
+                    delta_color="inverse"
+                )
+            else:
+                st.metric(
+                    f"Total Receivables (as of {date_cols[0]})",
+                    f"₹{latest_total:,.0f}",
+                    delta=f"↑ ₹{total_change:,.0f}",
+                    delta_color="normal"
+                )
 
         with col2:
             # Week-on-Week Change logic
-            st.metric(
-                "Week-on-Week Change",
-                f"{abs(week_change_pct):.2f}%",
-                delta=f"{abs(week_change_pct):.2f}%",
-                delta_color="normal" if week_change_pct > 0 else "inverse"  # Green if negative percentage change
-            )
+            if week_change_pct < 0:
+                st.metric(
+                    "Week-on-Week Change",
+                    f"{abs(week_change_pct):.2f}%",
+                    delta=f"↓ {abs(week_change_pct):.2f}%",
+                    delta_color="inverse"
+                )
+            else:
+                st.metric(
+                    "Week-on-Week Change",
+                    f"{week_change_pct:.2f}%",
+                    delta=f"↑ {week_change_pct:.2f}%",
+                    delta_color="normal"
+                )
 
         with col3:
             # Month-to-Date Change logic
-            st.metric(
-                "Month-to-Date Change",
-                f"{abs(month_change_pct):.2f}%",
-                delta=f"{abs(month_change_pct):.2f}%",
-                delta_color="normal" if month_change_pct > 0 else "inverse"  # Green if negative percentage change
-            )
-        
+            if month_change_pct < 0:
+                st.metric(
+                    "Month-to-Date Change",
+                    f"{abs(month_change_pct):.2f}%",
+                    delta=f"↓ {abs(month_change_pct):.2f}%",
+                    delta_color="inverse"
+                )
+            else:
+                st.metric(
+                    "Month-to-Date Change",
+                    f"{month_change_pct:.2f}%",
+                    delta=f"↑ {month_change_pct:.2f}%",
+                    delta_color="normal"
+                )
+
         # Main trend table
         st.markdown("### Ageing-wise Trend Analysis")
         styled_df = style_tsg_trend(df)
@@ -1436,7 +1460,7 @@ def show_tsg_dashboard():
 
         # Trend Analysis
         st.markdown("### Trend Visualization")
-        
+
         # Prepare data for plotting
         trend_data = df.melt(
             id_vars=['Ageing Category'],
@@ -1444,7 +1468,7 @@ def show_tsg_dashboard():
             var_name='Date',
             value_name='Amount'
         )
-        
+
         # Line chart
         fig_line = px.line(
             trend_data,
@@ -1459,7 +1483,7 @@ def show_tsg_dashboard():
         # Category Analysis
         st.markdown("### Category-wise Analysis")
         col1, col2 = st.columns(2)
-        
+
         with col1:
             # Latest distribution pie chart
             fig_pie = px.pie(
@@ -1498,7 +1522,7 @@ def show_tsg_dashboard():
                 file_name=f"tsg_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
                 mime="application/vnd.ms-excel"
             )
-        
+
     except Exception as e:
         st.error(f"Error in TSG analysis: {str(e)}")
         st.write("Error details:", str(e))
