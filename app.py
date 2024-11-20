@@ -1393,8 +1393,8 @@ def show_tsg_dashboard():
             st.metric(
                 f"Total Receivables ({date_cols[0]})",
                 f"₹{latest_total:,.0f}",
-                delta=f"₹{-total_change:,.0f}" if total_change > 0 else f"₹{total_change:,.0f}",
-                delta_color="inverse"  # Inverse to show reduction as positive (green)
+                delta=f"₹{abs(total_change):,.0f}",
+                delta_color="inverse" if total_change < 0 else "normal"  # Green if negative change
             )
 
         with col2:
@@ -1403,9 +1403,9 @@ def show_tsg_dashboard():
             # Arrow logic reversed: positive percentage is good if receivables decrease
             st.metric(
                 "Week-on-Week Change",
-                f"{week_change_pct:.2f}%",
+                f"{abs(week_change_pct):.2f}%",
                 delta=week_change_pct,
-                delta_color="inverse"  # Inverse to show reduction as positive (green)
+                delta_color="inverse" if week_change_pct > 0 else "normal"  # Green if percentage is positive (decrease)
             )
 
         with col3:
@@ -1416,9 +1416,9 @@ def show_tsg_dashboard():
             # Arrow logic reversed: positive percentage is good if receivables decrease
             st.metric(
                 "Month-to-Date Change",
-                f"{month_change_pct:.2f}%",
+                f"{abs(month_change_pct):.2f}%",
                 delta=month_change_pct,
-                delta_color="inverse"  # Inverse to show reduction as positive (green)
+                delta_color="inverse" if month_change_pct > 0 else "normal"  # Green if percentage is positive (decrease)
             )
         
         # Main trend table
