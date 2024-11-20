@@ -1384,41 +1384,49 @@ def show_tsg_dashboard():
         st.markdown("### Summary Metrics")
         col1, col2, col3 = st.columns(3)
 
-        with col1:
-            latest_total = df[date_cols[0]].sum()
-            prev_total = df[date_cols[1]].sum()
-            total_change = latest_total - prev_total
+        # Calculate total and change metrics
+        latest_total = df[date_cols[0]].sum()  # Most recent total receivables
+        prev_total = df[date_cols[1]].sum()     # Previous total receivables
+        total_change = latest_total - prev_total
 
-            # Arrow logic reversed: negative (reduction in receivables) is good
+        # Calculate the week-on-week percentage change
+        week_change_pct = ((latest_total - prev_total) / prev_total * 100) if prev_total != 0 else 0
+
+        # Calculate the month-to-date percentage change
+        month_start = df[date_cols[-1]].sum()   # Oldest date available
+        month_change_pct = ((latest_total - month_start) / month_start * 100) if month_start != 0 else 0
+
+        with col1:
+            # Logic to determine the color and direction for Total Receivables
+            # If receivables decrease (good), show green down arrow
+            # If receivables increase (bad), show red up arrow
             st.metric(
                 f"Total Receivables ({date_cols[0]})",
                 f"₹{latest_total:,.0f}",
                 delta=f"₹{abs(total_change):,.0f}",
-                delta_color="inverse" if total_change < 0 else "normal"  # Green if negative change
+                delta_color="inverse" if total_change < 0 else "normal"  # Show green if the change is negative
             )
 
         with col2:
-            week_change_pct = ((prev_total - latest_total) / prev_total * 100) if prev_total != 0 else 0
-
-            # Arrow logic reversed: positive percentage is good if receivables decrease
+            # Week-on-Week Change logic
+            # If percentage change is positive (reduction in receivables), show green down arrow
+            # If percentage change is negative (increase in receivables), show red up arrow
             st.metric(
                 "Week-on-Week Change",
                 f"{abs(week_change_pct):.2f}%",
-                delta=week_change_pct,
-                delta_color="inverse" if week_change_pct > 0 else "normal"  # Green if percentage is positive (decrease)
+                delta=f"{week_change_pct:.2f}%",
+                delta_color="inverse" if week_change_pct > 0 else "normal"
             )
 
         with col3:
-            # Calculate month-to-date change from the earliest date to the latest
-            month_start = df[date_cols[-1]].sum()
-            month_change_pct = ((month_start - latest_total) / month_start * 100) if month_start != 0 else 0
-
-            # Arrow logic reversed: positive percentage is good if receivables decrease
+            # Month-to-Date Change logic
+            # If percentage change is positive (reduction in receivables), show green down arrow
+            # If percentage change is negative (increase in receivables), show red up arrow
             st.metric(
                 "Month-to-Date Change",
                 f"{abs(month_change_pct):.2f}%",
-                delta=month_change_pct,
-                delta_color="inverse" if month_change_pct > 0 else "normal"  # Green if percentage is positive (decrease)
+                delta=f"{month_change_pct:.2f}%",
+                delta_color="inverse" if month_change_pct > 0 else "normal"
             )
         
         # Main trend table
