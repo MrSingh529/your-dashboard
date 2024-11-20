@@ -28,11 +28,16 @@ st.markdown("""
     <style>
     @font-face {
         font-family: 'SFUIDisplay';
-        src: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/fonts/SFUIDisplay-Regular.otf') format('opentype');
+        src: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/fonts/SFUIDisplay-Regular.otf?v=1') format('opentype');
         font-weight: normal;
         font-style: normal;
     }
-        html, body, .main, .css-10trblm, .css-12oz5g7, .stTextInput > div > input, .stButton > button, .stMarkdown, label {
+
+    * {
+        font-family: 'SFUIDisplay', sans-serif !important;
+    }
+
+    html, body, .main, .stTextInput > div > input, .stButton > button, .stMarkdown, label, h1, h2, h3, h4, h5, h6, p, div, span, li, a, input, textarea, button, select {
         font-family: 'SFUIDisplay', sans-serif !important;
     }
 
