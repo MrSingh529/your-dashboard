@@ -572,10 +572,10 @@ def style_comparison_df(df, dates):
                         next_pending = float(next_pending)
                         
                         if pd.notna(current_pending) and pd.notna(next_pending):
-                            if current_pending < next_pending:  # Pending amount decreased
-                                styles[col_idx] = 'background-color: #92D050'  # Green
-                            elif current_pending > next_pending:  # Pending amount increased
-                                styles[col_idx] = 'background-color: #FF7575'  # Red
+                            if current_pending > next_pending:  # Pending amount decreased
+                                styles[col_idx] = 'background-color: #92D050'  # Green for improvement
+                            elif current_pending < next_pending:  # Pending amount increased
+                                styles[col_idx] = 'background-color: #FF7575'  # Red for deterioration
                     except:
                         pass
                         
@@ -921,10 +921,10 @@ def show_collections_dashboard():
 
                 def highlight_latest_pending(row):
                     try:
-                        if row[pending_col_2] < row[pending_col_1]:
-                            return ['background-color: #92D050' if col == pending_col_2 else '' for col in row.index]  # Green for improvement
-                        elif row[pending_col_2] > row[pending_col_1]:
-                            return ['background-color: #FF7575' if col == pending_col_2 else '' for col in row.index]  # Red for deterioration
+                        if row[pending_col_2] < row[pending_col_1]:  # Pending decreased (improvement)
+                            return ['background-color: #92D050' if col == pending_col_2 else '' for col in row.index]  # Green
+                        elif row[pending_col_2] > row[pending_col_1]:  # Pending increased (deterioration)
+                            return ['background-color: #FF7575' if col == pending_col_2 else '' for col in row.index]  # Red
                         else:
                             return ['' for _ in row.index]
                     except:
