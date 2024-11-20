@@ -14,7 +14,6 @@ import time
 import pytz
 from difflib import get_close_matches
 import hashlib
-from functools import lru_cache
 
 # Configure page settings
 st.set_page_config(
@@ -24,9 +23,18 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Enhanced CSS with loading animation
+# Enhanced CSS with loading animation and custom font
 st.markdown("""
     <style>
+    @font-face {
+        font-family: 'SFUIDisplay';
+        src: url('assets/fonts/SFUIDisplay-Regular.otf') format('opentype');
+        font-weight: normal;
+        font-style: normal;
+    }
+    html, body, .main {
+        font-family: 'SFUIDisplay', sans-serif;
+    }
     .main {
         padding: 20px;
     }
