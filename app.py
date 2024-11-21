@@ -1675,7 +1675,7 @@ def main():
         # Display the selected report if both department and report are chosen
         selected_report_function()
 
-    # Add a professional and charming footer at the bottom of the page with a transparent background
+    # Add a professional and charming footer at the bottom of the page with a transparent background and black text
     footer = """
         <style>
             .footer {
@@ -1687,11 +1687,18 @@ def main():
                 text-align: center;
                 padding: 10px;
                 font-size: 14px;
-                color: #555;
+                color: black;  /* Set the font color to black */
+            }
+            .footer a {
+                color: black;  /* Set link color to black */
+                text-decoration: none;  /* Remove underline from the link */
+            }
+            .footer a:hover {
+                text-decoration: underline;  /* Optional: Underline link on hover for better accessibility */
             }
         </style>
         <div class="footer">
-            Designed to inform, built to empower – by the CEO Office. <a href="https://rvsolutions.in" target="_blank" style="color: #007BFF; text-decoration: none;">RV Solutions</a>
+            Designed to inform, built to empower – by the CEO Office. <a href="https://rvsolutions.in" target="_blank">RV Solutions</a>
         </div>
     """
     st.markdown(footer, unsafe_allow_html=True)
