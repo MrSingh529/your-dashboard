@@ -1675,6 +1675,28 @@ def main():
         # Display the selected report if both department and report are chosen
         selected_report_function()
 
+    # Add footer at the bottom of the page
+    footer = """
+        <style>
+            .footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background-color: #f8f9fa;
+                text-align: center;
+                padding: 10px;
+                font-size: 14px;
+                color: #555;
+                border-top: 1px solid #eaeaea;
+            }
+        </style>
+        <div class="footer">
+            Designed to inform, built to empower – by the CEO Office. <a href="https://streamlit.io/" target="_blank">Streamlit</a>
+        </div>
+    """
+    st.markdown(footer, unsafe_allow_html=True)
+
     st.sidebar.markdown("---")
     if st.sidebar.button("Logout"):
         st.session_state.clear()
