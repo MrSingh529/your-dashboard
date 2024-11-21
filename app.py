@@ -172,7 +172,6 @@ st.sidebar.markdown(
     <div class="sidebar-logo-container">
         <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo">
     </div>
-    <div class="sidebar-title">TSG Dashboard</div>
     <hr>
     """,
     unsafe_allow_html=True
