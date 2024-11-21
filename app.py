@@ -1692,7 +1692,7 @@ def main():
             }
         </style>
         <div class="footer">
-            Designed to inform, built to empower – by the CEO Office. <a href="https://streamlit.io/" target="_blank">Streamlit</a>
+            Designed to inform, built to empower – by the CEO Office. <a href="https://rvsolutions.in/" target="_blank">RV Solutions</a>
         </div>
     """
     st.markdown(footer, unsafe_allow_html=True)
