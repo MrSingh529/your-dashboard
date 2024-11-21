@@ -1668,15 +1668,12 @@ def main():
     if not check_password():
         return
 
-    # Show custom greeting at the top of the main page
-    st.title(get_custom_greeting())
-
     # Display the department and report menu
     selected_report_function = show_department_menu()
 
     # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
-        st.title(get_greeting())
+        st.title(get_custom_greeting())
         st.markdown("""
             ### You've successfully logged in to your reports dashboard! 🚀
 
