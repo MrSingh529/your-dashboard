@@ -1650,7 +1650,7 @@ def get_greeting():
     else:
         greeting = "Good Night"
 
-    return f"Hey there! {greeting} 👋"
+    return f"Hey there! {greeting} 👋🏻"
 
 # Main function
 def main():
