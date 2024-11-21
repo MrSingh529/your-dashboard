@@ -1634,13 +1634,12 @@ def show_department_menu():
 
     return None
 
-def get_greeting():
-    # Get the current time in IST (Indian Standard Time)
+def get_custom_greeting():
     ist = pytz.timezone('Asia/Kolkata')
     current_time = datetime.now(ist)
     current_hour = current_time.hour
 
-    # Determine the greeting based on the current hour
+    greeting = ""
     if 5 <= current_hour < 12:
         greeting = "Good Morning"
     elif 12 <= current_hour < 17:
@@ -1650,12 +1649,27 @@ def get_greeting():
     else:
         greeting = "Good Night"
 
+    # Custom greetings based on user role
+    if 'username' in st.session_state:
+        role = st.session_state.username
+        if role == "admin":
+            greeting += ", Harpinder!"
+        elif role == "ceo":
+            greeting += ", Ms. Vandana!"
+        elif role == "manager":
+            greeting += ", Manager!"
+        else:
+            greeting += "!"
+
     return f"Hey there! {greeting} 👋🏻"
 
-# Main function
+# In the main function, show greeting at the top:
 def main():
     if not check_password():
         return
+
+    # Show custom greeting at the top of the main page
+    st.title(get_custom_greeting())
 
     # Display the department and report menu
     selected_report_function = show_department_menu()
