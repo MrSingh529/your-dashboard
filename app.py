@@ -1675,38 +1675,22 @@ def main():
         # Display the selected report if both department and report are chosen
         selected_report_function()
 
-    # Add a professional and charming footer at the bottom of the page with a transparent background and black text
-    footer = """
-        <style>
-            .footer {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                background-color: rgba(255, 255, 255, 0);  /* Make the background transparent */
-                text-align: center;
-                padding: 10px;
-                font-size: 14px;
-                color: black;  /* Set the font color to black */
-            }
-            .footer a {
-                color: black;  /* Set link color to black */
-                text-decoration: none;  /* Remove underline from the link */
-            }
-            .footer a:hover {
-                text-decoration: underline;  /* Optional: Underline link on hover for better accessibility */
-            }
-        </style>
-        <div class="footer">
-            Designed to inform, built to empower – by the CEO Office. <a href="https://rvsolutions.in" target="_blank">RV Solutions</a>
-        </div>
-    """
-    st.markdown(footer, unsafe_allow_html=True)
-
     st.sidebar.markdown("---")
     if st.sidebar.button("Logout"):
         st.session_state.clear()
         st.rerun()
+
+    # Add footer to the sidebar
+    st.sidebar.markdown(
+        """
+        ---
+        <div style="text-align: center; font-size: 12px; color: #555;">
+            Designed to inform, built to empower – by the CEO Office. <br>
+            <a href="https://rvsolutions.in" target="_blank" style="color: black; text-decoration: none;">RV Solutions</a>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 if __name__ == "__main__":
     main()
