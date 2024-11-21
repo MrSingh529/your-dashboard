@@ -24,7 +24,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Enhanced CSS with loading animation and custom font
+# Enhanced CSS with loading animation, custom font, and sidebar styling
 st.markdown("""
     <style>
     @font-face {
@@ -42,6 +42,7 @@ st.markdown("""
         font-family: 'SFUIDisplay', sans-serif !important;
     }
 
+    /* Main Content Styling */
     .main {
         padding: 20px;
     }
@@ -98,6 +99,7 @@ st.markdown("""
         margin-top: 10px;
     }
 
+    /* Loading animation */
     .loading {
         display: inline-block;
         width: 20px;
@@ -111,8 +113,70 @@ st.markdown("""
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
+
+    /* Custom Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background-color: #f0f2f6; /* Light grey background for sidebar */
+        color: black; /* Text color for better contrast */
+        border-right: 1px solid #e6e6e6;
+    }
+    
+    [data-testid="stSidebar"] .sidebar-content {
+        padding: 20px;
+    }
+
+    [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
+        color: #333333;  /* Dark text color for readability */
+    }
+
+    [data-testid="stSidebar"] a {
+        color: #007BFF;  /* Theme color for links */
+        text-decoration: none;
+    }
+    
+    [data-testid="stSidebar"] a:hover {
+        text-decoration: underline;
+    }
+
+    /* Custom Sidebar Branding */
+    .sidebar-logo-container {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .sidebar-logo-container img {
+        max-width: 150px;
+    }
+
+    .sidebar-title {
+        font-size: 1.4em;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20px;
+        color: #007BFF; /* Consistent primary color */
+    }
+
+    /* Enhanced Header Styling */
+    .header-title {
+        color: #007BFF;  /* Consistent theme color */
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+
     </style>
 """, unsafe_allow_html=True)
+
+# Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
+st.sidebar.markdown(
+    """
+    <div class="sidebar-logo-container">
+        <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo">
+    </div>
+    <div class="sidebar-title">TSG Dashboard</div>
+    <hr>
+    """,
+    unsafe_allow_html=True
+)
 
 # Enhanced security with password hashing
 def hash_password(password):
