@@ -24,7 +24,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Enhanced CSS with loading animation, custom font, and sidebar styling
+# CSS with loading animation, custom font, and sidebar styling
 st.markdown("""
     <style>
     @font-face {
@@ -438,13 +438,23 @@ def load_sdr_trend():
         # Deduplicate column names manually if duplicates are found
         df.columns = deduplicate_columns(df.columns)
 
-        # Convert amount columns to numeric (excluding 'Ageing Category' and 'Reduced OS')
+        # Identify date columns and convert them to datetime objects
         static_columns = ['Ageing Category', 'Reduced OS']
+        date_columns = [col for col in df.columns if col not in static_columns]
+
+        for col in date_columns:
+            # Convert date columns to datetime format if they are not already
+            try:
+                df[col] = pd.to_datetime(df[col], errors='coerce')
+            except Exception as e:
+                st.warning(f"Could not convert column '{col}' to datetime: {str(e)}")
+        
+        # Convert amount columns to numeric (excluding 'Ageing Category' and 'Reduced OS')
         for col in df.columns:
             if col not in static_columns:
                 # Removing commas, converting to numeric, and filling NaNs with 0
                 df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-        
+
         return df
 
     except Exception as e:
@@ -1072,6 +1082,7 @@ def style_sdr_trend(df):
             else:
                 # Logic for date columns
                 date_cols = [col for col in df.columns if col not in ['Ageing Category', 'Reduced OS']]
+                date_cols = [col for col in date_cols if pd.api.types.is_datetime64_any_dtype(df[col])]
                 date_cols.sort(reverse=True)  # Most recent first
                 
                 if col_name in date_cols:
@@ -1079,7 +1090,7 @@ def style_sdr_trend(df):
                     if col_idx < len(date_cols) - 1:  # If not the last date
                         next_col = date_cols[col_idx + 1]
                         current_val = val
-                        next_val = df.loc[df[col_name] == val, next_col].iloc[0]
+                        next_val = df[next_col].loc[df[col_name] == val].iloc[0]
                         
                         if pd.isna(current_val) or pd.isna(next_val):
                             return ''
@@ -1090,9 +1101,9 @@ def style_sdr_trend(df):
                         else:
                             return 'background-color: #FFFF00'  # Yellow
             return ''
-        except:
-            return ''
-    
+        except Exception as e:
+            return f"Error: {str(e)}"
+
     # Apply styling to the DataFrame.
     styled = df.style.apply(lambda x: [color_values(val, col) for val, col in zip(x, x.index)], axis=1)
     
@@ -1109,7 +1120,9 @@ def show_sdr_dashboard():
 
     # Define date columns at the start so they can be used in all tabs
     try:
+        # Ensure date columns are datetime type
         date_columns = [col for col in df.columns if col not in ['Ageing Category', 'Reduced OS']]
+        date_columns = [col for col in date_columns if pd.api.types.is_datetime64_any_dtype(df[col])]
         date_columns.sort(reverse=True)  # Most recent first
         
         # Adding tabs for better analysis switching
@@ -1135,24 +1148,26 @@ def show_sdr_dashboard():
                 )
             
             with col2:
-                latest_date = date_columns[0]
-                prev_date = date_columns[1]
-                latest_total = df[latest_date].sum()
-                prev_total = df[prev_date].sum()
-                change = latest_total - prev_total
-                st.metric(
-                    f"Latest Total ({latest_date})",
-                    f"{latest_total:,.2f}",
-                    delta=-change  # Negative change is good
-                )
+                if len(date_columns) > 1:
+                    latest_date = date_columns[0]
+                    prev_date = date_columns[1]
+                    latest_total = df[latest_date].sum()
+                    prev_total = df[prev_date].sum()
+                    change = latest_total - prev_total
+                    st.metric(
+                        f"Latest Total ({latest_date})",
+                        f"{latest_total:,.2f}",
+                        delta=-change  # Negative change is good
+                    )
             
             with col3:
-                reduction_percent = ((prev_total - latest_total) / prev_total * 100)
-                st.metric(
-                    "Week-on-Week Improvement",
-                    f"{reduction_percent:.2f}%",
-                    delta=reduction_percent
-                )
+                if len(date_columns) > 1:
+                    reduction_percent = ((prev_total - latest_total) / prev_total * 100)
+                    st.metric(
+                        "Week-on-Week Improvement",
+                        f"{reduction_percent:.2f}%",
+                        delta=reduction_percent
+                    )
 
         with tab2:
             # Original SDR Ageing Analysis Section
