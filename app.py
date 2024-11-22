@@ -438,18 +438,19 @@ def load_sdr_trend():
         # Deduplicate column names manually if duplicates are found
         df.columns = deduplicate_columns(df.columns)
 
-        # Identify date columns and convert them to datetime objects
+        # Identify the date columns and convert their format explicitly
         static_columns = ['Ageing Category', 'Reduced OS']
         date_columns = [col for col in df.columns if col not in static_columns]
 
         for col in date_columns:
-            # Convert date columns to datetime format if they are not already
+            # Attempt to convert the column header to datetime format
             try:
-                df[col] = pd.to_datetime(df[col], errors='coerce')
+                new_col_name = pd.to_datetime(col, format='%d-%b-%y', errors='coerce').strftime('%Y-%m-%d')
+                df.rename(columns={col: new_col_name}, inplace=True)
             except Exception as e:
                 st.warning(f"Could not convert column '{col}' to datetime: {str(e)}")
         
-        # Convert amount columns to numeric (excluding 'Ageing Category' and 'Reduced OS')
+        # Convert the amount columns to numeric values (excluding static columns)
         for col in df.columns:
             if col not in static_columns:
                 # Removing commas, converting to numeric, and filling NaNs with 0
@@ -1082,7 +1083,7 @@ def style_sdr_trend(df):
             else:
                 # Logic for date columns
                 date_cols = [col for col in df.columns if col not in ['Ageing Category', 'Reduced OS']]
-                date_cols = [col for col in date_cols if pd.api.types.is_datetime64_any_dtype(df[col])]
+                date_cols = [col for col in date_cols if pd.api.types.is_numeric_dtype(df[col])]
                 date_cols.sort(reverse=True)  # Most recent first
                 
                 if col_name in date_cols:
