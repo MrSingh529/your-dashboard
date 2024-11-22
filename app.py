@@ -1119,18 +1119,26 @@ def show_sdr_dashboard():
 
     st.title("CSD SDR Trend Analysis")
 
-    # Define date columns at the start so they can be used in all tabs
+    # Verify DataFrame Columns
+    st.write("Debug - DataFrame Columns:", df.columns.tolist())  # To verify available columns
+
     try:
-        # Ensure date columns are datetime type
-        date_columns = [col for col in df.columns if col not in ['Ageing Category', 'Reduced OS']]
-        date_columns = [col for col in date_columns if pd.api.types.is_datetime64_any_dtype(df[col])]
-        date_columns.sort(reverse=True)  # Most recent first
-        
+        # Identify date columns for plotting
+        static_columns = ['Ageing Category', 'Reduced OS']
+        date_columns = [col for col in df.columns if col not in static_columns]
+
+        # Check if the date columns are correctly parsed and available
+        if len(date_columns) < 2:
+            st.error("Not enough date columns available for trend analysis.")
+            return
+
+        date_columns.sort(reverse=True)  # Sort dates from most recent
+
         # Adding tabs for better analysis switching
         tab1, tab2, tab3, tab4 = st.tabs(["Highlights Trend", "SDR Ageing Analysis", "Trend Analysis", "Category-wise Analysis"])
         
         with tab1:
-            # Display Highlights Trend in a new tab
+            # Display Highlights Trend
             st.subheader("Highlights Trend")
             st.markdown("A detailed analysis of the changes over different periods, indicating improvements and deteriorations.")
             styled_df = style_sdr_trend(df)
@@ -1139,7 +1147,7 @@ def show_sdr_dashboard():
             # Display Summary Metrics
             st.markdown("### Summary Metrics")
             col1, col2, col3 = st.columns(3)
-            
+
             with col1:
                 total_reduced = df['Reduced OS'].sum()
                 st.metric(
@@ -1147,28 +1155,26 @@ def show_sdr_dashboard():
                     f"{total_reduced:,.2f}",
                     delta=total_reduced
                 )
-            
+
             with col2:
-                if len(date_columns) > 1:
-                    latest_date = date_columns[0]
-                    prev_date = date_columns[1]
-                    latest_total = df[latest_date].sum()
-                    prev_total = df[prev_date].sum()
-                    change = latest_total - prev_total
-                    st.metric(
-                        f"Latest Total ({latest_date})",
-                        f"{latest_total:,.2f}",
-                        delta=-change  # Negative change is good
-                    )
-            
+                latest_date = date_columns[0]
+                prev_date = date_columns[1]
+                latest_total = df[latest_date].sum()
+                prev_total = df[prev_date].sum()
+                change = latest_total - prev_total
+                st.metric(
+                    f"Latest Total ({latest_date})",
+                    f"{latest_total:,.2f}",
+                    delta=-change  # Negative change is good
+                )
+
             with col3:
-                if len(date_columns) > 1:
-                    reduction_percent = ((prev_total - latest_total) / prev_total * 100)
-                    st.metric(
-                        "Week-on-Week Improvement",
-                        f"{reduction_percent:.2f}%",
-                        delta=reduction_percent
-                    )
+                reduction_percent = ((prev_total - latest_total) / prev_total * 100) if prev_total != 0 else 0
+                st.metric(
+                    "Week-on-Week Improvement",
+                    f"{reduction_percent:.2f}%",
+                    delta=reduction_percent
+                )
 
         with tab2:
             # Original SDR Ageing Analysis Section
@@ -1179,62 +1185,74 @@ def show_sdr_dashboard():
         with tab3:
             # Trend Analysis
             st.subheader("Trend Analysis")
-            
-            # Create trend data
+
+            # Prepare trend data in long format for plotting
             trend_data = []
-            for idx, row in df.iterrows():
+            for _, row in df.iterrows():
                 for date in date_columns:
                     trend_data.append({
                         'Ageing Category': row['Ageing Category'],
                         'Date': date,
                         'Amount': row[date]
                     })
-            
+
             trend_df = pd.DataFrame(trend_data)
-            
+
+            # Check if trend_df is correct
+            st.write("Debug - Trend Data Columns:", trend_df.columns.tolist())  # Verify trend data columns
+            st.write("Debug - Trend Data Preview:", trend_df.head())  # Preview trend data
+
             # Line chart for trends
-            fig = px.line(
-                trend_df,
-                x='Date',
-                y='Amount',
-                color='Ageing Category',
-                title="SDR Trends by Ageing Category"
-            )
-            st.plotly_chart(fig, use_container_width=True)
+            try:
+                fig = px.line(
+                    trend_df,
+                    x='Date',  # Ensure 'Date' column is present in trend_df
+                    y='Amount',
+                    color='Ageing Category',
+                    title="SDR Trends by Ageing Category"
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            except Exception as e:
+                st.error(f"Error in plotting trend analysis: {str(e)}")
 
         with tab4:
-            # Category Analysis
+            # Category-wise Analysis
             st.subheader("Category-wise Analysis")
-            
             latest_date = date_columns[0]
             prev_date = date_columns[1]
-            
+
             col1, col2 = st.columns(2)
-            
+
             with col1:
-                # Pie chart for latest distribution
-                fig_pie = px.pie(
-                    df,
-                    values=latest_date,
-                    names='Ageing Category',
-                    title=f"Distribution as of {latest_date}"
-                )
-                st.plotly_chart(fig_pie, use_container_width=True)
-            
+                # Pie chart for the latest distribution
+                try:
+                    fig_pie = px.pie(
+                        df,
+                        values=latest_date,
+                        names='Ageing Category',
+                        title=f"Distribution as of {latest_date}"
+                    )
+                    st.plotly_chart(fig_pie, use_container_width=True)
+                except Exception as e:
+                    st.error(f"Error in plotting pie chart: {str(e)}")
+
             with col2:
                 # Bar chart for changes
                 df_changes = df.copy()
                 df_changes['Change'] = df_changes[latest_date] - df_changes[prev_date]
-                
-                fig_changes = px.bar(
-                    df_changes,
-                    x='Ageing Category',
-                    y='Change',
-                    title=f"Changes from {prev_date} to {latest_date}",
-                    color='Change',
-                    color_continuous_scale=['green', 'yellow', 'red']
-                )
-                st.plotly_chart(fig_changes)
+
+                try:
+                    fig_changes = px.bar(
+                        df_changes,
+                        x='Ageing Category',
+                        y='Change',
+                        title=f"Changes from {prev_date} to {latest_date}",
+                        color='Change',
+                        color_continuous_scale=['green', 'yellow', 'red']
+                    )
+                    st.plotly_chart(fig_changes)
+                except Exception as e:
+                    st.error(f"Error in plotting bar chart: {str(e)}")
 
         # Export Option
         if st.sidebar.button("Export SDR Analysis"):
@@ -1242,14 +1260,14 @@ def show_sdr_dashboard():
             with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
                 df.to_excel(writer, sheet_name='SDR Data', index=False)
                 trend_df.to_excel(writer, sheet_name='Trend Analysis', index=False)
-            
+
             st.sidebar.download_button(
                 label="📥 Download SDR Report",
                 data=buffer.getvalue(),
                 file_name=f"sdr_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
                 mime="application/vnd.ms-excel"
             )
-            
+
     except Exception as e:
         st.error(f"Error in SDR analysis: {str(e)}")
         st.write("Error details:", str(e))
