@@ -1119,9 +1119,6 @@ def show_sdr_dashboard():
 
     st.title("CSD SDR Trend Analysis")
 
-    # Verify DataFrame Columns
-    st.write("Debug - DataFrame Columns:", df.columns.tolist())  # To verify available columns
-
     try:
         # Identify date columns for plotting
         static_columns = ['Ageing Category', 'Reduced OS']
