@@ -24,7 +24,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS with loading animation, custom font, and sidebar styling
+# Enhanced CSS styling with animations, custom fonts, and layout improvements
 st.markdown("""
     <style>
     @font-face {
@@ -38,13 +38,9 @@ st.markdown("""
         font-family: 'GlassdoorSans', sans-serif !important;
     }
 
-    html, body, .main, .stTextInput > div > input, .stButton > button, .stMarkdown, label, h1, h2, h3, h4, h5, h6, p, div, span, li, a, input, textarea, button, select {
-        font-family: 'GlassdoorSans', sans-serif !important;
-    }
-
-    /* Custom Page Background */
-    body {
-        background: linear-gradient(135deg, #f0f4fc, #d6e0f0);
+    /* General Layout */
+    html, body, [class^="st"] {
+        font-family: 'GlassdoorSans', sans-serif;
     }
 
     /* Main Content Styling */
@@ -52,114 +48,134 @@ st.markdown("""
         padding: 20px;
     }
 
-    /* Metric Card Styling with Subtle Shadow and Hover Effect */
     .metric-card {
         background-color: white;
         padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        margin: 15px 0;
-        transition: transform 0.2s ease, box-shadow 0.3s ease;
+        border-radius: 15px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        margin: 10px 0;
+        transition: all 0.3s ease;
     }
 
     .metric-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        transform: scale(1.02);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
 
-    /* Filter Container Styling for Consistent Visual Flow */
     .filter-container {
-        background-color: #ffffff;
+        background-color: #f1f3f6;
         padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        margin-bottom: 25px;
-        transition: box-shadow 0.3s ease;
+        border-radius: 15px;
+        margin-bottom: 20px;
     }
 
-    .filter-container:hover {
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    .comparison-card {
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        margin: 15px 0;
     }
 
-    /* Sidebar Customization for Distinct Appearance */
-    [data-testid="stSidebar"] {
-        background-color: #1f2937;
-        color: #ffffff;
-        border-right: 1px solid #e6e6e6;
-    }
-    [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
-        color: #f3f4f6;
-    }
-    [data-testid="stSidebar"] a {
-        color: #38bdf8;
-        text-decoration: none;
-    }
-    [data-testid="stSidebar"] a:hover {
-        text-decoration: underline;
-    }
-
-    /* Enhanced Button Styling for Better Visibility */
+    /* Improved Button Styling */
     .stButton>button {
-        background: #007BFF;
-        color: #fff;
-        border-radius: 8px;
-        padding: 10px 20px;
+        width: 100%;
+        background-color: #007BFF;
+        color: white;
+        padding: 10px;
+        border-radius: 10px;
         border: none;
-        transition: background-color 0.3s ease;
+        transition: background-color 0.3s, transform 0.2s;
     }
 
     .stButton>button:hover {
-        background: #0056b3;
-    }
-
-    /* Login Container Styling */
-    .login-container {
-        max-width: 450px;
-        margin: auto;
-        padding: 25px;
-        background-color: rgba(255, 255, 255, 0.9);
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        background-color: #0056b3;
+        transform: translateY(-2px);
     }
 
     /* Loading animation */
     .loading {
         display: inline-block;
-        width: 30px;
-        height: 30px;
-        border: 4px solid rgba(0,0,0,.1);
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(0,0,0,.1);
         border-radius: 50%;
-        border-top-color: #3498db;
-        animation: spin 1s linear infinite;
+        border-top-color: #2ecc71;
+        animation: spin 1s ease-in-out infinite;
     }
 
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
 
-    /* Header Customization for Better Branding */
+    /* Custom Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background-color: #f8fafc;
+        color: #333;
+        border-right: 1px solid #e0e0e0;
+    }
+    
+    [data-testid="stSidebar"] .sidebar-content {
+        padding: 25px;
+    }
+
+    [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
+        color: #333;
+    }
+    
+    [data-testid="stSidebar"] a {
+        color: #007BFF;
+        text-decoration: none;
+    }
+    
+    [data-testid="stSidebar"] a:hover {
+        text-decoration: underline;
+    }
+
+    /* Enhanced Header Styling */
     .header-title {
         color: #007BFF;
         font-weight: bold;
-        text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
+    /* Welcome Box Styling */
+    .welcome-container {
+        padding: 20px;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #83a4d4, #b6fbff);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        color: white;
+        text-align: center;
+    }
+
+    .welcome-title {
+        font-size: 1.5em;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .welcome-text {
+        font-size: 1.2em;
+    }
+    
     </style>
 """, unsafe_allow_html=True)
 
-# Branding for the sidebar - Enhanced with Image Resizing for Logo
+# Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
 st.sidebar.markdown(
     """
-    <div style="text-align:center; padding: 20px;">
-        <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
+    <div class="sidebar-logo-container">
+        <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo">
     </div>
-    <hr style="border: 1px solid #38bdf8; margin-bottom: 20px;">
+    <hr>
+    <div class="sidebar-title">TSG Payment Receivables</div>
     """,
     unsafe_allow_html=True
 )
 
-# Enhanced authentication with password hashing
+# Enhanced security with password hashing
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
@@ -266,13 +282,28 @@ def check_password():
     if not st.session_state.authenticated:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.markdown("""
-                <div class="login-container">
-                    <div class="logo-container">
-                        <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
-                    </div>
-                    <h2 style="text-align: center; margin-bottom: 20px;">Dashboard Login</h2>
-            """, unsafe_allow_html=True)
+            st.markdown(
+                """
+                <style>
+                .logo-container {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    margin-bottom: 20px;
+                }
+                </style>
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown(
+                """
+                <div class="logo-container">
+                    <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>", unsafe_allow_html=True)
             username = st.text_input("Username").lower()
             password = st.text_input("Password", type="password")
 
@@ -291,9 +322,6 @@ def check_password():
                     st.error("Invalid credentials")
         return False
     return True
-    
-if not check_password():
-    st.stop()
         
 # Specific functions to load each dataset
 @st.cache_data(ttl=300)
@@ -1713,6 +1741,7 @@ def get_custom_greeting():
     else:
         greeting = "Good Night"
 
+    # Custom greetings based on user role
     if 'username' in st.session_state:
         role = st.session_state.username
         if role == "admin":
@@ -1726,34 +1755,24 @@ def get_custom_greeting():
 
     return f"Hey there! {greeting} 👋🏻"
 
-# Show Greeting on App
-if not st.session_state.get("authenticated", False):
-    st.markdown("<div class='header-title'>Welcome to the TSG Payment Receivables Dashboard!</div>", unsafe_allow_html=True)
-    st.markdown("<div class='header-title'>" + get_custom_greeting() + "</div>", unsafe_allow_html=True)
-else:
-    st.markdown("<div class='header-title'>" + get_custom_greeting() + "</div>", unsafe_allow_html=True)
-
 # In the main function, show greeting at the top:
 def main():
+    # Implement authentication and data loading (same as before)
     if not check_password():
         return
 
-    # Display the department and report menu
     selected_report_function = show_department_menu()
 
-    # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
-        st.title(get_custom_greeting())
+        st.title("📌 Select a Department and Report")
         st.markdown("""
-            ### You've successfully logged in to your reports dashboard! 🚀
-
-            - **To get started**, please choose a department from the **Select Department** dropdown on the left.
-            - After that, **pick the report** you'd like to explore. 📊
-
-            Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
+            ### 🌀 Getting Started
+            - **Choose a department** from the left sidebar.
+            - Then select the report you'd like to visualize!
+            
+            These reports are built to empower you with actionable insights. 🏠
         """)
     else:
-        # Display the selected report if both department and report are chosen
         selected_report_function()
 
     st.sidebar.markdown("---")
