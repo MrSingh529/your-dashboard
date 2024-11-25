@@ -1868,7 +1868,7 @@ def main():
         """
         ---
         <div style="text-align: center; font-size: 12px; color: #555;">
-            Designed to inform, built to empower – by the CEO Office. <br>
+            Made with Gussa by Harpinder. <br>
             <a href="https://rvsolutions.in" target="_blank" style="color: black; text-decoration: none;">RV Solutions</a>
         </div>
         """,
