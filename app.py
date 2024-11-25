@@ -18,7 +18,7 @@ import hashlib
 
 # Configure page settings
 st.set_page_config(
-    page_title="Trend Reports Dashboard",
+    page_title="TSG Payment Receivables Dashboard",
     page_icon="📈",
     layout="wide",
     initial_sidebar_state="expanded"
