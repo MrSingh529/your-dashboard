@@ -42,119 +42,119 @@ st.markdown("""
         font-family: 'GlassdoorSans', sans-serif !important;
     }
 
+    /* Custom Page Background */
+    body {
+        background: linear-gradient(135deg, #f0f4fc, #d6e0f0);
+    }
+
     /* Main Content Styling */
     .main {
         padding: 20px;
     }
 
+    /* Metric Card Styling with Subtle Shadow and Hover Effect */
     .metric-card {
         background-color: white;
         padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin: 10px 0;
-        transition: transform 0.2s;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin: 15px 0;
+        transition: transform 0.2s ease, box-shadow 0.3s ease;
     }
 
     .metric-card:hover {
-        transform: translateY(-2px);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
     }
 
+    /* Filter Container Styling for Consistent Visual Flow */
     .filter-container {
-        background-color: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-
-    .comparison-card {
         background-color: #ffffff;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        margin: 10px 0;
-    }
-
-    .trend-positive {
-        color: #2ecc71;
-        font-weight: bold;
-    }
-
-    .trend-negative {
-        color: #e74c3c;
-        font-weight: bold;
-    }
-
-    .login-container {
-        max-width: 400px;
-        margin: auto;
         padding: 20px;
-        background-color: white;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
+        transition: box-shadow 0.3s ease;
     }
 
+    .filter-container:hover {
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    /* Sidebar Customization for Distinct Appearance */
+    [data-testid="stSidebar"] {
+        background-color: #1f2937;
+        color: #ffffff;
+        border-right: 1px solid #e6e6e6;
+    }
+    [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
+        color: #f3f4f6;
+    }
+    [data-testid="stSidebar"] a {
+        color: #38bdf8;
+        text-decoration: none;
+    }
+    [data-testid="stSidebar"] a:hover {
+        text-decoration: underline;
+    }
+
+    /* Enhanced Button Styling for Better Visibility */
     .stButton>button {
-        width: 100%;
-        margin-top: 10px;
+        background: #007BFF;
+        color: #fff;
+        border-radius: 8px;
+        padding: 10px 20px;
+        border: none;
+        transition: background-color 0.3s ease;
+    }
+
+    .stButton>button:hover {
+        background: #0056b3;
+    }
+
+    /* Login Container Styling */
+    .login-container {
+        max-width: 450px;
+        margin: auto;
+        padding: 25px;
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     /* Loading animation */
     .loading {
         display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 3px solid rgba(0,0,0,.1);
+        width: 30px;
+        height: 30px;
+        border: 4px solid rgba(0,0,0,.1);
         border-radius: 50%;
-        border-top-color: #2ecc71;
-        animation: spin 1s ease-in-out infinite;
+        border-top-color: #3498db;
+        animation: spin 1s linear infinite;
     }
 
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
 
-    /* Custom Sidebar Styling */
-    [data-testid="stSidebar"] {
-        background-color: #f0f2f6;
-        color: black;
-        border-right: 1px solid #e6e6e6;
-    }
-    
-    [data-testid="stSidebar"] .sidebar-content {
-        padding: 20px;
-    }
-
-    [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
-        color: #333333;
-    }
-
-    [data-testid="stSidebar"] a {
-        color: #007BFF;
-        text-decoration: none;
-    }
-    
-    [data-testid="stSidebar"] a:hover {
-        text-decoration: underline;
-    }
-
-    /* Enhanced Header Styling */
+    /* Header Customization for Better Branding */
     .header-title {
         color: #007BFF;
         font-weight: bold;
-        margin-bottom: 15px;
+        text-align: center;
+        margin-bottom: 20px;
     }
 
     </style>
 """, unsafe_allow_html=True)
 
-# Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
+# Branding for the sidebar - Enhanced with Image Resizing for Logo
 st.sidebar.markdown(
     """
-    <div class="sidebar-logo-container">
-        <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo">
+    <div style="text-align:center; padding: 20px;">
+        <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
     </div>
-    <hr>
+    <hr style="border: 1px solid #38bdf8; margin-bottom: 20px;">
     """,
     unsafe_allow_html=True
 )
@@ -266,15 +266,13 @@ def check_password():
     if not st.session_state.authenticated:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.markdown(
-                """
-                <div class="logo-container">
-                    <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
-                </div>
-                <h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>
-                """,
-                unsafe_allow_html=True
-            )
+            st.markdown("""
+                <div class="login-container">
+                    <div class="logo-container">
+                        <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
+                    </div>
+                    <h2 style="text-align: center; margin-bottom: 20px;">Dashboard Login</h2>
+            """, unsafe_allow_html=True)
             username = st.text_input("Username").lower()
             password = st.text_input("Password", type="password")
 
@@ -293,6 +291,9 @@ def check_password():
                     st.error("Invalid credentials")
         return False
     return True
+    
+if not check_password():
+    st.stop()
         
 # Specific functions to load each dataset
 @st.cache_data(ttl=300)
@@ -1712,7 +1713,6 @@ def get_custom_greeting():
     else:
         greeting = "Good Night"
 
-    # Custom greetings based on user role
     if 'username' in st.session_state:
         role = st.session_state.username
         if role == "admin":
@@ -1725,6 +1725,13 @@ def get_custom_greeting():
             greeting += "!"
 
     return f"Hey there! {greeting} 👋🏻"
+
+# Show Greeting on App
+if not st.session_state.get("authenticated", False):
+    st.markdown("<div class='header-title'>Welcome to the TSG Payment Receivables Dashboard!</div>", unsafe_allow_html=True)
+    st.markdown("<div class='header-title'>" + get_custom_greeting() + "</div>", unsafe_allow_html=True)
+else:
+    st.markdown("<div class='header-title'>" + get_custom_greeting() + "</div>", unsafe_allow_html=True)
 
 # In the main function, show greeting at the top:
 def main():
