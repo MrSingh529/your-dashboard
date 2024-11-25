@@ -28,18 +28,18 @@ st.set_page_config(
 st.markdown("""
     <style>
     @font-face {
-        font-family: 'SFUIDisplay';
-        src: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/fonts/SFUIDisplay-Regular.otf?v=1') format('opentype');
+        font-family: 'GlassdoorSans';
+        src: url('https://raw.githubusercontent.com/your_username/your-dashboard/main/assets/fonts/GlassdoorSans-Regular.woff2') format('woff2');
         font-weight: normal;
         font-style: normal;
     }
 
     * {
-        font-family: 'SFUIDisplay', sans-serif !important;
+        font-family: 'GlassdoorSans', sans-serif !important;
     }
 
     html, body, .main, .stTextInput > div > input, .stButton > button, .stMarkdown, label, h1, h2, h3, h4, h5, h6, p, div, span, li, a, input, textarea, button, select {
-        font-family: 'SFUIDisplay', sans-serif !important;
+        font-family: 'GlassdoorSans', sans-serif !important;
     }
 
     /* Main Content Styling */
