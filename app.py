@@ -24,7 +24,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Enhanced CSS styling with animations, custom fonts, and layout improvements
+# CSS with loading animation, custom font, and sidebar styling
 st.markdown("""
     <style>
     @font-face {
@@ -38,70 +38,93 @@ st.markdown("""
         font-family: 'GlassdoorSans', sans-serif !important;
     }
 
-    /* General Layout */
-    html, body, [class^="st"] {
-        font-family: 'GlassdoorSans', sans-serif;
+    html, body, .main, .stTextInput > div > input, .stButton > button, .stMarkdown, label, h1, h2, h3, h4, h5, h6, p, div, span, li, a, input, textarea, button, select {
+        font-family: 'GlassdoorSans', sans-serif !important;
     }
 
     /* Main Content Styling */
     .main {
         padding: 20px;
+        background: #f7f9fc; /* Lightened main content background for a softer look */
     }
 
     .metric-card {
         background-color: white;
         padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        margin: 10px 0;
-        transition: all 0.3s ease;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin: 15px 0;
+        transition: transform 0.3s;
     }
 
     .metric-card:hover {
-        transform: scale(1.02);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
 
     .filter-container {
-        background-color: #f1f3f6;
+        background-color: #eef2f7;
         padding: 20px;
-        border-radius: 15px;
+        border-radius: 10px;
         margin-bottom: 20px;
     }
 
     .comparison-card {
         background-color: #ffffff;
-        padding: 15px;
-        border-radius: 15px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
         margin: 15px 0;
+        transition: transform 0.3s;
     }
 
-    /* Improved Button Styling */
+    .comparison-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .trend-positive {
+        color: #2ecc71;
+        font-weight: bold;
+    }
+
+    .trend-negative {
+        color: #e74c3c;
+        font-weight: bold;
+    }
+
+    .login-container {
+        max-width: 400px;
+        margin: auto;
+        padding: 25px;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+
     .stButton>button {
         width: 100%;
+        margin-top: 15px;
         background-color: #007BFF;
-        color: white;
-        padding: 10px;
-        border-radius: 10px;
+        color: #ffffff;
         border: none;
-        transition: background-color 0.3s, transform 0.2s;
+        border-radius: 8px;
+        padding: 10px;
+        transition: background-color 0.3s;
     }
 
     .stButton>button:hover {
         background-color: #0056b3;
-        transform: translateY(-2px);
     }
 
     /* Loading animation */
     .loading {
         display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 3px solid rgba(0,0,0,.1);
+        width: 30px;
+        height: 30px;
+        border: 4px solid rgba(0,0,0,.1);
         border-radius: 50%;
-        border-top-color: #2ecc71;
-        animation: spin 1s ease-in-out infinite;
+        border-top-color: #007BFF;
+        animation: spin 1s linear infinite;
     }
 
     @keyframes spin {
@@ -110,21 +133,21 @@ st.markdown("""
 
     /* Custom Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: #f8fafc;
-        color: #333;
-        border-right: 1px solid #e0e0e0;
+        background-color: #f0f2f6; /* Light grey background for sidebar */
+        color: black; /* Text color for better contrast */
+        border-right: 1px solid #e6e6e6;
     }
     
     [data-testid="stSidebar"] .sidebar-content {
-        padding: 25px;
+        padding: 20px;
     }
 
     [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
-        color: #333;
+        color: #333333;  /* Dark text color for readability */
     }
-    
+
     [data-testid="stSidebar"] a {
-        color: #007BFF;
+        color: #007BFF;  /* Theme color for links */
         text-decoration: none;
     }
     
@@ -132,34 +155,64 @@ st.markdown("""
         text-decoration: underline;
     }
 
+    /* Custom Sidebar Branding */
+    .sidebar-logo-container {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .sidebar-logo-container img {
+        max-width: 150px;
+        transition: transform 0.3s;
+    }
+
+    .sidebar-logo-container img:hover {
+        transform: scale(1.1);
+    }
+
+    .sidebar-title {
+        font-size: 1.6em;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20px;
+        color: #007BFF; /* Consistent primary color */
+    }
+
     /* Enhanced Header Styling */
     .header-title {
-        color: #007BFF;
+        color: #007BFF;  /* Consistent theme color */
         font-weight: bold;
         margin-bottom: 15px;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    /* Welcome Box Styling */
-    .welcome-container {
-        padding: 20px;
-        border-radius: 15px;
-        background: linear-gradient(135deg, #83a4d4, #b6fbff);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        color: white;
+    /* Tooltip styling for better user guidance */
+    .tooltip {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+    }
+
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 160px;
+        background-color: #555;
+        color: #fff;
         text-align: center;
+        border-radius: 6px;
+        padding: 5px;
+        position: absolute;
+        z-index: 1;
+        bottom: 100%;
+        left: 50%;
+        margin-left: -80px;
+        opacity: 0;
+        transition: opacity 0.3s;
     }
 
-    .welcome-title {
-        font-size: 1.5em;
-        font-weight: bold;
-        margin-bottom: 10px;
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
     }
-
-    .welcome-text {
-        font-size: 1.2em;
-    }
-    
     </style>
 """, unsafe_allow_html=True)
 
@@ -170,7 +223,6 @@ st.sidebar.markdown(
         <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo">
     </div>
     <hr>
-    <div class="sidebar-title">TSG Payment Receivables</div>
     """,
     unsafe_allow_html=True
 )
@@ -284,26 +336,13 @@ def check_password():
         with col2:
             st.markdown(
                 """
-                <style>
-                .logo-container {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    margin-bottom: 20px;
-                }
-                </style>
-                """,
-                unsafe_allow_html=True
-            )
-            st.markdown(
-                """
                 <div class="logo-container">
                     <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
                 </div>
+                <h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>
                 """,
                 unsafe_allow_html=True
             )
-            st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>", unsafe_allow_html=True)
             username = st.text_input("Username").lower()
             password = st.text_input("Password", type="password")
 
@@ -316,6 +355,8 @@ def check_password():
                 if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
                     st.session_state.authenticated = True
                     st.session_state.username = username
+                    st.success("Login successful! Redirecting...")
+                    time.sleep(1)
                     st.rerun()
                 else:
                     st.session_state.login_attempts += 1
@@ -1757,22 +1798,25 @@ def get_custom_greeting():
 
 # In the main function, show greeting at the top:
 def main():
-    # Implement authentication and data loading (same as before)
     if not check_password():
         return
 
+    # Display the department and report menu
     selected_report_function = show_department_menu()
 
+    # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
-        st.title("📌 Select a Department and Report")
+        st.title(get_custom_greeting())
         st.markdown("""
-            ### 🌀 Getting Started
-            - **Choose a department** from the left sidebar.
-            - Then select the report you'd like to visualize!
-            
-            These reports are built to empower you with actionable insights. 🏠
+            ### You've successfully logged in to your reports dashboard! 🚀
+
+            - **To get started**, please choose a department from the **Select Department** dropdown on the left.
+            - After that, **pick the report** you'd like to explore. 📊
+
+            Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
         """)
     else:
+        # Display the selected report if both department and report are chosen
         selected_report_function()
 
     st.sidebar.markdown("---")
