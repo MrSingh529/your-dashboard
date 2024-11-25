@@ -116,8 +116,8 @@ st.markdown("""
 
     /* Custom Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: #f0f2f6; /* Light grey background for sidebar */
-        color: black; /* Text color for better contrast */
+        background-color: #f0f2f6;
+        color: black;
         border-right: 1px solid #e6e6e6;
     }
     
@@ -126,11 +126,11 @@ st.markdown("""
     }
 
     [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
-        color: #333333;  /* Dark text color for readability */
+        color: #333333;
     }
 
     [data-testid="stSidebar"] a {
-        color: #007BFF;  /* Theme color for links */
+        color: #007BFF;
         text-decoration: none;
     }
     
@@ -138,27 +138,9 @@ st.markdown("""
         text-decoration: underline;
     }
 
-    /* Custom Sidebar Branding */
-    .sidebar-logo-container {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    .sidebar-logo-container img {
-        max-width: 150px;
-    }
-
-    .sidebar-title {
-        font-size: 1.4em;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 20px;
-        color: #007BFF; /* Consistent primary color */
-    }
-
     /* Enhanced Header Styling */
     .header-title {
-        color: #007BFF;  /* Consistent theme color */
+        color: #007BFF;
         font-weight: bold;
         margin-bottom: 15px;
     }
@@ -177,7 +159,7 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 
-# Enhanced security with password hashing
+# Enhanced authentication with password hashing
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
@@ -286,26 +268,13 @@ def check_password():
         with col2:
             st.markdown(
                 """
-                <style>
-                .logo-container {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    margin-bottom: 20px;
-                }
-                </style>
-                """,
-                unsafe_allow_html=True
-            )
-            st.markdown(
-                """
                 <div class="logo-container">
                     <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
                 </div>
+                <h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>
                 """,
                 unsafe_allow_html=True
             )
-            st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>", unsafe_allow_html=True)
             username = st.text_input("Username").lower()
             password = st.text_input("Password", type="password")
 
