@@ -19,7 +19,7 @@ import hashlib
 # Configure page settings
 st.set_page_config(
     page_title="TSG Payment Receivables Dashboard",
-    page_icon="📊",
+    page_icon="📈",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -45,45 +45,47 @@ st.markdown("""
     /* Main Content Styling */
     .main {
         padding: 20px;
-        background: #f7f9fc; /* Lightened main content background for a softer look */
+        background: linear-gradient(to bottom right, #f7f9fc, #eaf3ff); /* Gradient background for a softer look */
     }
 
     .metric-card {
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        background-color: #ffffff;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         margin: 15px 0;
-        transition: transform 0.3s;
+        transition: transform 0.4s, box-shadow 0.4s;
     }
 
     .metric-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        transform: translateY(-5px) scale(1.03);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     }
 
     .filter-container {
-        background-color: #eef2f7;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
+        background-color: #e3efff;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
     }
 
     .comparison-card {
         background-color: #ffffff;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         margin: 15px 0;
-        transition: transform 0.3s;
+        transition: transform 0.4s, box-shadow 0.4s;
     }
 
     .comparison-card:hover {
-        transform: translateY(-3px);
+        transform: translateY(-5px) scale(1.03);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     }
 
     .trend-positive {
-        color: #2ecc71;
+        color: #27ae60;
         font-weight: bold;
     }
 
@@ -93,12 +95,12 @@ st.markdown("""
     }
 
     .login-container {
-        max-width: 400px;
+        max-width: 450px;
         margin: auto;
-        padding: 25px;
+        padding: 30px;
         background-color: #ffffff;
-        border-radius: 10px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        border-radius: 15px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
     }
 
     .stButton>button {
@@ -107,20 +109,22 @@ st.markdown("""
         background-color: #007BFF;
         color: #ffffff;
         border: none;
-        border-radius: 8px;
-        padding: 10px;
-        transition: background-color 0.3s;
+        border-radius: 12px;
+        padding: 12px;
+        font-size: 1.1em;
+        transition: background-color 0.3s, box-shadow 0.3s;
     }
 
     .stButton>button:hover {
         background-color: #0056b3;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
     /* Loading animation */
     .loading {
         display: inline-block;
-        width: 30px;
-        height: 30px;
+        width: 40px;
+        height: 40px;
         border: 4px solid rgba(0,0,0,.1);
         border-radius: 50%;
         border-top-color: #007BFF;
@@ -133,17 +137,17 @@ st.markdown("""
 
     /* Custom Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: #f0f2f6; /* Light grey background for sidebar */
-        color: black; /* Text color for better contrast */
-        border-right: 1px solid #e6e6e6;
+        background: linear-gradient(to bottom, #f0f2f6, #d9e6ff); /* Light gradient background for sidebar */
+        color: black;
+        border-right: 1px solid #d1d8e0;
     }
     
     [data-testid="stSidebar"] .sidebar-content {
-        padding: 20px;
+        padding: 25px;
     }
 
     [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
-        color: #333333;  /* Dark text color for readability */
+        color: #2d3436;  /* Slightly darker text color for readability */
     }
 
     [data-testid="stSidebar"] a {
@@ -158,31 +162,33 @@ st.markdown("""
     /* Custom Sidebar Branding */
     .sidebar-logo-container {
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
 
     .sidebar-logo-container img {
-        max-width: 150px;
-        transition: transform 0.3s;
+        max-width: 160px;
+        transition: transform 0.4s;
     }
 
     .sidebar-logo-container img:hover {
-        transform: scale(1.1);
+        transform: scale(1.1) rotate(-2deg);
     }
 
     .sidebar-title {
-        font-size: 1.6em;
+        font-size: 1.8em;
         font-weight: bold;
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
         color: #007BFF; /* Consistent primary color */
+        text-shadow: 1px 1px 2px #d1d8e0;
     }
 
     /* Enhanced Header Styling */
     .header-title {
-        color: #007BFF;  /* Consistent theme color */
+        color: #007BFF;
         font-weight: bold;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
+        text-shadow: 1px 1px 2px #eaf3ff;
     }
 
     /* Tooltip styling for better user guidance */
@@ -194,17 +200,17 @@ st.markdown("""
 
     .tooltip .tooltiptext {
         visibility: hidden;
-        width: 160px;
+        width: 180px;
         background-color: #555;
         color: #fff;
         text-align: center;
         border-radius: 6px;
-        padding: 5px;
+        padding: 8px;
         position: absolute;
         z-index: 1;
-        bottom: 100%;
+        bottom: 125%;
         left: 50%;
-        margin-left: -80px;
+        margin-left: -90px;
         opacity: 0;
         transition: opacity 0.3s;
     }
@@ -212,6 +218,39 @@ st.markdown("""
     .tooltip:hover .tooltiptext {
         visibility: visible;
         opacity: 1;
+    }
+    
+    /* Button Animation for Attractive User Interaction */
+    .btn-animated {
+        background-color: #007BFF;
+        color: white;
+        border-radius: 50px;
+        padding: 12px 25px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1em;
+        font-weight: bold;
+    }
+
+    .btn-animated:hover {
+        background-color: #0056b3;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        transform: translateY(-3px);
+    }
+
+    /* Animated card hover effect */
+    .card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 15px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+        transition: transform 0.4s, box-shadow 0.4s;
+    }
+
+    .card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
     }
     </style>
 """, unsafe_allow_html=True)
@@ -222,6 +261,7 @@ st.sidebar.markdown(
     <div class="sidebar-logo-container">
         <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo">
     </div>
+    <div class="sidebar-title">TSG Receivables Dashboard</div>
     <hr>
     """,
     unsafe_allow_html=True
