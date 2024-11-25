@@ -29,7 +29,7 @@ st.markdown("""
     <style>
     @font-face {
         font-family: 'GlassdoorSans';
-        src: url('https://raw.githubusercontent.com/your_username/your-dashboard/main/assets/fonts/GlassdoorSans-Regular.woff2') format('woff2');
+        src: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/fonts/GlassdoorSans-Regular.woff2') format('woff2');
         font-weight: normal;
         font-style: normal;
     }
