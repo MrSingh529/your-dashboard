@@ -18,7 +18,7 @@ import hashlib
 
 # Configure page settings
 st.set_page_config(
-    page_title="TSG Payment Receivables Dashboard",
+    page_title="Trend Reports Dashboard",
     page_icon="📈",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -261,7 +261,6 @@ st.sidebar.markdown(
     <div class="sidebar-logo-container">
         <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo">
     </div>
-    <div class="sidebar-title">TSG Receivables Dashboard</div>
     <hr>
     """,
     unsafe_allow_html=True
