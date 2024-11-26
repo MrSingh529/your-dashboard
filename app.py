@@ -844,27 +844,39 @@ def add_breadcrumb_navigation(department, report):
 
 def display_custom_metric(title, value, delta=None, delta_type="normal"):
     """
-    Display a custom metric card with additional HTML-based styling for control over how metrics appear.
-    
+    Display a custom metric card with HTML-based styling for a more polished appearance.
+
     Args:
     - title (str): The title of the metric.
     - value (str): The value to be displayed.
     - delta (str, optional): Change value with indicators. Defaults to None.
     - delta_type (str, optional): Type of delta ('normal' for increase, 'inverse' for decrease). Defaults to 'normal'.
     """
+    # Assign delta arrow and color based on delta_type
     delta_arrow = "↑" if delta_type == "normal" else "↓"
-    delta_type = "green" if delta_type == "inverse" else "red"
+    delta_color = "#2ecc71" if delta_type == "inverse" else "#e74c3c"
 
-    # Construct the card with HTML
-    delta_html = f"""<div style="font-size: 14px; color: {delta_type};">{delta_arrow} {delta}</div>""" if delta else ""
-    
-    st.markdown(f"""
-    <div style="background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: 15px 0; height: 180px; width: 220px; text-align: center;">
-        <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">{title}</div>
-        <div style="font-size: 24px; margin-bottom: 8px;">{value}</div>
+    # Create HTML for the metric card
+    delta_html = f"""<div style="font-size: 14px; color: {delta_color}; font-weight: 600;">{delta_arrow} {delta}</div>""" if delta else ""
+
+    card_html = f"""
+    <div style="
+        background-color: #ffffff;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease-in-out;
+        margin: 15px 0;
+        width: 250px;
+        text-align: center;
+    ">
+        <div style="font-size: 18px; font-weight: bold; color: #34495e; margin-bottom: 8px;">{title}</div>
+        <div style="font-size: 26px; font-weight: bold; color: #2c3e50; margin-bottom: 8px;">{value}</div>
         {delta_html}
     </div>
-    """, unsafe_allow_html=True)
+    """
+
+    st.markdown(card_html, unsafe_allow_html=True)
 
 # Enhanced dashboard display
 def show_collections_dashboard():
