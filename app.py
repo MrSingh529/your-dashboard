@@ -957,7 +957,7 @@ def show_collections_dashboard():
         # Display Metrics for the first selected date
         col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
-            display_metric_card("Total Balance",f"₹{total_balance_1:,.2f}",delta=f"₹{total_reduced_1:,.2f}", delta_color="inverse")
+            display_metric_card("Total Balance",f"₹{total_balance_1:,.2f}",delta=f"₹{total_reduced_1:,.2f}")
             
         with col2:
             display_metric_card("Total Pending",f"₹{total_pending_1:,.2f}")
