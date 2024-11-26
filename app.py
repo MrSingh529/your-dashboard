@@ -878,8 +878,8 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
     " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 8px 16px rgba(0, 0, 0, 0.2)';" 
       onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 8px rgba(0, 0, 0, 0.1)';"
     >
-        <div style="font-size: 14px; font-weight: 600; color: #34495e; margin-bottom: 10px;">{title}</div>
-        <div style="font-size: 20px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;">{value}</div>
+        <div style="font-size: 16px; font-weight: 600; color: #FF5D5D; margin-bottom: 10px;">{title}</div>
+        <div style="font-size: 24px; font-weight: bold; color: #5229FF; margin-bottom: 10px;">{value}</div>
         {delta_html}
     </div>
     """
