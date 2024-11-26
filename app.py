@@ -807,7 +807,7 @@ def show_comparative_analysis(filtered_df, dates, selected_branches):
             display_metric_card(
                 "Total Pending Change",
                 f"₹{change:,.2f}",
-                delta=-change  # Negative is good for pending
+                delta=-change,  # Negative is good for pending
                 delta_color="inverse"
             )
         
