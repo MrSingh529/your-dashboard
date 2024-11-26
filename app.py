@@ -227,20 +227,6 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 
-def toggle_theme():
-    """
-    Adds a theme toggle to the sidebar.
-    """
-    theme = st.sidebar.radio("Theme", ["Light", "Dark"])
-    st.markdown(f"""
-    <style>
-        body {{
-            background-color: {"#f7f9fc" if theme == "Light" else "#333333"};
-            color: {"#000000" if theme == "Light" else "#ffffff"};
-        }}
-    </style>
-    """, unsafe_allow_html=True)
-
 # Enhanced security with password hashing
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -818,11 +804,21 @@ def show_comparative_analysis(filtered_df, dates, selected_branches):
             latest_total = comparison_df[f'Pending_{dates[0]}'].sum()
             prev_total = comparison_df[f'Pending_{dates[1]}'].sum()
             change = latest_total - prev_total
-            display_metric_card("Total Pending Change",f"₹{change:,.2f}",delta=-change)  # Negative is good for pending
+            display_metric_card(
+                "Total Pending Change",
+                f"₹{change:,.2f}",
+                delta=-change  # Negative is good for pending
+                delta_color="inverse"
+            )
         
         with col2:
             improvement = ((prev_total - latest_total) / prev_total * 100)
-            display_metric_card("Improvement Percentage",f"{improvement:.2f}%",delta=improvement)
+            display_metric_card(
+                "Improvement Percentage",
+                f"{improvement:.2f}%",
+                delta=improvement
+                delta_color="inverse"
+            )
             
     except Exception as e:
         st.error(f"Error in comparative analysis: {str(e)}")
@@ -946,19 +942,19 @@ def show_collections_dashboard():
         # Display Metrics for the first selected date
         col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
-            display_metric_card("Total Balance",f"₹{total_balance_1:,.2f}",f"₹{total_reduced_1:,.2f}", delta_color="inverse")
+            display_metric_card("Total Balance",f"₹{total_balance_1:,.2f}",delta=f"₹{total_reduced_1:,.2f}", delta_color="inverse")
             
         with col2:
-            display_metric_card("Total Pending",f"₹{total_pending_1:,.2f}", delta_color="inverse")
+            display_metric_card("Total Pending",f"₹{total_pending_1:,.2f}")
             
         with col3:
-            display_metric_card("Collection Ratio",f"{collection_ratio_1:.1f}%", delta_color="inverse")
+            display_metric_card("Collection Ratio",f"{collection_ratio_1:.1f}%")
             
         with col4:
-            display_metric_card("Best Performing Branch",top_balance_branch_1, delta_color="inverse")
+            display_metric_card("Best Performing Branch",top_balance_branch_1)
             
         with col5:
-            display_metric_card("Poor Performing Branch",poor_performing_branch, delta_color="inverse")
+            display_metric_card("Poor Performing Branch",poor_performing_branch)
         
     except KeyError as e:
         st.error(f"Error calculating metrics: {str(e)}")
@@ -1220,7 +1216,7 @@ def show_sdr_dashboard():
 
             with col1:
                 total_reduced = df['Reduced OS'].sum()
-                display_metric_card("Total Reduced OS",f"{total_reduced:,.2f}",delta=total_reduced, delta_color="inverse")
+                display_metric_card("Total Reduced OS",f"{total_reduced:,.2f}",delta=total_reduced,delta_color="inverse")
 
             with col2:
                 latest_date = date_columns[0]
@@ -1435,15 +1431,15 @@ def show_itss_dashboard():
         col1, col2, col3 = st.columns(3)
         with col1:
             total_outstanding = current_data[aging_categories].sum().sum()
-            display_metric_card("Total Outstanding",f"₹{total_outstanding:.2f} Lakhs", delta_color="inverse")
+            display_metric_card("Total Outstanding",f"₹{total_outstanding:.2f} Lakhs")
         
         with col2:
             high_risk = current_data[['361-720', 'More than 2 Yr']].sum().sum()
-            display_metric_card("High Risk Amount",f"₹{high_risk:.2f} Lakhs",f"{(high_risk/total_outstanding*100 if total_outstanding else 0):.1f}%", delta_color="inverse")
+            display_metric_card("High Risk Amount",f"₹{high_risk:.2f} Lakhs",f"{(high_risk/total_outstanding*100 if total_outstanding else 0):.1f}%")
         
         with col3:
             active_accounts = len(current_data[current_data[aging_categories].sum(axis=1) > 0])
-            display_metric_card("Active Accounts",str(active_accounts), delta_color="inverse")
+            display_metric_card("Active Accounts",str(active_accounts))
         
         # Main data display
         st.markdown("### Account-wise Aging Analysis")
@@ -1581,24 +1577,25 @@ def show_tsg_dashboard():
             # Adjusting to explicitly control the arrows and coloring
             if total_change < 0:
                 display_metric_card(f"Total Receivables (as of {date_cols[0]})",f"₹{latest_total:,.0f}",delta=f"↓ ₹{abs(total_change):,.0f}",delta_color="inverse")
+                
             else:
-                display_metric_card(f"Total Receivables (as of {date_cols[0]})",f"₹{latest_total:,.0f}",delta=f"↑ ₹{abs(total_change):,.0f}",delta_color="normal")
+                display_metric_card(f"Total Receivables (as of {date_cols[0]})",f"₹{latest_total:,.0f}",delta=f"↑ ₹{abs(total_change):,.0f}",delta_color="normal")  # Red color indicating worsening
 
         with col2:
             # Week-on-Week Change logic
             if week_change_pct < 0:
-                display_metric_card("Week-on-Week Change",f"{abs(week_change_pct):.2f}%",delta=f"↓ {abs(week_change_pct):.2f}%",delta_color="inverse")  # Green color indicating improvement
+                display_metric_card("Week-on-Week Change",f"{abs(week_change_pct):.2f}%",delta=f"↓ {abs(week_change_pct):.2f}%",delta_color="inverse")
                 
             else:
-                display_metric_card("Week-on-Week Change",f"{abs(week_change_pct):.2f}%",delta=f"↑ {abs(week_change_pct):.2f}%",delta_color="normal") # Red color indicating worsening
+                display_metric_card("Week-on-Week Change",f"{abs(week_change_pct):.2f}%",delta=f"↑ {abs(week_change_pct):.2f}%",delta_color="normal")
 
         with col3:
             # Month-to-Date Change logic
             if month_change_pct < 0:
-                display_metric_card("Month-to-Date Change",f"{abs(month_change_pct):.2f}%",delta=f"↓ {abs(month_change_pct):.2f}%",delta_color="inverse")  # Green color indicating improvement
+                display_metric_card("Month-to-Date Change",f"{abs(month_change_pct):.2f}%",delta=f"↓ {abs(month_change_pct):.2f}%",delta_color="inverse")
                 
             else:
-                display_metric_card("Month-to-Date Change",f"{abs(month_change_pct):.2f}%",delta=f"↑ {abs(month_change_pct):.2f}%",delta_color="normal")  # Red color indicating worsening
+                display_metric_card("Month-to-Date Change",f"{abs(month_change_pct):.2f}%",delta=f"↑ {abs(month_change_pct):.2f}%",delta_color="normal")  
 
         # Main trend table
         st.markdown("### Ageing-wise Trend Analysis")
@@ -1789,8 +1786,6 @@ def main():
     if not check_password():
         return
 
-    toggle_theme()    
-    
     # Display the department and report menu
     selected_report_function = show_department_menu()
 
