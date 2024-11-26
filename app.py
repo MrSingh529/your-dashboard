@@ -842,22 +842,26 @@ def add_breadcrumb_navigation(department, report):
     </div>
     """, unsafe_allow_html=True)
 
-def display_metric_card(title, value, delta=None, delta_color="normal"):
+ddef display_custom_metric(title, value, delta=None, delta_color="normal"):
     """
-    Display a styled metric card with optional delta (change) display.
+    Display a styled metric card using HTML and markdown to support custom styling and value formatting.
     """
-    # Build the delta section only if delta is provided
+    # Define color for delta
+    delta_sign = '↑' if delta_color == 'inverse' else '↓'
+    delta_color_code = 'green' if delta_color == 'inverse' else 'red'
+
+    # Build the delta section if delta is provided
     delta_html = ""
     if delta:
         delta_html = f"""
-        <div style="font-size: 14px; color: {'green' if delta_color == 'inverse' else 'red'};">
-            {'↑' if delta_color == 'inverse' else '↓'} {delta}
+        <div style="font-size: 14px; color: {delta_color_code};">
+            {delta_sign} {delta}
         </div>
         """
 
-    # Combine everything into one styled HTML card
+    # Combine everything into a styled HTML card
     st.markdown(f"""
-    <div class="metric-card">
+    <div style="background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: 15px 0; height: 180px; width: 220px; text-align: center;">
         <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">{title}</div>
         <div style="font-size: 24px; margin-bottom: 8px;">{value}</div>
         {delta_html}
@@ -957,7 +961,7 @@ def show_collections_dashboard():
         # Display Metrics for the first selected date
         col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
-            display_metric_card("Total Balance",f"₹{total_balance_1:,.2f}",delta=f"₹{total_reduced_1:,.2f}")
+            display_metric_card("Total Balance",f"₹{total_balance_1:,.2f}",delta=f"₹{total_reduced_1:,.2f}",delta_color="inverse")
             
         with col2:
             display_metric_card("Total Pending",f"₹{total_pending_1:,.2f}")
