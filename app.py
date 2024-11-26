@@ -1273,15 +1273,10 @@ def show_sdr_dashboard():
             reduction_percent = ((prev_total - latest_total) / prev_total * 100) if prev_total != 0 else 0
             display_custom_metric("Week-on-Week Improvement", f"{reduction_percent:.2f}%", delta=reduction_percent, delta_type="inverse")
 
-        # Main trend display and analysis sections
-        # Display Highlights Trend
-        st.subheader("Highlights Trend")
-        styled_df = style_sdr_trend(df)
-        st.dataframe(styled_df, height=400, use_container_width=True)
-
         with tab2:
             # Original SDR Ageing Analysis Section
             st.subheader("SDR Ageing Analysis")
+            styled_df = style_sdr_trend(df)
             st.markdown("Aging Analysis for different SDR categories.")
             st.dataframe(df, height=400, use_container_width=True)
 
