@@ -878,10 +878,15 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
         justify-content: center;
         align-items: center;
         text-align: center;
-        transition: all 0.3s ease-in-out;
+        transition: all 0.5s ease-in-out;
         cursor: pointer;
-    " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 8px 16px rgba(0, 0, 0, 0.2)';" 
-      onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 8px rgba(0, 0, 0, 0.1)';"
+        transform: perspective(500px) rotateX(0deg) rotateY(0deg);
+    " onmouseover="this.style.transform='perspective(500px) rotateX(3deg) rotateY(3deg) scale(1.08)'; 
+                   this.style.boxShadow='0 8px 20px rgba(0, 0, 0, 0.3)'; 
+                   this.style.border='1px solid rgba(0, 173, 239, 0.4)';"
+      onmouseout="this.style.transform='perspective(500px) rotateX(0deg) rotateY(0deg) scale(1)'; 
+                  this.style.boxShadow='0 4px 8px rgba(0, 0, 0, 0.1)'; 
+                  this.style.border='none';"
     >
         <div style="font-size: 16px; font-weight: 500; color: #333333; margin-bottom: 10px;">{title}</div>
         <div style="font-size: 22px; font-weight: bold; color: #333333; margin-bottom: 10px;">{value}</div>
