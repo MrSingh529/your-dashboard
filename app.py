@@ -842,24 +842,22 @@ def add_breadcrumb_navigation(department, report):
     </div>
     """, unsafe_allow_html=True)
 
-def display_metric_card(title, value, delta=None, delta_color="normal"):
+def display_custom_metric(title, value, delta=None, delta_type="normal"):
     """
-    Display a styled metric card using HTML and markdown to support custom styling and value formatting.
+    Display a custom metric card with additional HTML-based styling for control over how metrics appear.
+    
+    Args:
+    - title (str): The title of the metric.
+    - value (str): The value to be displayed.
+    - delta (str, optional): Change value with indicators. Defaults to None.
+    - delta_type (str, optional): Type of delta ('normal' for increase, 'inverse' for decrease). Defaults to 'normal'.
     """
-    # Define color for delta
-    delta_sign = '↑' if delta_color == 'inverse' else '↓'
-    delta_color_code = 'green' if delta_color == 'inverse' else 'red'
+    delta_arrow = "↑" if delta_type == "normal" else "↓"
+    delta_color = "green" if delta_type == "inverse" else "red"
 
-    # Build the delta section if delta is provided
-    delta_html = ""
-    if delta:
-        delta_html = f"""
-        <div style="font-size: 14px; color: {delta_color_code};">
-            {delta_sign} {delta}
-        </div>
-        """
-
-    # Combine everything into a styled HTML card
+    # Construct the card with HTML
+    delta_html = f"""<div style="font-size: 14px; color: {delta_color};">{delta_arrow} {delta}</div>""" if delta else ""
+    
     st.markdown(f"""
     <div style="background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: 15px 0; height: 180px; width: 220px; text-align: center;">
         <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">{title}</div>
@@ -960,20 +958,34 @@ def show_collections_dashboard():
         
         # Display Metrics for the first selected date
         col1, col2, col3, col4, col5 = st.columns(5)
+
         with col1:
-            display_metric_card("Total Balance",f"₹{total_balance_1:,.2f}",delta=f"₹{total_reduced_1:,.2f}",delta_color="inverse")
-            
+            display_custom_metric(
+                "Total Balance",
+                f"₹{total_balance_1:,.2f}",
+                delta=f"₹{total_reduced_1:,.2f}",
+                delta_type="inverse" if total_reduced_1 < 0 else "normal"
+            )
         with col2:
-            display_metric_card("Total Pending",f"₹{total_pending_1:,.2f}")
-            
+            display_custom_metric(
+                "Total Pending",
+                f"₹{total_pending_1:,.2f}"
+            )
         with col3:
-            display_metric_card("Collection Ratio",f"{collection_ratio_1:.1f}%")
-            
+            display_custom_metric(
+                "Collection Ratio",
+                f"{collection_ratio_1:.1f}%"
+            )
         with col4:
-            display_metric_card("Best Performing Branch",top_balance_branch_1)
-            
+            display_custom_metric(
+                "Best Performing Branch",
+                top_balance_branch_1
+            )
         with col5:
-            display_metric_card("Poor Performing Branch",poor_performing_branch)
+            display_custom_metric(
+                "Poor Performing Branch",
+                poor_performing_branch
+            )
         
     except KeyError as e:
         st.error(f"Error calculating metrics: {str(e)}")
