@@ -336,13 +336,26 @@ def check_password():
         with col2:
             st.markdown(
                 """
-                <div class="logo-container">
-                    <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
-                </div>
-                <h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>
+                <style>
+                .logo-container {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    margin-bottom: 20px;
+                }
+                </style>
                 """,
                 unsafe_allow_html=True
             )
+            st.markdown(
+                """
+                <div class="logo-container">
+                    <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>", unsafe_allow_html=True)
             username = st.text_input("Username").lower()
             password = st.text_input("Password", type="password")
 
@@ -355,8 +368,6 @@ def check_password():
                 if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
                     st.session_state.authenticated = True
                     st.session_state.username = username
-                    st.success("Login successful! Redirecting...")
-                    time.sleep(1)
                     st.rerun()
                 else:
                     st.session_state.login_attempts += 1
