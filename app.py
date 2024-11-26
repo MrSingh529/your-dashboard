@@ -1251,8 +1251,19 @@ def show_sdr_dashboard():
 
         date_columns.sort(reverse=True)  # Sort dates from most recent
 
-        st.markdown("### Summary Metrics")
-        col1, col2, col3 = st.columns(3)
+        # Adding tabs for better analysis switching
+        tab1, tab2, tab3, tab4 = st.tabs(["Highlights Trend", "SDR Ageing Analysis", "Trend Analysis", "Category-wise Analysis"])
+        
+        with tab1:
+            # Display Highlights Trend
+            st.subheader("Highlights Trend")
+            st.markdown("A detailed analysis of the changes over different periods, indicating improvements and deteriorations.")
+            styled_df = style_sdr_trend(df)
+            st.dataframe(styled_df, height=400, use_container_width=True)
+
+            # Display Summary Metrics
+            st.markdown("### Summary Metrics")
+            col1, col2, col3 = st.columns(3)
 
         with col1:
             total_reduced = df['Reduced OS'].sum()
