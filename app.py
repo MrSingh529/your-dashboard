@@ -55,11 +55,12 @@ st.markdown("""
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         margin: 15px 0;
         transition: transform 0.3s;
-        height: 150px; /* Fixed height */
+        height: 180px; /* Fixed height for consistency */
+        width: 200px; /* Optional: Set width if necessary */
         display: flex;
         flex-direction: column;
-        justify-content: space-between; /* Evenly space items vertically */
-        align-items: center; /* Center content horizontally */
+        justify-content: space-between;
+        align-items: center;
         text-align: center;
     }
 
