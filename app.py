@@ -1251,35 +1251,33 @@ def show_sdr_dashboard():
 
         date_columns.sort(reverse=True)  # Sort dates from most recent
 
-        # Adding tabs for better analysis switching
-        tab1, tab2, tab3, tab4 = st.tabs(["Highlights Trend", "SDR Ageing Analysis", "Trend Analysis", "Category-wise Analysis"])
-        
-        with tab1:
-            # Display Highlights Trend
-            st.subheader("Highlights Trend")
-            st.markdown("A detailed analysis of the changes over different periods, indicating improvements and deteriorations.")
-            styled_df = style_sdr_trend(df)
-            st.dataframe(styled_df, height=400, use_container_width=True)
+        st.markdown("### Summary Metrics")
+        col1, col2, col3 = st.columns(3)
 
-            # Display Summary Metrics
-            st.markdown("### Summary Metrics")
-            col1, col2, col3 = st.columns(3)
+        with col1:
+            total_reduced = df['Reduced OS'].sum()
+            display_custom_metric("Total Reduced OS", f"{total_reduced:,.2f}", delta=total_reduced, delta_type="inverse")
 
-            with col1:
-                total_reduced = df['Reduced OS'].sum()
-                display_custom_metric("Total Reduced OS",f"{total_reduced:,.2f}",delta=total_reduced,delta_type="inverse")
+        with col2:
+            latest_total = df[date_columns[0]].sum()
+            prev_total = df[date_columns[1]].sum()
+            change = latest_total - prev_total
+            display_custom_metric(
+                f"Latest Total ({date_columns[0]})",
+                f"{latest_total:,.2f}",
+                delta=-change,
+                delta_type="inverse"
+            )
 
-            with col2:
-                latest_date = date_columns[0]
-                prev_date = date_columns[1]
-                latest_total = df[latest_date].sum()
-                prev_total = df[prev_date].sum()
-                change = latest_total - prev_total
-                display_custom_metric(f"Latest Total ({latest_date})",f"{latest_total:,.2f}",delta=-change, delta_type="inverse")
+        with col3:
+            reduction_percent = ((prev_total - latest_total) / prev_total * 100) if prev_total != 0 else 0
+            display_custom_metric("Week-on-Week Improvement", f"{reduction_percent:.2f}%", delta=reduction_percent, delta_type="inverse")
 
-            with col3:
-                reduction_percent = ((prev_total - latest_total) / prev_total * 100) if prev_total != 0 else 0
-                display_custom_metric("Week-on-Week Improvement",f"{reduction_percent:.2f}%",delta=reduction_percent, delta_type="inverse")
+        # Main trend display and analysis sections
+        # Display Highlights Trend
+        st.subheader("Highlights Trend")
+        styled_df = style_sdr_trend(df)
+        st.dataframe(styled_df, height=400, use_container_width=True)
 
         with tab2:
             # Original SDR Ageing Analysis Section
@@ -1482,15 +1480,21 @@ def show_itss_dashboard():
         col1, col2, col3 = st.columns(3)
         with col1:
             total_outstanding = current_data[aging_categories].sum().sum()
-            display_custom_metric("Total Outstanding",f"₹{total_outstanding:.2f} Lakhs")
-        
+            display_custom_metric("Total Outstanding", f"₹{total_outstanding:.2f} Lakhs")
+
         with col2:
             high_risk = current_data[['361-720', 'More than 2 Yr']].sum().sum()
-            display_custom_metric("High Risk Amount",f"₹{high_risk:.2f} Lakhs",f"{(high_risk/total_outstanding*100 if total_outstanding else 0):.1f}%")
+            high_risk_percentage = (high_risk / total_outstanding * 100) if total_outstanding != 0 else 0
+            display_custom_metric(
+                "High Risk Amount",
+                f"₹{high_risk:.2f} Lakhs",
+                delta=f"{high_risk_percentage:.1f}%",
+                delta_type="inverse" if high_risk_percentage < 0 else "normal"
+            )
         
         with col3:
             active_accounts = len(current_data[current_data[aging_categories].sum(axis=1) > 0])
-            display_custom_metric("Active Accounts",str(active_accounts))
+            display_custom_metric("Active Accounts", str(active_accounts))
         
         # Main data display
         st.markdown("### Account-wise Aging Analysis")
@@ -1625,28 +1629,28 @@ def show_tsg_dashboard():
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            # Adjusting to explicitly control the arrows and coloring
-            if total_change < 0:
-                display_custom_metric(f"Total Receivables (as of {date_cols[0]})",f"₹{latest_total:,.0f}",delta=f"↓ ₹{abs(total_change):,.0f}",delta_type="inverse")
-                
-            else:
-                display_custom_metric(f"Total Receivables (as of {date_cols[0]})",f"₹{latest_total:,.0f}",delta=f"↑ ₹{abs(total_change):,.0f}",delta_type="normal")  # Red color indicating worsening
+            display_custom_metric(
+                f"Total Receivables (as of {date_cols[0]})",
+                f"₹{latest_total:,.0f}",
+                delta=f"₹{total_change:,.0f}",
+                delta_type="inverse" if total_change < 0 else "normal"
+            )
 
         with col2:
-            # Week-on-Week Change logic
-            if week_change_pct < 0:
-                display_custom_metric("Week-on-Week Change",f"{abs(week_change_pct):.2f}%",delta=f"↓ {abs(week_change_pct):.2f}%",delta_type="inverse")
-                
-            else:
-                display_custom_metric("Week-on-Week Change",f"{abs(week_change_pct):.2f}%",delta=f"↑ {abs(week_change_pct):.2f}%",delta_type="normal")
+            display_custom_metric(
+                "Week-on-Week Change",
+                f"{abs(week_change_pct):.2f}%",
+                delta=f"{week_change_pct:.2f}%",
+                delta_type="inverse" if week_change_pct < 0 else "normal"
+            )
 
         with col3:
-            # Month-to-Date Change logic
-            if month_change_pct < 0:
-                display_custom_metric("Month-to-Date Change",f"{abs(month_change_pct):.2f}%",delta=f"↓ {abs(month_change_pct):.2f}%",delta_type="inverse")
-                
-            else:
-                display_custom_metric("Month-to-Date Change",f"{abs(month_change_pct):.2f}%",delta=f"↑ {abs(month_change_pct):.2f}%",delta_type="normal")  
+            display_custom_metric(
+                "Month-to-Date Change",
+                f"{abs(month_change_pct):.2f}%",
+                delta=f"{month_change_pct:.2f}%",
+                delta_type="inverse" if month_change_pct < 0 else "normal"
+            )
 
         # Main trend table
         st.markdown("### Ageing-wise Trend Analysis")
