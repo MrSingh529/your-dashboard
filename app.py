@@ -854,10 +854,12 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
     """
     # Set delta properties: color and icon
     delta_arrow = "↑" if delta_type == "normal" else "↓"
-    delta_color = "#27AE60" if delta_type == "normal" else "#F39C12"  # Green for increase, Orange for decrease
+    delta_color = "#E74C3C" if delta_type == "normal" else "#27AE60"  # Red for increase, Green for decrease
 
     # Set background color for different cards
-    background_color = "linear-gradient(to right, #ffe6e6, #fff5cc);"
+    background_color = "#FFF7E6" if title == "Total Outstanding" else \
+                       "#F6C6C6" if title == "High Risk Amount" else \
+                       "#CFF2C7"  # Light peach, muted red, and light green (all softer tones)
 
     # Create HTML for the metric card
     delta_html = f"""<div style="font-size: 16px; color: {delta_color}; font-weight: 600;">{delta_arrow} {delta}</div>""" if delta else ""
@@ -881,8 +883,8 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
     " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 8px 16px rgba(0, 0, 0, 0.2)';" 
       onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 8px rgba(0, 0, 0, 0.1)';"
     >
-        <div style="font-size: 16px; font-weight: 600; color: #20B2AA; margin-bottom: 10px;">{title}</div>
-        <div style="font-size: 24px; font-weight: bold; color: #00BFFF; margin-bottom: 10px;">{value}</div>
+        <div style="font-size: 16px; font-weight: 600; color: #333333; margin-bottom: 10px;">{title}</div>
+        <div style="font-size: 24px; font-weight: bold; color: #333333; margin-bottom: 10px;">{value}</div>
         {delta_html}
     </div>
     """
