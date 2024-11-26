@@ -24,181 +24,204 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS with loading animation, custom font, and sidebar styling
-st.markdown("""
+# Add a dark mode toggle
+if 'dark_mode' not in st.session_state:
+    st.session_state['dark_mode'] = False
+
+def toggle_dark_mode():
+    st.session_state['dark_mode'] = not st.session_state['dark_mode']
+
+st.sidebar.button("Toggle Dark Mode", on_click=toggle_dark_mode)
+
+# CSS with loading animation, custom font, dark mode, and sidebar styling
+if st.session_state['dark_mode']:
+    background_gradient = "linear-gradient(to bottom right, #2c3e50, #34495e);"
+    card_background = "#3b3b3b"
+    text_color = "#ecf0f1"
+    link_color = "#3498db"
+    hover_color = "#2980b9"
+else:
+    background_gradient = "linear-gradient(to bottom right, #f7f9fc, #eaf3ff);"
+    card_background = "#ffffff"
+    text_color = "#2c3e50"
+    link_color = "#007BFF"
+    hover_color = "#0056b3"
+
+st.markdown(f"""
     <style>
-    @font-face {
+    @font-face {{
         font-family: 'GlassdoorSans';
         src: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/fonts/GlassdoorSans-Regular.woff2') format('woff2');
         font-weight: normal;
         font-style: normal;
-    }
+    }}
 
-    * {
+    * {{
         font-family: 'GlassdoorSans', sans-serif !important;
-    }
+    }}
 
-    html, body, .main, .stTextInput > div > input, .stButton > button, .stMarkdown, label, h1, h2, h3, h4, h5, h6, p, div, span, li, a, input, textarea, button, select {
+    html, body, .main, .stTextInput > div > input, .stButton > button, .stMarkdown, label, h1, h2, h3, h4, h5, h6, p, div, span, li, a, input, textarea, button, select {{
         font-family: 'GlassdoorSans', sans-serif !important;
-    }
+        color: {text_color} !important;
+    }}
 
     /* Main Content Styling */
-    .main {
+    .main {{
         padding: 20px;
-        background: linear-gradient(to bottom right, #f7f9fc, #eaf3ff); /* Gradient background for a softer look */
-    }
+        background: {background_gradient}; /* Gradient background for a softer look */
+    }}
 
-    .metric-card {
-        background-color: #ffffff;
+    .metric-card {{
+        background-color: {card_background};
         padding: 25px;
         border-radius: 15px;
         box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         margin: 15px 0;
         transition: transform 0.4s, box-shadow 0.4s;
-    }
+    }}
 
-    .metric-card:hover {
+    .metric-card:hover {{
         transform: translateY(-5px) scale(1.03);
         box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-    }
+    }}
 
-    .filter-container {
+    .filter-container {{
         background-color: #e3efff;
         padding: 25px;
         border-radius: 15px;
         box-shadow: 0 3px 10px rgba(0,0,0,0.1);
         margin-bottom: 25px;
-    }
+    }}
 
-    .comparison-card {
-        background-color: #ffffff;
+    .comparison-card {{
+        background-color: {card_background};
         padding: 25px;
         border-radius: 15px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         margin: 15px 0;
         transition: transform 0.4s, box-shadow 0.4s;
-    }
+    }}
 
-    .comparison-card:hover {
+    .comparison-card:hover {{
         transform: translateY(-5px) scale(1.03);
         box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-    }
+    }}
 
-    .trend-positive {
+    .trend-positive {{
         color: #27ae60;
         font-weight: bold;
-    }
+    }}
 
-    .trend-negative {
+    .trend-negative {{
         color: #e74c3c;
         font-weight: bold;
-    }
+    }}
 
-    .login-container {
+    .login-container {{
         max-width: 450px;
         margin: auto;
         padding: 30px;
-        background-color: #ffffff;
+        background-color: {card_background};
         border-radius: 15px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-    }
+    }}
 
-    .stButton>button {
+    .stButton>button {{
         width: 100%;
         margin-top: 15px;
-        background-color: #007BFF;
+        background-color: {link_color};
         color: #ffffff;
         border: none;
         border-radius: 12px;
         padding: 12px;
         font-size: 1.1em;
         transition: background-color 0.3s, box-shadow 0.3s;
-    }
+    }}
 
-    .stButton>button:hover {
-        background-color: #0056b3;
+    .stButton>button:hover {{
+        background-color: {hover_color};
         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
+    }}
 
     /* Loading animation */
-    .loading {
+    .loading {{
         display: inline-block;
         width: 40px;
         height: 40px;
         border: 4px solid rgba(0,0,0,.1);
         border-radius: 50%;
-        border-top-color: #007BFF;
+        border-top-color: {link_color};
         animation: spin 1s linear infinite;
-    }
+    }}
 
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
+    @keyframes spin {{
+        to {{ transform: rotate(360deg); }}
+    }}
 
     /* Custom Sidebar Styling */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(to bottom, #f0f2f6, #d9e6ff); /* Light gradient background for sidebar */
+    [data-testid="stSidebar"] {{
+        background: {background_gradient}; /* Light gradient background for sidebar */
         color: black;
         border-right: 1px solid #d1d8e0;
-    }
+    }}
     
-    [data-testid="stSidebar"] .sidebar-content {
+    [data-testid="stSidebar"] .sidebar-content {{
         padding: 25px;
-    }
+    }}
 
-    [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
-        color: #2d3436;  /* Slightly darker text color for readability */
-    }
+    [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {{
+        color: {text_color};  /* Slightly darker text color for readability */
+    }}
 
-    [data-testid="stSidebar"] a {
-        color: #007BFF;  /* Theme color for links */
+    [data-testid="stSidebar"] a {{
+        color: {link_color};  /* Theme color for links */
         text-decoration: none;
-    }
+    }}
     
-    [data-testid="stSidebar"] a:hover {
+    [data-testid="stSidebar"] a:hover {{
         text-decoration: underline;
-    }
+    }}
 
     /* Custom Sidebar Branding */
-    .sidebar-logo-container {
+    .sidebar-logo-container {{
         text-align: center;
         margin-bottom: 25px;
-    }
+    }}
 
-    .sidebar-logo-container img {
+    .sidebar-logo-container img {{
         max-width: 160px;
         transition: transform 0.4s;
-    }
+    }}
 
-    .sidebar-logo-container img:hover {
+    .sidebar-logo-container img:hover {{
         transform: scale(1.1) rotate(-2deg);
-    }
+    }}
 
-    .sidebar-title {
+    .sidebar-title {{
         font-size: 1.8em;
         font-weight: bold;
         text-align: center;
         margin-bottom: 25px;
-        color: #007BFF; /* Consistent primary color */
+        color: {link_color}; /* Consistent primary color */
         text-shadow: 1px 1px 2px #d1d8e0;
-    }
+    }}
 
     /* Enhanced Header Styling */
-    .header-title {
-        color: #007BFF;
+    .header-title {{
+        color: {link_color};
         font-weight: bold;
         margin-bottom: 20px;
         text-shadow: 1px 1px 2px #eaf3ff;
-    }
+    }}
 
     /* Tooltip styling for better user guidance */
-    .tooltip {
+    .tooltip {{
         position: relative;
         display: inline-block;
         cursor: pointer;
-    }
+    }}
 
-    .tooltip .tooltiptext {
+    .tooltip .tooltiptext {{
         visibility: hidden;
         width: 180px;
         background-color: #555;
@@ -213,16 +236,16 @@ st.markdown("""
         margin-left: -90px;
         opacity: 0;
         transition: opacity 0.3s;
-    }
+    }}
 
-    .tooltip:hover .tooltiptext {
+    .tooltip:hover .tooltiptext {{
         visibility: visible;
         opacity: 1;
-    }
+    }}
     
     /* Button Animation for Attractive User Interaction */
-    .btn-animated {
-        background-color: #007BFF;
+    .btn-animated {{
+        background-color: {link_color};
         color: white;
         border-radius: 50px;
         padding: 12px 25px;
@@ -231,27 +254,27 @@ st.markdown("""
         transition: all 0.3s ease;
         font-size: 1em;
         font-weight: bold;
-    }
+    }}
 
-    .btn-animated:hover {
-        background-color: #0056b3;
+    .btn-animated:hover {{
+        background-color: {hover_color};
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
         transform: translateY(-3px);
-    }
+    }}
 
     /* Animated card hover effect */
-    .card {
+    .card {{
         position: relative;
         overflow: hidden;
         border-radius: 15px;
         box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
         transition: transform 0.4s, box-shadow 0.4s;
-    }
+    }}
 
-    .card:hover {
+    .card:hover {{
         transform: scale(1.05);
         box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
-    }
+    }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -1865,11 +1888,11 @@ def main():
 
     # Add footer to the sidebar
     st.sidebar.markdown(
-        """
+        f"""
         ---
         <div style="text-align: center; font-size: 12px; color: #555;">
             Designed to inform, built to empower – by the CEO Office. <br>
-            <a href="https://rvsolutions.in" target="_blank" style="color: black; text-decoration: none;">RV Solutions</a>
+            <a href="https://rvsolutions.in" target="_blank" style="color: {text_color}; text-decoration: none;">RV Solutions</a>
         </div>
         """,
         unsafe_allow_html=True
