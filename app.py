@@ -811,7 +811,7 @@ def show_comparative_analysis(filtered_df, dates, selected_branches):
             latest_total = comparison_df[f'Pending_{dates[0]}'].sum()
             prev_total = comparison_df[f'Pending_{dates[1]}'].sum()
             change = latest_total - prev_total
-            display_metric_card(
+            display_custom_metric(
                 "Total Pending Change",
                 f"₹{change:,.2f}",
                 delta=-change,  # Negative is good for pending
@@ -820,7 +820,7 @@ def show_comparative_analysis(filtered_df, dates, selected_branches):
         
         with col2:
             improvement = ((prev_total - latest_total) / prev_total * 100)
-            display_metric_card(
+            display_custom_metric(
                 "Improvement Percentage",
                 f"{improvement:.2f}%",
                 delta=improvement,
@@ -1247,7 +1247,7 @@ def show_sdr_dashboard():
 
             with col1:
                 total_reduced = df['Reduced OS'].sum()
-                display_metric_card("Total Reduced OS",f"{total_reduced:,.2f}",delta=total_reduced,delta_color="inverse")
+                display_custom_metric("Total Reduced OS",f"{total_reduced:,.2f}",delta=total_reduced,delta_color="inverse")
 
             with col2:
                 latest_date = date_columns[0]
@@ -1255,11 +1255,11 @@ def show_sdr_dashboard():
                 latest_total = df[latest_date].sum()
                 prev_total = df[prev_date].sum()
                 change = latest_total - prev_total
-                display_metric_card(f"Latest Total ({latest_date})",f"{latest_total:,.2f}",delta=-change, delta_color="inverse")
+                display_custom_metric(f"Latest Total ({latest_date})",f"{latest_total:,.2f}",delta=-change, delta_color="inverse")
 
             with col3:
                 reduction_percent = ((prev_total - latest_total) / prev_total * 100) if prev_total != 0 else 0
-                display_metric_card("Week-on-Week Improvement",f"{reduction_percent:.2f}%",delta=reduction_percent, delta_color="inverse")
+                display_custom_metric("Week-on-Week Improvement",f"{reduction_percent:.2f}%",delta=reduction_percent, delta_color="inverse")
 
         with tab2:
             # Original SDR Ageing Analysis Section
@@ -1462,15 +1462,15 @@ def show_itss_dashboard():
         col1, col2, col3 = st.columns(3)
         with col1:
             total_outstanding = current_data[aging_categories].sum().sum()
-            display_metric_card("Total Outstanding",f"₹{total_outstanding:.2f} Lakhs")
+            display_custom_metric("Total Outstanding",f"₹{total_outstanding:.2f} Lakhs")
         
         with col2:
             high_risk = current_data[['361-720', 'More than 2 Yr']].sum().sum()
-            display_metric_card("High Risk Amount",f"₹{high_risk:.2f} Lakhs",f"{(high_risk/total_outstanding*100 if total_outstanding else 0):.1f}%")
+            display_custom_metric("High Risk Amount",f"₹{high_risk:.2f} Lakhs",f"{(high_risk/total_outstanding*100 if total_outstanding else 0):.1f}%")
         
         with col3:
             active_accounts = len(current_data[current_data[aging_categories].sum(axis=1) > 0])
-            display_metric_card("Active Accounts",str(active_accounts))
+            display_custom_metric("Active Accounts",str(active_accounts))
         
         # Main data display
         st.markdown("### Account-wise Aging Analysis")
@@ -1607,26 +1607,26 @@ def show_tsg_dashboard():
         with col1:
             # Adjusting to explicitly control the arrows and coloring
             if total_change < 0:
-                display_metric_card(f"Total Receivables (as of {date_cols[0]})",f"₹{latest_total:,.0f}",delta=f"↓ ₹{abs(total_change):,.0f}",delta_color="inverse")
+                display_custom_metric(f"Total Receivables (as of {date_cols[0]})",f"₹{latest_total:,.0f}",delta=f"↓ ₹{abs(total_change):,.0f}",delta_color="inverse")
                 
             else:
-                display_metric_card(f"Total Receivables (as of {date_cols[0]})",f"₹{latest_total:,.0f}",delta=f"↑ ₹{abs(total_change):,.0f}",delta_color="normal")  # Red color indicating worsening
+                display_custom_metric(f"Total Receivables (as of {date_cols[0]})",f"₹{latest_total:,.0f}",delta=f"↑ ₹{abs(total_change):,.0f}",delta_color="normal")  # Red color indicating worsening
 
         with col2:
             # Week-on-Week Change logic
             if week_change_pct < 0:
-                display_metric_card("Week-on-Week Change",f"{abs(week_change_pct):.2f}%",delta=f"↓ {abs(week_change_pct):.2f}%",delta_color="inverse")
+                display_custom_metric("Week-on-Week Change",f"{abs(week_change_pct):.2f}%",delta=f"↓ {abs(week_change_pct):.2f}%",delta_color="inverse")
                 
             else:
-                display_metric_card("Week-on-Week Change",f"{abs(week_change_pct):.2f}%",delta=f"↑ {abs(week_change_pct):.2f}%",delta_color="normal")
+                display_custom_metric("Week-on-Week Change",f"{abs(week_change_pct):.2f}%",delta=f"↑ {abs(week_change_pct):.2f}%",delta_color="normal")
 
         with col3:
             # Month-to-Date Change logic
             if month_change_pct < 0:
-                display_metric_card("Month-to-Date Change",f"{abs(month_change_pct):.2f}%",delta=f"↓ {abs(month_change_pct):.2f}%",delta_color="inverse")
+                display_custom_metric("Month-to-Date Change",f"{abs(month_change_pct):.2f}%",delta=f"↓ {abs(month_change_pct):.2f}%",delta_color="inverse")
                 
             else:
-                display_metric_card("Month-to-Date Change",f"{abs(month_change_pct):.2f}%",delta=f"↑ {abs(month_change_pct):.2f}%",delta_color="normal")  
+                display_custom_metric("Month-to-Date Change",f"{abs(month_change_pct):.2f}%",delta=f"↑ {abs(month_change_pct):.2f}%",delta_color="normal")  
 
         # Main trend table
         st.markdown("### Ageing-wise Trend Analysis")
