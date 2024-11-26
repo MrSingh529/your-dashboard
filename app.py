@@ -55,6 +55,12 @@ st.markdown("""
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         margin: 15px 0;
         transition: transform 0.3s;
+        height: 150px; /* Fixed height */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between; /* Evenly space items vertically */
+        align-items: center; /* Center content horizontally */
+        text-align: center;
     }
 
     .metric-card:hover {
@@ -839,13 +845,19 @@ def display_metric_card(title, value, delta=None, delta_color="normal"):
     """
     Display a styled metric card with optional delta (change) display.
     """
+    delta_html = ""
+    if delta:
+        delta_html = f"""
+        <div style="font-size: 14px; color: {'green' if delta_color == 'inverse' else 'red'};">
+            {'↑' if delta_color == 'inverse' else '↓'} {delta}
+        </div>
+        """
+
     st.markdown(f"""
     <div class="metric-card">
         <div style="font-size: 18px; font-weight: bold;">{title}</div>
         <div style="font-size: 24px;">{value}</div>
-        <div style="font-size: 14px; color: {'green' if delta_color == 'inverse' else 'red'};">
-            {'↑' if delta_color == 'inverse' and delta else '↓' if delta else ''} {delta or ''}
-        </div>
+        {delta_html}
     </div>
     """, unsafe_allow_html=True)
 
