@@ -227,6 +227,20 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 
+def toggle_theme():
+    """
+    Adds a theme toggle to the sidebar.
+    """
+    theme = st.sidebar.radio("Theme", ["Light", "Dark"])
+    st.markdown(f"""
+    <style>
+        body {{
+            background-color: {"#f7f9fc" if theme == "Light" else "#333333"};
+            color: {"#000000" if theme == "Light" else "#ffffff"};
+        }}
+    </style>
+    """, unsafe_allow_html=True)
+
 # Enhanced security with password hashing
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -1775,6 +1789,8 @@ def main():
     if not check_password():
         return
 
+    toggle_theme()    
+    
     # Display the department and report menu
     selected_report_function = show_department_menu()
 
