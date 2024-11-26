@@ -857,9 +857,7 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
     delta_color = "#27AE60" if delta_type == "normal" else "#F39C12"  # Green for increase, Orange for decrease
 
     # Set background color for different cards
-    background_color = "#FFEFD5" if title == "Total Outstanding" else \
-                       "#F08080" if title == "High Risk Amount" else \
-                       "#98FB98"  # Light Peach, Coral, Pale Green
+    background_color = "linear-gradient(to right, #ffe6e6, #fff5cc);"
 
     # Create HTML for the metric card
     delta_html = f"""<div style="font-size: 16px; color: {delta_color}; font-weight: 600;">{delta_arrow} {delta}</div>""" if delta else ""
