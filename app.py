@@ -844,7 +844,7 @@ def add_breadcrumb_navigation(department, report):
 
 def display_custom_metric(title, value, delta=None, delta_type="normal"):
     """
-    Display a custom metric card with HTML-based styling for a more polished appearance.
+    Display a custom metric card with enhanced HTML-based styling for a modern and responsive appearance.
 
     Args:
     - title (str): The title of the metric.
@@ -852,9 +852,9 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
     - delta (str, optional): Change value with indicators. Defaults to None.
     - delta_type (str, optional): Type of delta ('normal' for increase, 'inverse' for decrease). Defaults to 'normal'.
     """
-    # Assign delta arrow and color based on delta_type
+    # Set delta properties: color and icon
     delta_arrow = "↑" if delta_type == "normal" else "↓"
-    delta_color = "#2ecc71" if delta_type == "inverse" else "#e74c3c"
+    delta_color = "#e74c3c" if delta_type == "normal" else "#2ecc71"  # Red for normal (increase), Green for inverse (decrease)
 
     # Create HTML for the metric card
     delta_html = f"""<div style="font-size: 14px; color: {delta_color}; font-weight: 600;">{delta_arrow} {delta}</div>""" if delta else ""
@@ -862,16 +862,17 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
     card_html = f"""
     <div style="
         background-color: #ffffff;
-        padding: 25px;
+        padding: 20px;
         border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease-in-out;
-        margin: 15px 0;
-        width: 250px;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        margin: 10px;
+        min-width: 200px;
         text-align: center;
+        flex: 1;  /* Allows cards to be responsive */
+        transition: transform 0.3s ease-in-out;
     ">
-        <div style="font-size: 18px; font-weight: bold; color: #34495e; margin-bottom: 8px;">{title}</div>
-        <div style="font-size: 26px; font-weight: bold; color: #2c3e50; margin-bottom: 8px;">{value}</div>
+        <div style="font-size: 18px; font-weight: 600; color: #34495e; margin-bottom: 8px;">{title}</div>
+        <div style="font-size: 24px; font-weight: bold; color: #2c3e50; margin-bottom: 8px;">{value}</div>
         {delta_html}
     </div>
     """
