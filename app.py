@@ -845,6 +845,7 @@ def display_metric_card(title, value, delta=None, delta_color="normal"):
     """
     Display a styled metric card with optional delta (change) display.
     """
+    # Build the delta section
     delta_html = ""
     if delta:
         delta_html = f"""
@@ -853,6 +854,7 @@ def display_metric_card(title, value, delta=None, delta_color="normal"):
         </div>
         """
 
+    # Combine all sections into one styled HTML block
     st.markdown(f"""
     <div class="metric-card">
         <div style="font-size: 18px; font-weight: bold;">{title}</div>
