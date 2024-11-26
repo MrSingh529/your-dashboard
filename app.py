@@ -49,11 +49,11 @@ st.markdown("""
     }
 
     .metric-card {
-        background-color: white;
+        background-color: #ffffff;
         padding: 20px;
-        border-radius: 10px;
+        border-radius: 15px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        margin: 15px 0;
+        margin: 15px;
         height: 180px; /* Ensures all tiles are of the same height */
         width: 220px;  /* Ensures all tiles are of the same width */
         display: flex;
@@ -61,12 +61,14 @@ st.markdown("""
         justify-content: center;
         align-items: center;
         text-align: center;
-        transition: transform 0.3s ease-in-out;
+        transition: all 0.5s ease-in-out;
+        cursor: pointer;
     }
 
     .metric-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        transform: perspective(500px) rotateX(3deg) rotateY(3deg) scale(1.05);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        border: 1px solid rgba(0, 123, 255, 0.4);
     }
 
     .filter-container {
@@ -90,12 +92,12 @@ st.markdown("""
     }
 
     .trend-positive {
-        color: #2ecc71;
+        color: #27ae60;
         font-weight: bold;
     }
 
     .trend-negative {
-        color: #e74c3c;
+        color: #c0392b;
         font-weight: bold;
     }
 
