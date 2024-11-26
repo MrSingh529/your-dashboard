@@ -844,7 +844,7 @@ def add_breadcrumb_navigation(department, report):
 
 def display_custom_metric(title, value, delta=None, delta_type="normal"):
     """
-    Display a custom metric card with enhanced HTML-based styling for a modern and responsive appearance.
+    Display a custom metric card with enhanced styling, animations, and consistency.
 
     Args:
     - title (str): The title of the metric.
@@ -854,25 +854,32 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
     """
     # Set delta properties: color and icon
     delta_arrow = "↑" if delta_type == "normal" else "↓"
-    delta_color = "#e74c3c" if delta_type == "normal" else "#2ecc71"  # Red for normal (increase), Green for inverse (decrease)
+    delta_color = "#e74c3c" if delta_type == "normal" else "#2ecc71"  # Red for increase, Green for decrease
 
     # Create HTML for the metric card
-    delta_html = f"""<div style="font-size: 14px; color: {delta_color}; font-weight: 600;">{delta_arrow} {delta}</div>""" if delta else ""
+    delta_html = f"""<div style="font-size: 16px; color: {delta_color}; font-weight: 600;">{delta_arrow} {delta}</div>""" if delta else ""
 
     card_html = f"""
     <div style="
         background-color: #ffffff;
         padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        margin: 10px;
-        min-width: 200px;
+        border-radius: 15px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin: 15px;
+        width: 230px;  /* Fixed width for consistency across all cards */
+        height: 160px; /* Fixed height for consistency */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
         text-align: center;
-        flex: 1;  /* Allows cards to be responsive */
-        transition: transform 0.3s ease-in-out;
-    ">
-        <div style="font-size: 18px; font-weight: 600; color: #34495e; margin-bottom: 8px;">{title}</div>
-        <div style="font-size: 24px; font-weight: bold; color: #2c3e50; margin-bottom: 8px;">{value}</div>
+        transition: all 0.3s ease-in-out;
+        cursor: pointer;
+    " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 8px 16px rgba(0, 0, 0, 0.2)';" 
+      onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 8px rgba(0, 0, 0, 0.1)';"
+    >
+        <div style="font-size: 18px; font-weight: 600; color: #34495e; margin-bottom: 10px;">{title}</div>
+        <div style="font-size: 28px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;">{value}</div>
         {delta_html}
     </div>
     """
