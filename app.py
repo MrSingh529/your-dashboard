@@ -53,29 +53,20 @@ st.markdown("""
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        margin: 15px;
-        width: 230px;
-        height: 160px;
+        margin: 15px 0;
+        height: 180px; /* Ensures all tiles are of the same height */
+        width: 220px;  /* Ensures all tiles are of the same width */
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         text-align: center;
-        transition: all 0.5s ease-in-out;
-        cursor: pointer;
+        transition: transform 0.3s ease-in-out;
     }
 
-    /* Hover effect for metric cards */
     .metric-card:hover {
-        transform: scale(1.05);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-        border: 2px solid #007BFF;  /* Light blue border to make cards stand out */
-    }
-
-    .metric-icon {
-        font-size: 36px;
-        margin-bottom: 10px;
-        color: #007BFF; /* Consistent blue color for the icon */
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
 
     .filter-container {
@@ -181,6 +172,7 @@ st.markdown("""
         max-width: 150px;
         transition: transform 0.3s;
     }
+
     .sidebar-logo-container img:hover {
         transform: scale(1.1);
     }
@@ -869,21 +861,44 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
                        "#F6C6C6" if title == "High Risk Amount" else \
                        "#CFF2C7"  # Light peach, muted red, and light green (all softer tones)
 
-    # Define the HTML for the metric card
+    # Inject CSS for the card styles
+    st.markdown(f"""
+        <style>
+            .metric-card {{
+                background-color: {background_color};
+                padding: 20px;
+                border-radius: 15px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                margin: 15px;
+                width: 230px;  /* Fixed width for consistency across all cards */
+                height: 160px; /* Fixed height for consistency */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                transition: all 0.5s ease-in-out;
+                cursor: pointer;
+            }}
+            .metric-card:hover {{
+                transform: perspective(500px) rotateX(3deg) rotateY(3deg) scale(1.05);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+                border: 1px solid rgba(0, 173, 239, 0.4);
+            }}
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Create HTML for the metric card
     delta_html = f"""<div style="font-size: 16px; color: {delta_color}; font-weight: 600;">{delta_arrow} {delta}</div>""" if delta else ""
 
     card_html = f"""
     <div class="metric-card">
-        <div class="metric-icon">
-            📊
-        </div>
-        <div style="font-size: 16px; font-weight: 500; color: #333333; margin-bottom: 5px;">{title}</div>
+        <div style="font-size: 16px; font-weight: 500; color: #333333; margin-bottom: 10px;">{title}</div>
         <div style="font-size: 22px; font-weight: bold; color: #333333; margin-bottom: 10px;">{value}</div>
         {delta_html}
     </div>
     """
 
-    # Render the card using Streamlit's markdown
     st.markdown(card_html, unsafe_allow_html=True)
 
 # Enhanced dashboard display
