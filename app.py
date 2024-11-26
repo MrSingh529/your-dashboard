@@ -816,7 +816,7 @@ def show_comparative_analysis(filtered_df, dates, selected_branches):
             display_metric_card(
                 "Improvement Percentage",
                 f"{improvement:.2f}%",
-                delta=improvement
+                delta=improvement,
                 delta_color="inverse"
             )
             
