@@ -842,7 +842,7 @@ def add_breadcrumb_navigation(department, report):
     </div>
     """, unsafe_allow_html=True)
 
-def display_metric_card(title, value, delta=None, delta_color="normal"):
+ddef display_metric_card(title, value, delta=None, delta_color="normal"):
     """
     Display a styled metric card with optional delta (change) display.
     """
