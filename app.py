@@ -219,7 +219,7 @@ st.markdown("""
     }
     
     body {
-        background-image: url('https://example.com/background-image.jpg');
+        background-image: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/bg.png');
         background-size: cover;
         background-attachment: fixed;
     }
