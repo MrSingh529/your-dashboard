@@ -217,8 +217,52 @@ st.markdown("""
         visibility: visible;
         opacity: 1;
     }
+    
+    /* Style for the Logout button */
+    .logout-button-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000; /* Keep it on top */
+    }
+
+    .logout-button-container a {
+        text-decoration: none;
+        color: #333333;
+        font-size: 14px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        background: #ffffff;
+        padding: 8px 12px;
+        border-radius: 8px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s;
+    }
+
+    .logout-button-container a:hover {
+        background-color: #f8f8f8;
+    }
+
+    .logout-button-container img {
+        width: 20px;
+        height: 20px;
+        margin-right: 5px;
+    }
     </style>
-""", unsafe_allow_html=True)
+
+    <div class="logout-button-container">
+        <a href="javascript:document.forms['logout'].submit();">
+            <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logout.png" alt="Logout Icon">
+            Logout
+        </a>
+        <form action="" method="post" name="logout">
+            <input type="hidden" name="logout" value="true">
+        </form>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
 st.sidebar.markdown(
