@@ -1876,9 +1876,14 @@ def main():
 
     # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
-        # Applying a fresh, cohesive look for the welcome screen
+        # Applying a fresh cinematic look for the welcome screen
         st.markdown("""
             <style>
+                body {
+                    margin: 0;
+                    padding: 0;
+                    overflow-x: hidden;
+                }
                 .welcome-container {
                     display: flex;
                     flex-direction: column;
@@ -1887,41 +1892,47 @@ def main():
                     margin: 60px auto;
                     max-width: 800px;
                     padding: 40px;
-                    background: rgba(255, 255, 255, 0.9);
-                    border-radius: 20px;
-                    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
                     animation: fadeIn 1.5s ease-in-out;
                 }
                 .welcome-title {
-                    font-size: 2.5em;
+                    font-size: 3em;
                     font-weight: bold;
-                    color: #333333;
+                    color: #ffffff;
                     text-align: center;
-                    margin-bottom: 20px;
+                    margin-bottom: 50px;
                     letter-spacing: 0.05em;
+                    text-shadow: 0 5px 15px rgba(0, 0, 0, 0.6);
+                }
+                .cinematic-container {
+                    position: relative;
+                    max-width: 800px;
+                    margin: 0 auto;
                 }
                 .step-card {
-                    background: rgba(247, 247, 247, 0.95);
+                    position: relative;
                     padding: 20px;
+                    background: rgba(255, 255, 255, 0.2);
+                    backdrop-filter: blur(10px);
                     border-radius: 15px;
-                    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-                    margin: 10px;
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+                    margin: 15px 0;
+                    transition: transform 0.3s ease, box-shadow 0.3s ease;
+                    cursor: pointer;
                     width: 90%;
-                    display: flex;
-                    align-items: center;
                 }
-                .icon {
-                    font-size: 1.8em;
-                    margin-right: 15px;
-                    color: #007bff;
+                .step-card:hover {
+                    transform: translateY(-5px) scale(1.02);
+                    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
                 }
                 .step-text {
-                    font-size: 1.2em;
-                    color: #444444;
-                    line-height: 1.5;
+                    font-size: 1.3em;
+                    font-weight: 500;
+                    color: #ffffff;
+                    text-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+                    line-height: 1.6;
                 }
                 .step-text strong {
-                    color: #007bff;
+                    color: #00acee;
                 }
                 @keyframes fadeIn {
                     from {
@@ -1935,25 +1946,24 @@ def main():
                 }
             </style>
 
-            <div class="welcome-container">
-                <div class="welcome-title">Welcome, Harpinder! 👋</div>
-                <div class="step-card">
-                    <span class="icon">✨</span>
-                    <p class="step-text">
-                        <strong>To get started</strong>, please choose a department from the <strong>Select Department</strong> dropdown on the left.
-                    </p>
-                </div>
-                <div class="step-card">
-                    <span class="icon">📊</span>
-                    <p class="step-text">
-                        After that, <strong>pick the report</strong> you'd like to explore.
-                    </p>
-                </div>
-                <div class="step-card">
-                    <span class="icon">🗂️</span>
-                    <p class="step-text">
-                        Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
-                    </p>
+            <div class="cinematic-container">
+                <div class="welcome-container">
+                    <div class="welcome-title">Welcome, Harpinder! 👋</div>
+                    <div class="step-card">
+                        <p class="step-text">
+                            ✨ <strong>To get started</strong>, please choose a department from the <strong>Select Department</strong> dropdown on the left.
+                        </p>
+                    </div>
+                    <div class="step-card">
+                        <p class="step-text">
+                            📊 After that, <strong>pick the report</strong> you'd like to explore.
+                        </p>
+                    </div>
+                    <div class="step-card">
+                        <p class="step-text">
+                            🌟 Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
+                        </p>
+                    </div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
