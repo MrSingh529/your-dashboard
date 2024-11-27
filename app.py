@@ -1876,7 +1876,7 @@ def main():
 
     # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
-        # Applying the updated cinematic look for the welcome screen
+        # Applying the cinematic look for the welcome screen
         st.markdown("""
             <style>
                 @keyframes gradientBackground {
@@ -1906,6 +1906,19 @@ def main():
                     0% { opacity: 0; transform: translateY(20px); }
                     100% { opacity: 1; transform: translateY(0); }
                 }
+                .card-container {
+                    margin: 20px auto;
+                    padding: 20px;
+                    background: rgba(255, 255, 255, 0.9);
+                    border-radius: 15px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                    max-width: 600px;
+                }
+                .card-text {
+                    font-size: 1.2em;
+                    color: #333333;
+                    text-align: left;
+                }
                 .cinematic-subtitle {
                     font-size: 1.8em;
                     color: #ffffff;
@@ -1913,44 +1926,43 @@ def main():
                     animation: fadeIn 3s ease-in-out forwards;
                     animation-delay: 1.2s;
                 }
-                .instructions {
-                    font-size: 1.4em;
-                    color: #ffffff;
-                    opacity: 0;
-                    animation: fadeIn 3s ease-in-out forwards;
-                    animation-delay: 2.4s;
-                    margin-top: 20px;
-                }
-                .instructions ul {
-                    list-style-type: none;
-                    padding: 0;
-                }
-                .instructions li {
-                    margin-top: 12px;
-                }
-                .instructions li::before {
-                    content: "🌟 ";
-                    color: #ffd700;
-                }
             </style>
 
             <div class="cinematic-container">
                 <div class="cinematic-title">Hey there! Good Evening, Harpinder! 👋🏻</div>
                 <div class="cinematic-subtitle">You've successfully logged in to your reports dashboard! 🚀</div>
-                <div class="instructions">
-                    <ul>
-                        <li>To get started, please choose a department from the <strong>Select Department</strong> dropdown on the left.</li>
-                        <li>After that, <strong>pick the report</strong> you'd like to explore. 📊</li>
-                    </ul>
-                    <p>Harpinder has hosted several insightful reports available to help you make informed decisions. 😊</p>
-                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # Instruction cards
+        st.markdown("""
+            <div class="card-container">
+                <p class="card-text">
+                    🌟 <strong>To get started</strong>, please choose a department from the <strong>Select Department</strong> dropdown on the left.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+            <div class="card-container">
+                <p class="card-text">
+                    🌟 After that, <strong>pick the report</strong> you'd like to explore. 📊
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+            <div class="card-container">
+                <p class="card-text">
+                    🌟 Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
+                </p>
             </div>
         """, unsafe_allow_html=True)
 
     else:
+        # Display the selected report if both department and report are chosen
         selected_report_function()
 
-    # Sidebar settings
     st.sidebar.markdown("---")
     st.sidebar.subheader("General Options")
     if st.sidebar.button("Logout"):
@@ -1958,12 +1970,13 @@ def main():
         st.rerun()
         st.sidebar.info("Logged out successfully!")
 
-    # Footer branding in sidebar
+    # Footer Branding in Sidebar
     st.sidebar.markdown(
         """
         ---
-        <div style="text-align: center; font-size: 12px; color: #ccc;">
-            Designed to inspire – by <a href="https://rvsolutions.in" target="_blank" style="color: white; text-decoration: none;">RV Solutions</a>.
+        <div style="text-align: center; font-size: 12px; color: #555;">
+            Designed to inform, built to empower – by the CEO Office. <br>
+            <a href="https://rvsolutions.in" target="_blank" style="color: black; text-decoration: none;">RV Solutions</a>
         </div>
         """,
         unsafe_allow_html=True
