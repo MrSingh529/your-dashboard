@@ -1881,7 +1881,7 @@ def main():
     st.sidebar.markdown("---")
 
     # Custom Logout Button using the image link
-    logout_image_url = "https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logout.png"
+    logout_image_url = "https://raw.githubusercontent.com/MrSingh529/your-dashboard/blob/main/assets/logout.png"
 
     # Place the logout button at the top of the sidebar and make it smaller
     st.sidebar.markdown(
