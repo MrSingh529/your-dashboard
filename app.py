@@ -27,19 +27,14 @@ st.set_page_config(
 # CSS with loading animation, custom font, and sidebar styling
 st.markdown("""
     <style>
-    @font-face {
-        font-family: 'PlayfairDisplay';
-        src: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/fonts/PlayfairDisplay-Regular.ttf') format('truetype');
-        font-weight: normal;
-        font-style: normal;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap');
 
     * {
-        font-family: 'PlayfairDisplay', serif !important;
+        font-family: 'Caveat', cursive !important;
     }
 
     html, body, .main, .stTextInput > div > input, .stButton > button, .stMarkdown, label, h1, h2, h3, h4, h5, h6, p, div, span, li, a, input, textarea, button, select {
-        font-family: 'PlayfairDisplay', serif !important;
+        font-family: 'Caveat', cursive !important;
     }
 
     /* Main Content Styling */
