@@ -221,59 +221,58 @@ st.markdown("""
     /* Style for buttons container at the top right of the main page */
     .top-right-buttons-container {
         position: absolute;
-        top: 10px;
-        right: 10px;
+        top: 15px;
+        right: 15px;
         z-index: 1000;
         display: flex;
         gap: 15px;
     }
 
-    .top-right-buttons-container a {
-        text-decoration: none;
-        color: #333333;
+    .top-right-button {
+        background-color: #007BFF;
+        color: #ffffff;
+        padding: 10px 15px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
         font-size: 14px;
         font-weight: bold;
-        display: flex;
-        align-items: center;
-        background: #ffffff;
-        padding: 8px 12px;
-        border-radius: 8px;
-        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-        transition: background-color 0.3s, transform 0.2s;
+        text-decoration: none;
     }
 
-    .top-right-buttons-container a:hover {
-        background-color: #f8f8f8;
-        transform: scale(1.05);
-    }
-
-    .top-right-buttons-container img {
-        width: 20px;
-        height: 20px;
-        margin-right: 5px;
+    .top-right-button:hover {
+        background-color: #0056b3;
     }
     </style>
-
-    <div class="top-right-buttons-container">
-        <a href="javascript:document.forms['exportForm'].submit();" title="Export Analysis">
-            <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/export.png" alt="Export Icon">
-            Export
-        </a>
-        <form action="" method="post" name="exportForm">
-            <input type="hidden" name="export" value="true">
-        </form>
-
-        <a href="javascript:document.forms['logoutForm'].submit();" title="Logout">
-            <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logout.png" alt="Logout Icon">
-            Logout
-        </a>
-        <form action="" method="post" name="logoutForm">
-            <input type="hidden" name="logout" value="true">
-        </form>
-    </div>
     """,
     unsafe_allow_html=True
 )
+
+# Create a container at the top-right corner for Export and Logout buttons
+buttons_container = st.empty()
+with buttons_container.container():
+    col1, col2 = st.columns([0.9, 0.1])
+    with col2:
+        # Create buttons for "Export" and "Logout"
+        if st.button("Export", key="export_button"):
+            st.session_state["export_triggered"] = True
+        if st.button("Logout", key="logout_button"):
+            st.session_state["logout_triggered"] = True
+
+# Handle Export action
+if st.session_state.get("export_triggered", False):
+    # Place your logic for exporting data here
+    st.success("Export process triggered. (This is where the data export logic would go.)")
+    # Reset export trigger state
+    st.session_state["export_triggered"] = False
+
+# Handle Logout action
+if st.session_state.get("logout_triggered", False):
+    # Clear all session state
+    st.session_state.clear()
+    # Display logout message
+    st.info("You have been logged out successfully.")
+    st.stop()
 
 # Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
 st.sidebar.markdown(
@@ -1838,17 +1837,14 @@ def show_department_menu():
     st.sidebar.title("Select Department and Report")
     DEPARTMENT_REPORTS = {
         "CSD": {
-            "Branch Reco Trend": show_collections_dashboard,
-            "CSD SDR Trend": show_sdr_dashboard
+            "Branch Reco Trend": lambda: st.write("Branch Reco Trend Report Placeholder"),
+            "CSD SDR Trend": lambda: st.write("CSD SDR Trend Report Placeholder")
         },
         "TSG": {
-            "TSG Payment Receivables": show_tsg_dashboard
+            "TSG Payment Receivables": lambda: st.write("TSG Payment Receivables Report Placeholder")
         },
         "ITSS": {
-            "ITSS SDR Analysis": show_itss_dashboard
-        },
-        "Finance": {
-            # Add Finance reports here
+            "ITSS SDR Analysis": lambda: st.write("ITSS SDR Analysis Report Placeholder")
         }
     }
 
