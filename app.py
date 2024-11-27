@@ -223,9 +223,10 @@ st.markdown("""
         background-size: cover;
         background-attachment: fixed;
     }
+
     .main {
+        background: rgba(255, 255, 255, 0.9); /* Adding a slight transparency to main content */
         padding: 20px;
-        background: rgba(255, 255, 255, 0.8); /* White background with some transparency for better readability */
         border-radius: 15px;
         box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
