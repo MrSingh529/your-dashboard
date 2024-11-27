@@ -1837,7 +1837,7 @@ def show_department_menu():
     st.sidebar.title("Select Department and Report")
     DEPARTMENT_REPORTS = {
         "CSD": {
-            "Branch Reco Trend": lambda: st.write("Branch Reco Trend Report Placeholder"),
+            "Branch Reco Trend": lambda: st.write(show_collections_dashboard),
             "CSD SDR Trend": lambda: st.write("CSD SDR Trend Report Placeholder")
         },
         "TSG": {
