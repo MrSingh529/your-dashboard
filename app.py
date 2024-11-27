@@ -1889,7 +1889,7 @@ def main():
                     text-align: center;
                     background: linear-gradient(270deg, #ff416c, #ff4b2b, #ff9a00, #ffd700, #007bff, #0056b3);
                     background-size: 800% 800%;
-                    animation: gradientBackground 15s ease infinite;
+                    animation: gradientBackground 10s ease infinite;
                     border-radius: 20px;
                     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
                     margin-bottom: 30px;
@@ -1909,7 +1909,7 @@ def main():
                 .card-container-unified {
                     margin: 30px auto;
                     padding: 30px;
-                    max-width: 800px;
+                    max-width: 1000px;
                     background: rgba(255, 255, 255, 0.85);
                     border-radius: 15px;
                     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
