@@ -119,7 +119,7 @@ st.markdown("""
     .stButton>button:hover {
         background-color: #0056b3;
     }
-    
+
     /* Loading animation */
     .loading {
         display: inline-block;
@@ -217,62 +217,8 @@ st.markdown("""
         visibility: visible;
         opacity: 1;
     }
-    
-    /* Style for buttons container at the top right of the main page */
-    .top-right-buttons-container {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        z-index: 1000;
-        display: flex;
-        gap: 15px;
-    }
-
-    .top-right-button {
-        background-color: #007BFF;
-        color: #ffffff;
-        padding: 10px 15px;
-        border-radius: 5px;
-        border: none;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: bold;
-        text-decoration: none;
-    }
-
-    .top-right-button:hover {
-        background-color: #0056b3;
-    }
     </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# Create a container at the top-right corner for Export and Logout buttons
-buttons_container = st.empty()
-with buttons_container.container():
-    col1, col2 = st.columns([0.9, 0.1])
-    with col2:
-        # Create buttons for "Export" and "Logout"
-        if st.button("Export", key="export_button"):
-            st.session_state["export_triggered"] = True
-        if st.button("Logout", key="logout_button"):
-            st.session_state["logout_triggered"] = True
-
-# Handle Export action
-if st.session_state.get("export_triggered", False):
-    # Place your logic for exporting data here
-    st.success("Export process triggered. (This is where the data export logic would go.)")
-    # Reset export trigger state
-    st.session_state["export_triggered"] = False
-
-# Handle Logout action
-if st.session_state.get("logout_triggered", False):
-    # Clear all session state
-    st.session_state.clear()
-    # Display logout message
-    st.info("You have been logged out successfully.")
-    st.stop()
+""", unsafe_allow_html=True)
 
 # Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
 st.sidebar.markdown(
@@ -1834,20 +1780,13 @@ def define_department_structure():
     }
 
 def show_department_menu():
+    """Display hierarchical department menu"""
     st.sidebar.title("Select Department and Report")
-    DEPARTMENT_REPORTS = {
-        "CSD": {
-            "Branch Reco Trend": lambda: st.write(show_collections_dashboard),
-            "CSD SDR Trend": lambda: st.write("CSD SDR Trend Report Placeholder")
-        },
-        "TSG": {
-            "TSG Payment Receivables": lambda: st.write("TSG Payment Receivables Report Placeholder")
-        },
-        "ITSS": {
-            "ITSS SDR Analysis": lambda: st.write("ITSS SDR Analysis Report Placeholder")
-        }
-    }
 
+    # Get department structure
+    DEPARTMENT_REPORTS = define_department_structure()
+
+    # Initialize session state for menu
     if 'selected_department' not in st.session_state:
         st.session_state.selected_department = None
     if 'selected_report' not in st.session_state:
@@ -1861,12 +1800,14 @@ def show_department_menu():
         index=0
     )
 
+    # Update department selection
     if selected_department != "Select a Department":
+        # Check if department has changed
         if st.session_state.selected_department != selected_department:
             st.session_state.selected_department = selected_department
-            st.session_state.selected_report = None
+            st.session_state.selected_report = None  # Reset report selection when department changes
 
-    # Report selection based on department
+    # Show reports for selected department
     if st.session_state.selected_department:
         reports = list(DEPARTMENT_REPORTS[st.session_state.selected_department].keys())
         selected_report = st.sidebar.selectbox(
@@ -1877,8 +1818,10 @@ def show_department_menu():
         if selected_report != "Select a Report":
             st.session_state.selected_report = selected_report
 
+    # Return the selected report function, if both department and report are selected
     if st.session_state.selected_department and st.session_state.selected_report:
-        return DEPARTMENT_REPORTS[st.session_state.selected_department][st.session_state.selected_report]
+        report_function = DEPARTMENT_REPORTS[st.session_state.selected_department][st.session_state.selected_report]
+        return report_function
 
     return None
 
@@ -1911,55 +1854,15 @@ def get_custom_greeting():
 
     return f"Hey there! {greeting} 👋🏻"
 
-def add_icon_button(icon_url, button_text, key):
-    button_html = f"""
-        <div style="display: flex; align-items: center; margin-bottom: 15px;">
-            <img src="{icon_url}" style="width: 25px; height: 25px; margin-right: 8px;">
-            <form action="" method="post">
-                <button type="submit" name="{key}" style="
-                    background-color: #007BFF;
-                    color: #FFFFFF;
-                    border: none;
-                    padding: 10px 20px;
-                    border-radius: 5px;
-                    cursor: pointer;
-                ">{button_text}</button>
-            </form>
-        </div>
-    """
-    st.sidebar.markdown(button_html, unsafe_allow_html=True)
-    if f"{key}" in st.session_state:
-        return True
-    return False
-
-def add_clickable_icon(icon_url, action_name, key):
-    button_html = f"""
-        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 15px;">
-            <a href="javascript:document.forms['{key}'].submit();" style="text-decoration: none;">
-                <img src="{icon_url}" style="width: 40px; height: 40px; margin-bottom: 5px; cursor: pointer;">
-            </a>
-            <form action="" method="post" name="{key}">
-                <input type="hidden" name="{key}" value="true">
-            </form>
-            <div style="font-size: 14px; color: #333;">{action_name}</div>
-        </div>
-    """
-    st.sidebar.markdown(button_html, unsafe_allow_html=True)
-    if f"{key}" in st.session_state:
-        return True
-    return False
-
-# Sidebar Icons URLs
-export_icon_url = 'https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/export.png'
-logout_icon_url = 'https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logout.png'
-
 # In the main function, show greeting at the top:
 def main():
     if not check_password():
         return
 
+    # Display the department and report menu
     selected_report_function = show_department_menu()
 
+    # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
         st.title(get_custom_greeting())
         st.markdown("""
@@ -1967,32 +1870,29 @@ def main():
 
             - **To get started**, please choose a department from the **Select Department** dropdown on the left.
             - After that, **pick the report** you'd like to explore. 📊
+
+            Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
         """)
     else:
+        # Display the selected report if both department and report are chosen
         selected_report_function()
 
-    # Handling export and logout form submission
-    if st.session_state.get("export", False):
-        try:
-            output = io.BytesIO()
-            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                # You should pass the specific data here to be exported
-                # Example dataframe:
-                filtered_df.to_excel(writer, sheet_name='Raw Data', index=False)
-            
-            st.download_button(
-                label="📥 Download Full Report",
-                data=output.getvalue(),
-                file_name=f"collection_analysis.xlsx",
-                mime="application/vnd.ms-excel"
-            )
-        except Exception as e:
-            st.error(f"Error exporting data: {str(e)}")
-        st.session_state.export = False
-
-    if st.session_state.get("logout", False):
+    st.sidebar.markdown("---")
+    if st.sidebar.button("Logout"):
         st.session_state.clear()
         st.rerun()
+
+    # Add footer to the sidebar
+    st.sidebar.markdown(
+        """
+        ---
+        <div style="text-align: center; font-size: 12px; color: #555;">
+            Designed to inform, built to empower – by the CEO Office. <br>
+            <a href="https://rvsolutions.in" target="_blank" style="color: black; text-decoration: none;">RV Solutions</a>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 if __name__ == "__main__":
     main()
