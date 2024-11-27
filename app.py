@@ -1379,19 +1379,19 @@ def show_sdr_dashboard():
         # Export Option
         with st.sidebar.expander("Export Options"):
             st.subheader("Export Analysis")
-            if st.button("Export SDR Analysis"):
-                buffer = io.BytesIO()
-                with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-                    df.to_excel(writer, sheet_name='SDR Data', index=False)
-                    trend_df.to_excel(writer, sheet_name='Trend Analysis', index=False)
+            try:
+                if st.button("Export SDR Analysis"):
+                    buffer = io.BytesIO()
+                    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                        df.to_excel(writer, sheet_name='SDR Data', index=False)
+                        trend_df.to_excel(writer, sheet_name='Trend Analysis', index=False)
 
-                st.sidebar.download_button(
-                    label="📥 Download SDR Report",
-                    data=buffer.getvalue(),
-                    file_name=f"sdr_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                    mime="application/vnd.ms-excel"
-                )
-
+                    st.sidebar.download_button(
+                        label="📥 Download SDR Report",
+                        data=buffer.getvalue(),
+                        file_name=f"sdr_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                        mime="application/vnd.ms-excel"
+                    )
             except Exception as e:
                 st.error(f"Error in SDR analysis: {str(e)}")
                 st.write("Error details:", str(e))
