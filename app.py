@@ -1871,50 +1871,52 @@ def main():
     if not check_password():
         return
 
-    # Determine the time of day to set greeting and background
-    ist = pytz.timezone('Asia/Kolkata')
-    current_time = datetime.now(ist)
-    current_hour = current_time.hour
-
-    if current_hour < 12:
-        greeting = "Good Morning, Harpinder! ☀️"
-        background_color = "#FFE4B5"  # Morning color
-        subtitle = "Start your day with the latest insights!"
-    elif current_hour < 18:
-        greeting = "Good Afternoon, Harpinder! 🌼"
-        background_color = "#FFECB3"  # Afternoon color
-        subtitle = "Let’s keep pushing forward!"
-    else:
-        greeting = "Good Evening, Harpinder! 🌙"
-        background_color = "#FFC1E3"  # Evening color
-        subtitle = "Reflect on today’s insights before you rest."
+    # Display the department and report menu
+    selected_report_function = show_department_menu()
 
     # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
-        st.markdown(f"""
+        st.markdown("""
             <style>
-                .dynamic-container {{
-                    padding: 40px 20px;
+                @keyframes gradientBackground {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+                .cinematic-container {
+                    padding: 60px 20px;
                     text-align: center;
-                    background-color: {background_color};
-                    color: #333;
-                    border-radius: 15px;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                    background: linear-gradient(270deg, #ff9a9e, #fad0c4, #fad0c4);
+                    background-size: 600% 600%;
+                    animation: gradientBackground 15s ease infinite;
+                    border-radius: 20px;
+                    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
                     margin-bottom: 30px;
-                }}
-                .dynamic-title {{
-                    font-size: 3em;
+                }
+                .cinematic-title {
+                    font-size: 4em;
                     font-weight: bold;
-                }}
-                .dynamic-subtitle {{
-                    font-size: 1.5em;
-                    margin-top: 20px;
-                }}
+                    color: #ffffff;
+                    text-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+                    opacity: 0;
+                    animation: fadeIn 3s forwards;
+                }
+                @keyframes fadeIn {
+                    0% { opacity: 0; transform: translateY(20px); }
+                    100% { opacity: 1; transform: translateY(0); }
+                }
+                .cinematic-subtitle {
+                    font-size: 2em;
+                    color: #ffffff;
+                    opacity: 0;
+                    animation: fadeIn 3s forwards;
+                    animation-delay: 1.5s;
+                }
             </style>
 
-            <div class="dynamic-container">
-                <div class="dynamic-title">{greeting}</div>
-                <div class="dynamic-subtitle">{subtitle}</div>
+            <div class="cinematic-container">
+                <div class="cinematic-title">Hello, Harpinder! 🎥</div>
+                <div class="cinematic-subtitle">Let's create some cinematic insights today.</div>
             </div>
         """, unsafe_allow_html=True)
 
@@ -1931,8 +1933,8 @@ def main():
     st.sidebar.markdown(
         """
         ---
-        <div style="text-align: center; font-size: 12px; color: #555;">
-            Dynamic dashboards for your productivity. Created by <a href="https://rvsolutions.in" target="_blank" style="color: black;">RV Solutions</a>.
+        <div style="text-align: center; font-size: 12px; color: #ccc;">
+            Crafted to inspire cinematic moments in data. Powered by <a href="https://rvsolutions.in" target="_blank" style="color: white;">RV Solutions</a>.
         </div>
         """,
         unsafe_allow_html=True
