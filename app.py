@@ -1876,7 +1876,7 @@ def main():
 
     # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
-        # Applying the cinematic look for the welcome screen
+        # Applying the updated cinematic look for the welcome screen
         st.markdown("""
             <style>
                 @keyframes gradientBackground {
@@ -1887,38 +1887,38 @@ def main():
                 .cinematic-container {
                     padding: 60px 20px;
                     text-align: center;
-                    background: linear-gradient(270deg, #ff9a9e, #fad0c4, #fad0c4);
-                    background-size: 600% 600%;
-                    animation: gradientBackground 15s ease infinite;
+                    background: linear-gradient(270deg, #ff416c, #ff4b2b, #ff9a00, #ffd700, #007bff, #0056b3);
+                    background-size: 800% 800%;
+                    animation: gradientBackground 20s ease infinite;
                     border-radius: 20px;
-                    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
                     margin-bottom: 30px;
                 }
                 .cinematic-title {
-                    font-size: 3em;
+                    font-size: 3.2em;
                     font-weight: bold;
                     color: #ffffff;
-                    text-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+                    text-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
                     opacity: 0;
-                    animation: fadeIn 3s forwards;
+                    animation: fadeIn 2.5s ease-in-out forwards;
                 }
                 @keyframes fadeIn {
                     0% { opacity: 0; transform: translateY(20px); }
                     100% { opacity: 1; transform: translateY(0); }
                 }
                 .cinematic-subtitle {
-                    font-size: 1.5em;
+                    font-size: 1.8em;
                     color: #ffffff;
                     opacity: 0;
-                    animation: fadeIn 3s forwards;
-                    animation-delay: 1.5s;
+                    animation: fadeIn 3s ease-in-out forwards;
+                    animation-delay: 1.2s;
                 }
                 .instructions {
-                    font-size: 1.2em;
+                    font-size: 1.4em;
                     color: #ffffff;
                     opacity: 0;
-                    animation: fadeIn 3s forwards;
-                    animation-delay: 3s;
+                    animation: fadeIn 3s ease-in-out forwards;
+                    animation-delay: 2.4s;
                     margin-top: 20px;
                 }
                 .instructions ul {
@@ -1926,7 +1926,11 @@ def main():
                     padding: 0;
                 }
                 .instructions li {
-                    margin-top: 10px;
+                    margin-top: 12px;
+                }
+                .instructions li::before {
+                    content: "🌟 ";
+                    color: #ffd700;
                 }
             </style>
 
@@ -1935,8 +1939,8 @@ def main():
                 <div class="cinematic-subtitle">You've successfully logged in to your reports dashboard! 🚀</div>
                 <div class="instructions">
                     <ul>
-                        <li>🌟 To get started, please choose a department from the <strong>Select Department</strong> dropdown on the left.</li>
-                        <li>📊 After that, <strong>pick the report</strong> you'd like to explore.</li>
+                        <li>To get started, please choose a department from the <strong>Select Department</strong> dropdown on the left.</li>
+                        <li>After that, <strong>pick the report</strong> you'd like to explore. 📊</li>
                     </ul>
                     <p>Harpinder has hosted several insightful reports available to help you make informed decisions. 😊</p>
                 </div>
