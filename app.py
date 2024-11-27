@@ -1876,17 +1876,22 @@ def main():
 
     # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
-        # Custom Hero Section for the welcome screen
         st.markdown("""
             <style>
-                .hero-section {
-                    background: linear-gradient(180deg, rgba(255, 195, 113, 0.8), rgba(255, 87, 34, 0.7)), url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/refs/heads/main/assets/bg.jpg');
+                .hero-container {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 50px;
+                    background: linear-gradient(180deg, #FFAA85, #B3315F), url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/refs/heads/main/assets/bg.jpg');
                     background-size: cover;
                     background-position: center;
                     color: #ffffff;
-                    padding: 60px;
-                    text-align: center;
                     border-radius: 15px;
+                    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2);
+                }
+                .hero-text {
+                    max-width: 60%;
                 }
                 .hero-title {
                     font-size: 3em;
@@ -1894,56 +1899,65 @@ def main():
                     margin-bottom: 0.3em;
                 }
                 .hero-subtitle {
-                    font-size: 1.5em;
+                    font-size: 1.3em;
                     font-weight: normal;
                     margin-bottom: 1.5em;
                 }
-                .card {
+                .get-started-button {
                     background-color: #ffffff;
+                    color: #ff6347;
+                    font-size: 1.1em;
+                    font-weight: bold;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    border: none;
+                    cursor: pointer;
+                    text-decoration: none;
+                    transition: all 0.3s;
+                }
+                .get-started-button:hover {
+                    background-color: #f0f0f0;
+                }
+                .hero-image {
+                    max-width: 35%;
+                }
+                .hero-image img {
+                    width: 100%;
                     border-radius: 10px;
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                    padding: 20px;
-                    margin: 10px;
-                    text-align: center;
-                    transition: transform 0.3s ease;
-                }
-                .card:hover {
-                    transform: scale(1.05);
-                    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-                }
-                .cards-container {
-                    display: flex;
-                    justify-content: space-around;
-                    flex-wrap: wrap;
-                }
-                .icon {
-                    font-size: 2em;
-                    margin-bottom: 0.5em;
+                    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
                 }
             </style>
 
-            <div class="hero-section">
-                <div class="hero-title">Hey there! Good Evening, Harpinder! 👋🏻</div>
-                <div class="hero-subtitle">
-                    You've successfully logged in to your reports dashboard! 🚀
+            <div class="hero-container">
+                <div class="hero-text">
+                    <div class="hero-title">Welcome, Harpinder! 👋🏻</div>
+                    <div class="hero-subtitle">
+                        You’ve successfully logged into the analytics dashboard where insights await. 🚀
+                    </div>
+                    <a href="#get-started" class="get-started-button">Get Started</a>
+                </div>
+                <div class="hero-image">
+                    <img src="https://via.placeholder.com/400" alt="Welcome Illustration">
                 </div>
             </div>
 
-            <div class="cards-container">
-                <div class="card">
-                    <div class="icon">📂</div>
-                    <div class="card-title"><b>Step 1: Choose a Department</b></div>
-                    <p>To get started, please select a department from the dropdown on the left.</p>
-                </div>
-                <div class="card">
-                    <div class="icon">📊</div>
-                    <div class="card-title"><b>Step 2: Pick a Report</b></div>
-                    <p>After selecting a department, choose the report you'd like to explore.</p>
-                </div>
-                <div class="card">
-                    <div class="icon">🌟</div>
-                    <div class="card-title"><b>Insights Await You</b></div>
-                    <p>Gain valuable insights with Harpinder's curated reports to help you make informed decisions.</p>
+            <div id="get-started" style="margin-top: 40px;">
+                <div class="cards-container">
+                    <div class="card">
+                        <div class="icon">📂</div>
+                        <div class="card-title"><b>Step 1: Choose a Department</b></div>
+                        <p>To get started, select a department from the dropdown on the left.</p>
+                    </div>
+                    <div class="card">
+                        <div class="icon">📊</div>
+                        <div class="card-title"><b>Step 2: Pick a Report</b></div>
+                        <p>After selecting a department, choose the report you’d like to explore.</p>
+                    </div>
+                    <div class="card">
+                        <div class="icon">✨</div>
+                        <div class="card-title"><b>Step 3: Gain Insights</b></div>
+                        <p>View insightful reports to help you make informed decisions.</p>
+                    </div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
