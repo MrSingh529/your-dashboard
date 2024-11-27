@@ -1878,88 +1878,48 @@ def main():
     if not st.session_state.selected_department or not st.session_state.selected_report:
         st.markdown("""
             <style>
-                .minimal-container {
-                    text-align: center;
-                    padding: 80px 30px;
-                    background-color: #ffffff;
+                .inspirational-container {
+                    padding: 40px 20px;
+                    background-color: #edf2fb;
                     border-radius: 20px;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                    margin-bottom: 30px;
+                    text-align: center;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                    margin-bottom: 40px;
                 }
-                .minimal-title {
+                .inspirational-title {
                     font-size: 3em;
+                    color: #1e6091;
                     font-weight: bold;
-                    color: #0b3d91;
-                    margin-bottom: 10px;
                 }
-                .minimal-subtitle {
-                    font-size: 1.5em;
+                .quote {
+                    font-style: italic;
                     color: #333333;
-                    margin-bottom: 30px;
-                }
-                .minimal-button {
-                    background-color: #ff6347;
-                    color: #ffffff;
+                    margin-top: 20px;
                     font-size: 1.2em;
-                    font-weight: bold;
-                    padding: 15px 25px;
-                    border-radius: 8px;
-                    text-decoration: none;
-                    transition: all 0.3s;
                 }
-                .minimal-button:hover {
-                    background-color: #e54e35;
-                }
-                .actions-container {
-                    display: flex;
-                    justify-content: center;
-                    gap: 20px;
-                    margin-top: 50px;
-                }
-                .action-card {
-                    background-color: #f9f9f9;
+                .progress-bar-container {
+                    margin-top: 30px;
+                    background-color: #ffffff;
                     padding: 20px;
                     border-radius: 10px;
-                    width: 300px;
-                    text-align: center;
-                    transition: transform 0.3s;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
                 }
-                .action-card:hover {
-                    transform: scale(1.05);
-                }
-                .action-title {
-                    font-size: 1.3em;
-                    font-weight: bold;
-                    color: #0b3d91;
-                }
-                .action-description {
-                    margin-top: 15px;
-                    font-size: 1em;
-                    color: #333;
+                .progress-title {
+                    font-size: 1.5em;
+                    color: #1e6091;
+                    margin-bottom: 15px;
                 }
             </style>
 
-            <div class="minimal-container">
-                <div class="minimal-title">Welcome, Harpinder</div>
-                <div class="minimal-subtitle">
-                    Access your analytics and make data-driven decisions with ease. 🚀
-                </div>
-                <a href="#explore-dashboard" class="minimal-button">Explore Dashboard</a>
+            <div class="inspirational-container">
+                <div class="inspirational-title">Welcome Back, Harpinder! 🚀</div>
+                <div class="quote">"Success is not the key to happiness. Happiness is the key to success."</div>
             </div>
 
-            <div id="explore-dashboard" class="actions-container">
-                <div class="action-card">
-                    <div class="action-title">🔍 Step 1: Choose Department</div>
-                    <div class="action-description">Select a department to proceed with your analysis.</div>
-                </div>
-                <div class="action-card">
-                    <div class="action-title">📊 Step 2: Select Report</div>
-                    <div class="action-description">View the insights and get a comprehensive view.</div>
-                </div>
-                <div class="action-card">
-                    <div class="action-title">🔎 Step 3: Get Insights</div>
-                    <div class="action-description">Analyze data and derive meaningful insights.</div>
-                </div>
+            <div class="progress-bar-container">
+                <div class="progress-title">Your Exploration Progress</div>
+                <progress value="60" max="100" style="width: 100%; height: 20px;"></progress>
+                <p style="text-align: right;">60% complete</p>
             </div>
         """, unsafe_allow_html=True)
 
