@@ -929,7 +929,7 @@ def show_collections_dashboard():
     st.sidebar.title("Options & Filters")
 
     # Branch Filters Section with Expander
-    with st.sidebar.expander("Branch Filters", expanded=True):
+    with st.sidebar.expander("Branch Filters", expanded=False):
         all_branches = sorted(df['Branch Name'].unique().tolist())  # Example branch names
         selected_branches = st.multiselect(
             "Select Branches (Search/Select)",
@@ -938,7 +938,7 @@ def show_collections_dashboard():
         )
     
     # Date Selection Section with Expander
-    with st.sidebar.expander("Date Selection", expanded=True):
+    with st.sidebar.expander("Date Selection", expanded=False):
         available_dates = sorted(df['Date'].dropna().unique(), reverse=True)  # Example dates
         selected_date_1 = st.selectbox("Select Analysis Date 1", available_dates, index=0)
         selected_date_2 = st.selectbox("Select Analysis Date 2 (for comparison)", available_dates, index=1)
