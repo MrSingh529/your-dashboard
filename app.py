@@ -218,15 +218,16 @@ st.markdown("""
         opacity: 1;
     }
     
-    body {
+    /* Target Streamlit Root Container */
+    [data-testid="stAppViewContainer"] {
         background-image: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/refs/heads/main/assets/bg.jpg');
         background-size: cover;
         background-attachment: fixed;
     }
 
     .main {
-        background: rgba(255, 255, 255, 0.9); /* Adding a slight transparency to main content */
         padding: 20px;
+        background: rgba(255, 255, 255, 0.9); /* Adding a slight transparency to main content */
         border-radius: 15px;
         box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
