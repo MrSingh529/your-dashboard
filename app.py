@@ -1883,12 +1883,14 @@ def main():
     # Custom Logout Button using the image link
     logout_image_url = "https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logout.png"
 
-    # Replace default logout button with custom image button
+    # Place the logout button at the top of the sidebar and make it smaller
     st.sidebar.markdown(
         f"""
-        <a href="#" onclick="logout()">
-            <img src="{logout_image_url}" alt="Logout Button" style="width: 150px; cursor: pointer;">
-        </a>
+        <div style="text-align: center;">
+            <a href="#" onclick="logout()">
+                <img src="{logout_image_url}" alt="Logout Button" style="width: 80px; cursor: pointer;">
+            </a>
+        </div>
         <script>
             function logout() {{
                 const logoutButton = document.querySelector('button.streamlit-button');
