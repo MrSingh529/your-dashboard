@@ -1878,20 +1878,14 @@ def main():
     if not st.session_state.selected_department or not st.session_state.selected_report:
         st.markdown("""
             <style>
-                .hero-container {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 50px;
-                    background: linear-gradient(180deg, #FFAA85, #B3315F), url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/refs/heads/main/assets/bg.jpg');
-                    background-size: cover;
-                    background-position: center;
+                .hero-section {
+                    padding: 40px;
+                    background: #3a6186; 
+                    background: -webkit-linear-gradient(to right, #89253e, #3a6186); 
+                    background: linear-gradient(to right, #89253e, #3a6186); 
                     color: #ffffff;
+                    text-align: center;
                     border-radius: 15px;
-                    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2);
-                }
-                .hero-text {
-                    max-width: 60%;
                 }
                 .hero-title {
                     font-size: 3em;
@@ -1899,66 +1893,75 @@ def main():
                     margin-bottom: 0.3em;
                 }
                 .hero-subtitle {
-                    font-size: 1.3em;
+                    font-size: 1.5em;
                     font-weight: normal;
                     margin-bottom: 1.5em;
                 }
-                .get-started-button {
-                    background-color: #ffffff;
-                    color: #ff6347;
-                    font-size: 1.1em;
-                    font-weight: bold;
-                    padding: 10px 20px;
-                    border-radius: 8px;
-                    border: none;
-                    cursor: pointer;
-                    text-decoration: none;
-                    transition: all 0.3s;
+                .section-container {
+                    margin-top: 30px;
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 20px;
+                    flex-wrap: wrap;
                 }
-                .get-started-button:hover {
-                    background-color: #f0f0f0;
-                }
-                .hero-image {
-                    max-width: 35%;
-                }
-                .hero-image img {
-                    width: 100%;
+                .card {
+                    background-color: #f5f5f5;
                     border-radius: 10px;
-                    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                    padding: 20px;
+                    width: calc(33% - 20px);
+                    text-align: center;
+                    transition: all 0.3s ease;
+                }
+                .card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+                }
+                .icon {
+                    font-size: 2em;
+                    color: #007BFF;
+                    margin-bottom: 10px;
+                }
+                .announcements {
+                    margin-top: 50px;
+                    background-color: #ff6347;
+                    padding: 20px;
+                    border-radius: 15px;
+                    color: white;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                }
+                .announcement-title {
+                    font-size: 1.5em;
+                    margin-bottom: 10px;
                 }
             </style>
 
-            <div class="hero-container">
-                <div class="hero-text">
-                    <div class="hero-title">Welcome, Harpinder! 👋🏻</div>
-                    <div class="hero-subtitle">
-                        You’ve successfully logged into the analytics dashboard where insights await. 🚀
-                    </div>
-                    <a href="#get-started" class="get-started-button">Get Started</a>
+            <div class="hero-section">
+                <div class="hero-title">Welcome, Harpinder! 👋🏻</div>
+                <div class="hero-subtitle">Access your data and analytics with ease! 🚀</div>
+            </div>
+
+            <div class="section-container">
+                <div class="card">
+                    <div class="icon">📂</div>
+                    <h3>Choose Department</h3>
+                    <p>Select from a range of departments to get started with the data.</p>
                 </div>
-                <div class="hero-image">
-                    <img src="https://via.placeholder.com/400" alt="Welcome Illustration">
+                <div class="card">
+                    <div class="icon">📊</div>
+                    <h3>Reports Dashboard</h3>
+                    <p>Explore detailed reports that provide actionable insights.</p>
+                </div>
+                <div class="card">
+                    <div class="icon">✨</div>
+                    <h3>Insights & Analytics</h3>
+                    <p>Utilize the analytics to make informed decisions.</p>
                 </div>
             </div>
 
-            <div id="get-started" style="margin-top: 40px;">
-                <div class="cards-container">
-                    <div class="card">
-                        <div class="icon">📂</div>
-                        <div class="card-title"><b>Step 1: Choose a Department</b></div>
-                        <p>To get started, select a department from the dropdown on the left.</p>
-                    </div>
-                    <div class="card">
-                        <div class="icon">📊</div>
-                        <div class="card-title"><b>Step 2: Pick a Report</b></div>
-                        <p>After selecting a department, choose the report you’d like to explore.</p>
-                    </div>
-                    <div class="card">
-                        <div class="icon">✨</div>
-                        <div class="card-title"><b>Step 3: Gain Insights</b></div>
-                        <p>View insightful reports to help you make informed decisions.</p>
-                    </div>
-                </div>
+            <div class="announcements">
+                <div class="announcement-title">📢 Announcements</div>
+                <p>Welcome to your newly upgraded dashboard. We've made improvements to enhance your experience. Check out the new features today!</p>
             </div>
         """, unsafe_allow_html=True)
 
