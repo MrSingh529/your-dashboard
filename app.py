@@ -1858,21 +1858,22 @@ def add_icon_button(icon_url, button_text, key):
     button_html = f"""
         <div style="display: flex; align-items: center; margin-bottom: 15px;">
             <img src="{icon_url}" style="width: 25px; height: 25px; margin-right: 8px;">
-            <button type="submit" style="
-                background-color: #007BFF;
-                color: #FFFFFF;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 5px;
-                cursor: pointer;
-            ">{button_text}</button>
+            <form action="" method="post">
+                <button type="submit" name="{key}" style="
+                    background-color: #007BFF;
+                    color: #FFFFFF;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                ">{button_text}</button>
+            </form>
         </div>
     """
-    if st.sidebar.button(button_text, key=key):
+    st.sidebar.markdown(button_html, unsafe_allow_html=True)
+    if f"{key}" in st.session_state:
         return True
-    else:
-        st.sidebar.markdown(button_html, unsafe_allow_html=True)
-        return False
+    return False
 
 # Sidebar Icons URLs
 export_icon_url = 'https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/export.png'
@@ -1906,7 +1907,8 @@ def main():
     st.sidebar.subheader("Export Options")
 
     # Add export button with icon
-    if add_icon_button(export_icon_url, "Export Complete Analysis", key="export_analysis"):
+    export_clicked = add_icon_button(export_icon_url, "Export Complete Analysis", key="export_analysis")
+    if export_clicked:
         try:
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -1923,7 +1925,8 @@ def main():
 
     # Sidebar: Logout button with icon
     st.sidebar.markdown("---")
-    if add_icon_button(logout_icon_url, "Logout", key="logout"):
+    logout_clicked = add_icon_button(logout_icon_url, "Logout", key="logout")
+    if logout_clicked:
         st.session_state.clear()
         st.rerun()
 
