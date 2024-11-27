@@ -1876,15 +1876,78 @@ def main():
 
     # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
-        st.title(get_custom_greeting())
+        # Custom Hero Section for the welcome screen
         st.markdown("""
-            ### You've successfully logged in to your reports dashboard! 🚀
+            <style>
+                .hero-section {
+                    background: linear-gradient(180deg, rgba(255, 195, 113, 0.8), rgba(255, 87, 34, 0.7)), url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/refs/heads/main/assets/bg.jpg');
+                    background-size: cover;
+                    background-position: center;
+                    color: #ffffff;
+                    padding: 60px;
+                    text-align: center;
+                    border-radius: 15px;
+                }
+                .hero-title {
+                    font-size: 3em;
+                    font-weight: bold;
+                    margin-bottom: 0.3em;
+                }
+                .hero-subtitle {
+                    font-size: 1.5em;
+                    font-weight: normal;
+                    margin-bottom: 1.5em;
+                }
+                .card {
+                    background-color: #ffffff;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                    padding: 20px;
+                    margin: 10px;
+                    text-align: center;
+                    transition: transform 0.3s ease;
+                }
+                .card:hover {
+                    transform: scale(1.05);
+                    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+                }
+                .cards-container {
+                    display: flex;
+                    justify-content: space-around;
+                    flex-wrap: wrap;
+                }
+                .icon {
+                    font-size: 2em;
+                    margin-bottom: 0.5em;
+                }
+            </style>
 
-            - **To get started**, please choose a department from the **Select Department** dropdown on the left.
-            - After that, **pick the report** you'd like to explore. 📊
+            <div class="hero-section">
+                <div class="hero-title">Hey there! Good Evening, Harpinder! 👋🏻</div>
+                <div class="hero-subtitle">
+                    You've successfully logged in to your reports dashboard! 🚀
+                </div>
+            </div>
 
-            Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
-        """)
+            <div class="cards-container">
+                <div class="card">
+                    <div class="icon">📂</div>
+                    <div class="card-title"><b>Step 1: Choose a Department</b></div>
+                    <p>To get started, please select a department from the dropdown on the left.</p>
+                </div>
+                <div class="card">
+                    <div class="icon">📊</div>
+                    <div class="card-title"><b>Step 2: Pick a Report</b></div>
+                    <p>After selecting a department, choose the report you'd like to explore.</p>
+                </div>
+                <div class="card">
+                    <div class="icon">🌟</div>
+                    <div class="card-title"><b>Insights Await You</b></div>
+                    <p>Gain valuable insights with Harpinder's curated reports to help you make informed decisions.</p>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
     else:
         # Display the selected report if both department and report are chosen
         selected_report_function()
