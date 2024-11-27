@@ -1854,6 +1854,30 @@ def get_custom_greeting():
 
     return f"Hey there! {greeting} 👋🏻"
 
+def add_icon_button(icon_url, button_text, key):
+    button_html = f"""
+        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+            <img src="{icon_url}" style="width: 25px; height: 25px; margin-right: 8px;">
+            <button type="submit" style="
+                background-color: #007BFF;
+                color: #FFFFFF;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+            ">{button_text}</button>
+        </div>
+    """
+    if st.sidebar.button(button_text, key=key):
+        return True
+    else:
+        st.sidebar.markdown(button_html, unsafe_allow_html=True)
+        return False
+
+# Sidebar Icons URLs
+export_icon_url = 'https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/export.png'
+logout_icon_url = 'https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logout.png'
+
 # In the main function, show greeting at the top:
 def main():
     if not check_password():
@@ -1877,31 +1901,31 @@ def main():
         # Display the selected report if both department and report are chosen
         selected_report_function()
 
-    # Add a separator line in the sidebar
+    # Sidebar: Export and Logout Buttons with Icons
     st.sidebar.markdown("---")
+    st.sidebar.subheader("Export Options")
 
-    # Custom Logout Button using the image link
-    logout_image_url = "https://raw.githubusercontent.com/MrSingh529/your-dashboard/blob/main/assets/logout.png"
+    # Add export button with icon
+    if add_icon_button(export_icon_url, "Export Complete Analysis", key="export_analysis"):
+        try:
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                filtered_df.to_excel(writer, sheet_name='Raw Data', index=False)
 
-    # Place the logout button at the top of the sidebar and make it smaller
-    st.sidebar.markdown(
-        f"""
-        <div style="text-align: center;">
-            <a href="#" onclick="logout()">
-                <img src="{logout_image_url}" alt="Logout Button" style="width: 80px; cursor: pointer;">
-            </a>
-        </div>
-        <script>
-            function logout() {{
-                const logoutButton = document.querySelector('button.streamlit-button');
-                if (logoutButton) {{
-                    logoutButton.click();
-                }}
-            }}
-        </script>
-        """,
-        unsafe_allow_html=True
-    )
+            st.sidebar.download_button(
+                label="📥 Download Full Report",
+                data=output.getvalue(),
+                file_name=f"collection_analysis_{selected_date_1}_vs_{selected_date_2}.xlsx",
+                mime="application/vnd.ms-excel"
+            )
+        except Exception as e:
+            st.sidebar.error(f"Error exporting data: {str(e)}")
+
+    # Sidebar: Logout button with icon
+    st.sidebar.markdown("---")
+    if add_icon_button(logout_icon_url, "Logout", key="logout"):
+        st.session_state.clear()
+        st.rerun()
 
     # Add footer to the sidebar
     st.sidebar.markdown(
