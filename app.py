@@ -219,7 +219,9 @@ st.markdown("""
     }
     
     body {
-        background: linear-gradient(to right, #6dd5fa, #2980b9);
+        background-image: url('https://example.com/background-image.jpg');
+        background-size: cover;
+        background-attachment: fixed;
     }
     .main {
         padding: 20px;
