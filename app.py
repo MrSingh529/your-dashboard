@@ -28,18 +28,18 @@ st.set_page_config(
 st.markdown("""
     <style>
     @font-face {
-        font-family: 'GlassdoorSans';
-        src: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/fonts/GlassdoorSans-Regular.woff2') format('woff2');
+        font-family: 'PlayfairDisplay';
+        src: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/fonts/PlayfairDisplay-Regular.ttf') format('truetype');
         font-weight: normal;
         font-style: normal;
     }
 
     * {
-        font-family: 'GlassdoorSans', sans-serif !important;
+        font-family: 'PlayfairDisplay', serif !important;
     }
 
     html, body, .main, .stTextInput > div > input, .stButton > button, .stMarkdown, label, h1, h2, h3, h4, h5, h6, p, div, span, li, a, input, textarea, button, select {
-        font-family: 'GlassdoorSans', sans-serif !important;
+        font-family: 'PlayfairDisplay', serif !important;
     }
 
     /* Main Content Styling */
