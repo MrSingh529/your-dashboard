@@ -250,7 +250,7 @@ FILE_IDS = {
 }
 
 # Replace logout button with icon-based logout button
-logout_icon = "https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logout.svg"
+logout_icon = "https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logout.png"
 
 st.sidebar.markdown(
     f"""
