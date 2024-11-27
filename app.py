@@ -1878,90 +1878,102 @@ def main():
     if not st.session_state.selected_department or not st.session_state.selected_report:
         st.markdown("""
             <style>
-                .hero-section {
-                    padding: 40px;
-                    background: #3a6186; 
-                    background: -webkit-linear-gradient(to right, #89253e, #3a6186); 
-                    background: linear-gradient(to right, #89253e, #3a6186); 
-                    color: #ffffff;
-                    text-align: center;
-                    border-radius: 15px;
+                @import url('https://fonts.googleapis.com/css2?family=Geist&display=swap');
+                body {
+                    font-family: 'Geist', sans-serif !important;
                 }
-                .hero-title {
+                .welcome-container {
+                    padding: 50px 20px;
+                    text-align: center;
+                    background: linear-gradient(120deg, #f093fb 0%, #f5576c 100%);
+                    color: #ffffff;
+                    border-radius: 15px;
+                    margin-bottom: 30px;
+                }
+                .welcome-title {
                     font-size: 3em;
                     font-weight: bold;
-                    margin-bottom: 0.3em;
+                    animation: fadeIn 1s ease-in-out;
                 }
-                .hero-subtitle {
+                .welcome-subtitle {
                     font-size: 1.5em;
-                    font-weight: normal;
-                    margin-bottom: 1.5em;
+                    margin: 20px 0;
                 }
-                .section-container {
-                    margin-top: 30px;
+                .steps-container {
                     display: flex;
-                    justify-content: space-between;
                     gap: 20px;
+                    justify-content: space-between;
+                    margin-top: 40px;
                     flex-wrap: wrap;
                 }
-                .card {
-                    background-color: #f5f5f5;
-                    border-radius: 10px;
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                    padding: 20px;
+                .step {
                     width: calc(33% - 20px);
-                    text-align: center;
-                    transition: all 0.3s ease;
-                }
-                .card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-                }
-                .icon {
-                    font-size: 2em;
-                    color: #007BFF;
-                    margin-bottom: 10px;
-                }
-                .announcements {
-                    margin-top: 50px;
-                    background-color: #ff6347;
-                    padding: 20px;
+                    background-color: #ffffff;
                     border-radius: 15px;
-                    color: white;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                    padding: 20px;
+                    color: #333;
+                    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+                    transition: transform 0.3s;
                 }
-                .announcement-title {
-                    font-size: 1.5em;
-                    margin-bottom: 10px;
+                .step:hover {
+                    transform: scale(1.05);
+                }
+                .step-icon {
+                    font-size: 2.5em;
+                    color: #f5576c;
+                    animation: shake 0.5s;
+                }
+                .step-title {
+                    margin-top: 10px;
+                    font-weight: bold;
+                    font-size: 1.4em;
+                }
+                .step-description {
+                    margin-top: 15px;
+                    font-size: 1.1em;
+                }
+                @keyframes fadeIn {
+                    0% { opacity: 0; }
+                    100% { opacity: 1; }
+                }
+                @keyframes shake {
+                    0% { transform: translateX(0); }
+                    25% { transform: translateX(-2px); }
+                    50% { transform: translateX(2px); }
+                    75% { transform: translateX(-2px); }
+                    100% { transform: translateX(0); }
                 }
             </style>
 
-            <div class="hero-section">
-                <div class="hero-title">Welcome, Harpinder! 👋🏻</div>
-                <div class="hero-subtitle">Access your data and analytics with ease! 🚀</div>
-            </div>
-
-            <div class="section-container">
-                <div class="card">
-                    <div class="icon">📂</div>
-                    <h3>Choose Department</h3>
-                    <p>Select from a range of departments to get started with the data.</p>
-                </div>
-                <div class="card">
-                    <div class="icon">📊</div>
-                    <h3>Reports Dashboard</h3>
-                    <p>Explore detailed reports that provide actionable insights.</p>
-                </div>
-                <div class="card">
-                    <div class="icon">✨</div>
-                    <h3>Insights & Analytics</h3>
-                    <p>Utilize the analytics to make informed decisions.</p>
+            <div class="welcome-container">
+                <div class="welcome-title">Hello Harpinder! 👋🏻</div>
+                <div class="welcome-subtitle">
+                    Ready to uncover powerful insights and drive decisions with data? 🚀
                 </div>
             </div>
 
-            <div class="announcements">
-                <div class="announcement-title">📢 Announcements</div>
-                <p>Welcome to your newly upgraded dashboard. We've made improvements to enhance your experience. Check out the new features today!</p>
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-icon">📂</div>
+                    <div class="step-title">Step 1: Choose Department</div>
+                    <div class="step-description">
+                        Select the department from the dropdown menu on the left to get started.
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-icon">📊</div>
+                    <div class="step-title">Step 2: Pick Your Report</div>
+                    <div class="step-description">
+                        Select the specific report you'd like to explore and discover its insights.
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-icon">📈</div>
+                    <div class="step-title">Step 3: Analyze Data</div>
+                    <div class="step-description">
+                        Dive deep into trends, graphs, and insights for informed decision-making.
+                    </div>
+                </div>
             </div>
         """, unsafe_allow_html=True)
 
