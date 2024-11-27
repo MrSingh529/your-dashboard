@@ -1878,53 +1878,100 @@ def main():
     if not st.session_state.selected_department or not st.session_state.selected_report:
         st.markdown("""
             <style>
-                .inspirational-container {
-                    padding: 40px 20px;
-                    background-color: #edf2fb;
-                    border-radius: 20px;
+                body {
+                    background-color: #121212;
+                    color: #ffffff;
+                    font-family: 'Geist', sans-serif;
+                }
+                .dark-container {
+                    padding: 50px 20px;
                     text-align: center;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-                    margin-bottom: 40px;
+                    background: #1e1e1e;
+                    color: #ffffff;
+                    border-radius: 15px;
+                    margin-bottom: 30px;
+                    box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
                 }
-                .inspirational-title {
+                .dark-title {
                     font-size: 3em;
-                    color: #1e6091;
                     font-weight: bold;
+                    text-shadow: 0 0 10px #00e6e6;
                 }
-                .quote {
-                    font-style: italic;
-                    color: #333333;
-                    margin-top: 20px;
-                    font-size: 1.2em;
-                }
-                .progress-bar-container {
-                    margin-top: 30px;
-                    background-color: #ffffff;
-                    padding: 20px;
-                    border-radius: 10px;
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-                }
-                .progress-title {
+                .dark-subtitle {
                     font-size: 1.5em;
-                    color: #1e6091;
-                    margin-bottom: 15px;
+                    margin: 20px 0;
+                    color: #bbbbbb;
+                }
+                .dark-button {
+                    background-color: #00b3b3;
+                    color: #ffffff;
+                    padding: 15px 25px;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    transition: background-color 0.3s, transform 0.3s;
+                    box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
+                }
+                .dark-button:hover {
+                    background-color: #009999;
+                    transform: scale(1.1);
+                }
+                .steps-container {
+                    display: flex;
+                    gap: 20px;
+                    justify-content: space-evenly;
+                    margin-top: 40px;
+                    flex-wrap: wrap;
+                }
+                .step {
+                    width: calc(30% - 20px);
+                    background-color: #333333;
+                    border-radius: 15px;
+                    padding: 20px;
+                    color: #ffffff;
+                    box-shadow: 0 4px 15px rgba(255, 20, 147, 0.3);
+                    transition: transform 0.3s;
+                }
+                .step:hover {
+                    transform: scale(1.05);
+                }
+                .step-icon {
+                    font-size: 2.5em;
+                    color: #ff66b3;
+                }
+                .step-title {
+                    margin-top: 15px;
+                    font-weight: bold;
+                    font-size: 1.5em;
+                    color: #00b3b3;
                 }
             </style>
 
-            <div class="inspirational-container">
-                <div class="inspirational-title">Welcome Back, Harpinder! 🚀</div>
-                <div class="quote">"Success is not the key to happiness. Happiness is the key to success."</div>
+            <div class="dark-container">
+                <div class="dark-title">Welcome to the Dashboard, Harpinder! 🌌</div>
+                <div class="dark-subtitle">Make informed decisions with impactful insights. 🚀</div>
+                <a href="#explore-dashboard" class="dark-button">Get Started</a>
             </div>
 
-            <div class="progress-bar-container">
-                <div class="progress-title">Your Exploration Progress</div>
-                <progress value="60" max="100" style="width: 100%; height: 20px;"></progress>
-                <p style="text-align: right;">60% complete</p>
+            <div id="explore-dashboard" class="steps-container">
+                <div class="step">
+                    <div class="step-icon">📂</div>
+                    <div class="step-title">Step 1: Choose Department</div>
+                    <div class="step-description">Navigate to your desired department using the dropdown.</div>
+                </div>
+                <div class="step">
+                    <div class="step-icon">📊</div>
+                    <div class="step-title">Step 2: Pick Your Report</div>
+                    <div class="step-description">Dive into insightful reports with ease.</div>
+                </div>
+                <div class="step">
+                    <div class="step-icon">🔍</div>
+                    <div class="step-title">Step 3: Gain Insights</div>
+                    <div class="step-description">Analyze data and explore trends that matter.</div>
+                </div>
             </div>
         """, unsafe_allow_html=True)
 
     else:
-        # Display the selected report if both department and report are chosen
         selected_report_function()
 
     st.sidebar.markdown("---")
@@ -1934,13 +1981,11 @@ def main():
         st.rerun()
         st.sidebar.info("Logged out successfully!")
 
-    # Footer Branding in Sidebar
     st.sidebar.markdown(
         """
         ---
-        <div style="text-align: center; font-size: 12px; color: #555;">
-            Designed to inform, built to empower – by the CEO Office. <br>
-            <a href="https://rvsolutions.in" target="_blank" style="color: black; text-decoration: none;">RV Solutions</a>
+        <div style="text-align: center; font-size: 12px; color: #777;">
+            Dark mode enabled for a sleek and modern experience. Designed by <a href="https://rvsolutions.in" target="_blank" style="color: cyan;">RV Solutions</a>.
         </div>
         """,
         unsafe_allow_html=True
