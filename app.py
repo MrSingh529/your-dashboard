@@ -255,7 +255,7 @@ logout_icon = "https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/
 st.sidebar.markdown(
     f"""
     <div style="text-align: center; margin-top: 20px;">
-        <button style="background: none; border: none; cursor: pointer;" onclick="document.location.href='{st.experimental_rerun()}'">
+        <button style="background: none; border: none; cursor: pointer;" onclick="document.location.href='{st.rerun()}'">
             <img src="{logout_icon}" alt="Logout Icon" style="width: 24px; height: 24px;">
             <span style="font-size: 16px; font-weight: bold; color: #007BFF;">Logout</span>
         </button>
