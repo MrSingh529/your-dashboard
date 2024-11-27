@@ -1871,103 +1871,50 @@ def main():
     if not check_password():
         return
 
-    # Display the department and report menu
-    selected_report_function = show_department_menu()
+    # Determine the time of day to set greeting and background
+    ist = pytz.timezone('Asia/Kolkata')
+    current_time = datetime.now(ist)
+    current_hour = current_time.hour
+
+    if current_hour < 12:
+        greeting = "Good Morning, Harpinder! ☀️"
+        background_color = "#FFE4B5"  # Morning color
+        subtitle = "Start your day with the latest insights!"
+    elif current_hour < 18:
+        greeting = "Good Afternoon, Harpinder! 🌼"
+        background_color = "#FFECB3"  # Afternoon color
+        subtitle = "Let’s keep pushing forward!"
+    else:
+        greeting = "Good Evening, Harpinder! 🌙"
+        background_color = "#FFC1E3"  # Evening color
+        subtitle = "Reflect on today’s insights before you rest."
 
     # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
-        st.markdown("""
+        st.markdown(f"""
             <style>
-                body {
-                    background-color: #121212;
-                    color: #ffffff;
-                    font-family: 'Geist', sans-serif;
-                }
-                .dark-container {
-                    padding: 50px 20px;
+                .dynamic-container {{
+                    padding: 40px 20px;
                     text-align: center;
-                    background: #1e1e1e;
-                    color: #ffffff;
+                    background-color: {background_color};
+                    color: #333;
                     border-radius: 15px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
                     margin-bottom: 30px;
-                    box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
-                }
-                .dark-title {
+                }}
+                .dynamic-title {{
                     font-size: 3em;
                     font-weight: bold;
-                    text-shadow: 0 0 10px #00e6e6;
-                }
-                .dark-subtitle {
+                }}
+                .dynamic-subtitle {{
                     font-size: 1.5em;
-                    margin: 20px 0;
-                    color: #bbbbbb;
-                }
-                .dark-button {
-                    background-color: #00b3b3;
-                    color: #ffffff;
-                    padding: 15px 25px;
-                    border-radius: 8px;
-                    text-decoration: none;
-                    transition: background-color 0.3s, transform 0.3s;
-                    box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
-                }
-                .dark-button:hover {
-                    background-color: #009999;
-                    transform: scale(1.1);
-                }
-                .steps-container {
-                    display: flex;
-                    gap: 20px;
-                    justify-content: space-evenly;
-                    margin-top: 40px;
-                    flex-wrap: wrap;
-                }
-                .step {
-                    width: calc(30% - 20px);
-                    background-color: #333333;
-                    border-radius: 15px;
-                    padding: 20px;
-                    color: #ffffff;
-                    box-shadow: 0 4px 15px rgba(255, 20, 147, 0.3);
-                    transition: transform 0.3s;
-                }
-                .step:hover {
-                    transform: scale(1.05);
-                }
-                .step-icon {
-                    font-size: 2.5em;
-                    color: #ff66b3;
-                }
-                .step-title {
-                    margin-top: 15px;
-                    font-weight: bold;
-                    font-size: 1.5em;
-                    color: #00b3b3;
-                }
+                    margin-top: 20px;
+                }}
             </style>
 
-            <div class="dark-container">
-                <div class="dark-title">Welcome to the Dashboard, Harpinder! 🌌</div>
-                <div class="dark-subtitle">Make informed decisions with impactful insights. 🚀</div>
-                <a href="#explore-dashboard" class="dark-button">Get Started</a>
-            </div>
-
-            <div id="explore-dashboard" class="steps-container">
-                <div class="step">
-                    <div class="step-icon">📂</div>
-                    <div class="step-title">Step 1: Choose Department</div>
-                    <div class="step-description">Navigate to your desired department using the dropdown.</div>
-                </div>
-                <div class="step">
-                    <div class="step-icon">📊</div>
-                    <div class="step-title">Step 2: Pick Your Report</div>
-                    <div class="step-description">Dive into insightful reports with ease.</div>
-                </div>
-                <div class="step">
-                    <div class="step-icon">🔍</div>
-                    <div class="step-title">Step 3: Gain Insights</div>
-                    <div class="step-description">Analyze data and explore trends that matter.</div>
-                </div>
+            <div class="dynamic-container">
+                <div class="dynamic-title">{greeting}</div>
+                <div class="dynamic-subtitle">{subtitle}</div>
             </div>
         """, unsafe_allow_html=True)
 
@@ -1984,8 +1931,8 @@ def main():
     st.sidebar.markdown(
         """
         ---
-        <div style="text-align: center; font-size: 12px; color: #777;">
-            Dark mode enabled for a sleek and modern experience. Designed by <a href="https://rvsolutions.in" target="_blank" style="color: cyan;">RV Solutions</a>.
+        <div style="text-align: center; font-size: 12px; color: #555;">
+            Dynamic dashboards for your productivity. Created by <a href="https://rvsolutions.in" target="_blank" style="color: black;">RV Solutions</a>.
         </div>
         """,
         unsafe_allow_html=True
