@@ -217,6 +217,16 @@ st.markdown("""
         visibility: visible;
         opacity: 1;
     }
+    
+    body {
+        background: linear-gradient(to right, #6dd5fa, #2980b9);
+    }
+    .main {
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.8); /* White background with some transparency for better readability */
+        border-radius: 15px;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+    }
     </style>
 """, unsafe_allow_html=True)
 
