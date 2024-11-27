@@ -1876,95 +1876,80 @@ def main():
 
     # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
-        # Applying a fresh cinematic look for the welcome screen
+        # Applying a fresh, cohesive look for the welcome screen
         st.markdown("""
             <style>
-                body {
-                    margin: 0;
-                    padding: 0;
-                    overflow-x: hidden;
+                @keyframes gradientBackground {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
                 }
-                .welcome-container {
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    margin: 60px auto;
-                    max-width: 800px;
-                    padding: 40px;
-                    animation: fadeIn 1.5s ease-in-out;
+                .cinematic-container {
+                    padding: 50px 20px;
+                    text-align: center;
+                    background: linear-gradient(270deg, #ff416c, #ff4b2b, #ff9a00, #ffd700, #007bff, #0056b3);
+                    background-size: 800% 800%;
+                    animation: gradientBackground 10s ease infinite;
+                    border-radius: 20px;
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                    margin-bottom: 30px;
                 }
-                .welcome-title {
+                .cinematic-title {
                     font-size: 3em;
                     font-weight: bold;
                     color: #ffffff;
-                    text-align: center;
-                    margin-bottom: 50px;
-                    letter-spacing: 0.05em;
-                    text-shadow: 0 5px 15px rgba(0, 0, 0, 0.6);
-                }
-                .cinematic-container {
-                    position: relative;
-                    max-width: 800px;
-                    margin: 0 auto;
-                }
-                .step-card {
-                    position: relative;
-                    padding: 20px;
-                    background: rgba(255, 255, 255, 0.2);
-                    backdrop-filter: blur(10px);
-                    border-radius: 15px;
-                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-                    margin: 15px 0;
-                    transition: transform 0.3s ease, box-shadow 0.3s ease;
-                    cursor: pointer;
-                    width: 90%;
-                }
-                .step-card:hover {
-                    transform: translateY(-5px) scale(1.02);
-                    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
-                }
-                .step-text {
-                    font-size: 1.3em;
-                    font-weight: 500;
-                    color: #ffffff;
-                    text-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
-                    line-height: 1.6;
-                }
-                .step-text strong {
-                    color: #00acee;
+                    text-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+                    opacity: 0;
+                    animation: fadeIn 2.5s ease-in-out forwards;
                 }
                 @keyframes fadeIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(30px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
+                    0% { opacity: 0; transform: translateY(20px); }
+                    100% { opacity: 1; transform: translateY(0); }
+                }
+                .card-container-unified {
+                    margin: 30px auto;
+                    padding: 30px;
+                    max-width: 1200px;
+                    background: rgba(255, 255, 255, 0.85);
+                    border-radius: 15px;
+                    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+                    animation: fadeIn 3s ease-in-out;
+                    transition: all 0.4s ease-in-out;
+                }
+                .card-text-unified {
+                    font-size: 1.4em;
+                    color: #333333;
+                    text-align: left;
+                    line-height: 1.6;
+                }
+                .card-text-unified strong {
+                    color: #007bff;
+                }
+                .icon {
+                    font-size: 2em;
+                    margin-right: 15px;
+                    vertical-align: middle;
+                }
+                .card-container-unified:hover {
+                    transform: translateY(-10px);
+                    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
                 }
             </style>
 
             <div class="cinematic-container">
-                <div class="welcome-container">
-                    <div class="welcome-title">Welcome, Harpinder! 👋</div>
-                    <div class="step-card">
-                        <p class="step-text">
-                            ✨ <strong>To get started</strong>, please choose a department from the <strong>Select Department</strong> dropdown on the left.
-                        </p>
-                    </div>
-                    <div class="step-card">
-                        <p class="step-text">
-                            📊 After that, <strong>pick the report</strong> you'd like to explore.
-                        </p>
-                    </div>
-                    <div class="step-card">
-                        <p class="step-text">
-                            🌟 Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
-                        </p>
-                    </div>
-                </div>
+                <div class="cinematic-title">Hey there! Good Evening, Harpinder! 👋🏻</div>
+            </div>
+
+            <div class="card-container-unified">
+                <p class="card-text-unified">
+                    <span class="icon">✨</span> <strong>To get started</strong>, please choose a department from the <strong>Select Department</strong> dropdown on the left.
+                </p>
+                <p class="card-text-unified">
+                    <span class="icon">📊</span> After that, <strong>pick the report</strong> you'd like to explore.
+                </p>
+                <p class="card-text-unified">
+                    <span class="icon">🗂️</span> Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
+                </p>
             </div>
         """, unsafe_allow_html=True)
 
