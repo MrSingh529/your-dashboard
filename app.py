@@ -1910,7 +1910,7 @@ def main():
                     margin: 30px auto;
                     padding: 30px;
                     max-width: 1200px;
-                    background: rgba(255, 255, 255, 0.85);
+                    background: rgba(246, 239, 238, 1);
                     border-radius: 15px;
                     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
                     animation: fadeIn 3s ease-in-out;
