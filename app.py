@@ -218,12 +218,12 @@ st.markdown("""
         opacity: 1;
     }
     
-    /* Style for buttons container at the top right */
+    /* Style for buttons container at the top right of the main page */
     .top-right-buttons-container {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 1000; /* Keeps the buttons above other elements */
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
         display: flex;
         gap: 15px;
     }
