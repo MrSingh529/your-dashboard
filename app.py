@@ -54,7 +54,7 @@ st.markdown("""
     }
 
     .metric-card {
-        background-color: #ffffff;
+        background: linear-gradient(135deg, #FFEBCD, #FFDAB9); /* Light peach gradient for a warm, sunset-like feel */
         padding: 20px;
         border-radius: 15px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -68,6 +68,7 @@ st.markdown("""
         text-align: center;
         transition: all 0.5s ease-in-out;
         cursor: pointer;
+        color: #333; /* Darker color for readability against lighter background */
     }
 
     .metric-card:hover {
@@ -77,7 +78,7 @@ st.markdown("""
     }
 
     .filter-container {
-        background-color: #eef2f7;
+        background-color: #f9e8d6; /* Light cream to complement the sunset colors */
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 20px;
