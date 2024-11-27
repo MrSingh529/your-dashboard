@@ -1379,7 +1379,7 @@ def show_sdr_dashboard():
         # Export Option
         with st.sidebar.expander("Export Options"):
             st.subheader("Export Analysis")
-            if st.button("Export SDR Analysis")::
+            if st.button("Export SDR Analysis"):
                 buffer = io.BytesIO()
                 with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
                     df.to_excel(writer, sheet_name='SDR Data', index=False)
