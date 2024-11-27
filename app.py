@@ -1377,7 +1377,9 @@ def show_sdr_dashboard():
                     st.error(f"Error in plotting bar chart: {str(e)}")
 
         # Export Option
-        if st.sidebar.button("Export SDR Analysis"):
+        with st.sidebar.expander("Export Options"):
+        st.subheader("Export Analysis")
+        if st.button("Export SDR Analysis")::
             buffer = io.BytesIO()
             with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
                 df.to_excel(writer, sheet_name='SDR Data', index=False)
