@@ -221,7 +221,7 @@ st.markdown("""
     /* Style for buttons container at the top right */
     .top-right-buttons-container {
         position: fixed;
-        top: 20px;
+        top: 40px;
         right: 20px;
         z-index: 1000; /* Keeps the buttons above other elements */
         display: flex;
