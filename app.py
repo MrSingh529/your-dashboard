@@ -1875,6 +1875,23 @@ def add_icon_button(icon_url, button_text, key):
         return True
     return False
 
+def add_clickable_icon(icon_url, action_name, key):
+    button_html = f"""
+        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 15px;">
+            <a href="javascript:document.forms['{key}'].submit();" style="text-decoration: none;">
+                <img src="{icon_url}" style="width: 40px; height: 40px; margin-bottom: 5px; cursor: pointer;">
+            </a>
+            <form action="" method="post" name="{key}">
+                <input type="hidden" name="{key}" value="true">
+            </form>
+            <div style="font-size: 14px; color: #333;">{action_name}</div>
+        </div>
+    """
+    st.sidebar.markdown(button_html, unsafe_allow_html=True)
+    if f"{key}" in st.session_state:
+        return True
+    return False
+
 # Sidebar Icons URLs
 export_icon_url = 'https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/export.png'
 logout_icon_url = 'https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logout.png'
@@ -1902,12 +1919,12 @@ def main():
         # Display the selected report if both department and report are chosen
         selected_report_function()
 
-    # Sidebar: Export and Logout Buttons with Icons
+    # Sidebar: Export and Logout Icons
     st.sidebar.markdown("---")
     st.sidebar.subheader("Export Options")
 
-    # Add export button with icon
-    export_clicked = add_icon_button(export_icon_url, "Export Complete Analysis", key="export_analysis")
+    # Add export icon
+    export_clicked = add_clickable_icon("https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/export.png", "Export", key="export_analysis")
     if export_clicked:
         try:
             output = io.BytesIO()
@@ -1923,9 +1940,9 @@ def main():
         except Exception as e:
             st.sidebar.error(f"Error exporting data: {str(e)}")
 
-    # Sidebar: Logout button with icon
+    # Sidebar: Logout icon
     st.sidebar.markdown("---")
-    logout_clicked = add_icon_button(logout_icon_url, "Logout", key="logout")
+    logout_clicked = add_clickable_icon("https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logout.png", "Logout", key="logout")
     if logout_clicked:
         st.session_state.clear()
         st.rerun()
