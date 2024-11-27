@@ -1876,57 +1876,77 @@ def main():
 
     # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
+        # Applying the cinematic look for the welcome screen
         st.markdown("""
             <style>
-                .interactive-container {
-                    padding: 50px 20px;
+                @keyframes gradientBackground {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+                .cinematic-container {
+                    padding: 60px 20px;
                     text-align: center;
-                    background: #f0f8ff;
+                    background: linear-gradient(270deg, #ff9a9e, #fad0c4, #fad0c4);
+                    background-size: 600% 600%;
+                    animation: gradientBackground 15s ease infinite;
                     border-radius: 20px;
-                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
                     margin-bottom: 30px;
                 }
-                .interactive-title {
+                .cinematic-title {
                     font-size: 3em;
                     font-weight: bold;
-                    color: #007bff;
-                    margin-bottom: 20px;
+                    color: #ffffff;
+                    text-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+                    opacity: 0;
+                    animation: fadeIn 3s forwards;
                 }
-                .interactive-subtitle {
+                @keyframes fadeIn {
+                    0% { opacity: 0; transform: translateY(20px); }
+                    100% { opacity: 1; transform: translateY(0); }
+                }
+                .cinematic-subtitle {
                     font-size: 1.5em;
-                    margin-bottom: 20px;
-                    color: #666;
+                    color: #ffffff;
+                    opacity: 0;
+                    animation: fadeIn 3s forwards;
+                    animation-delay: 1.5s;
+                }
+                .instructions {
+                    font-size: 1.2em;
+                    color: #ffffff;
+                    opacity: 0;
+                    animation: fadeIn 3s forwards;
+                    animation-delay: 3s;
+                    margin-top: 20px;
+                }
+                .instructions ul {
+                    list-style-type: none;
+                    padding: 0;
+                }
+                .instructions li {
+                    margin-top: 10px;
                 }
             </style>
 
-            <div class="interactive-container">
-                <div class="interactive-title">Hello, Harpinder! 🎡</div>
-                <div class="interactive-subtitle">Let’s explore your data hands-on!</div>
+            <div class="cinematic-container">
+                <div class="cinematic-title">Hey there! Good Evening, Harpinder! 👋🏻</div>
+                <div class="cinematic-subtitle">You've successfully logged in to your reports dashboard! 🚀</div>
+                <div class="instructions">
+                    <ul>
+                        <li>🌟 To get started, please choose a department from the <strong>Select Department</strong> dropdown on the left.</li>
+                        <li>📊 After that, <strong>pick the report</strong> you'd like to explore.</li>
+                    </ul>
+                    <p>Harpinder has hosted several insightful reports available to help you make informed decisions. 😊</p>
+                </div>
             </div>
         """, unsafe_allow_html=True)
-
-        # Adding an interactive widget right on the welcome screen
-        st.markdown("#### Explore Random Data Insights 🔍")
-
-        # Sample Data
-        data = {
-            "Category": ["Category A", "Category B", "Category C", "Category D"],
-            "Value": [random.randint(50, 200) for _ in range(4)]
-        }
-        df = pd.DataFrame(data)
-
-        # Dropdown to select a category and visualize its value
-        selected_category = st.selectbox("Select a Category:", df["Category"])
-        filtered_value = df[df["Category"] == selected_category]["Value"].values[0]
-        st.write(f"**Selected Value for {selected_category}:** {filtered_value}")
-
-        # Visualization
-        fig = px.bar(df, x="Category", y="Value", title="Random Data Visualization")
-        st.plotly_chart(fig)
 
     else:
         selected_report_function()
 
+    # Sidebar settings
     st.sidebar.markdown("---")
     st.sidebar.subheader("General Options")
     if st.sidebar.button("Logout"):
@@ -1934,11 +1954,12 @@ def main():
         st.rerun()
         st.sidebar.info("Logged out successfully!")
 
+    # Footer branding in sidebar
     st.sidebar.markdown(
         """
         ---
-        <div style="text-align: center; font-size: 12px; color: #555;">
-            Dive right into interactive insights! Created by <a href="https://rvsolutions.in" target="_blank" style="color: #007bff;">RV Solutions</a>.
+        <div style="text-align: center; font-size: 12px; color: #ccc;">
+            Designed to inspire – by <a href="https://rvsolutions.in" target="_blank" style="color: white; text-decoration: none;">RV Solutions</a>.
         </div>
         """,
         unsafe_allow_html=True
