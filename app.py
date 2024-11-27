@@ -27,14 +27,14 @@ st.set_page_config(
 # CSS with loading animation, custom font, and sidebar styling
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Geist&display=swap');
 
     * {
-        font-family: 'Caveat', cursive !important;
+        font-family: 'Geist', sans-serif !important;
     }
 
     html, body, .main, .stTextInput > div > input, .stButton > button, .stMarkdown, label, h1, h2, h3, h4, h5, h6, p, div, span, li, a, input, textarea, button, select {
-        font-family: 'Caveat', cursive !important;
+        font-family: 'Geist', sans-serif !important;
     }
 
     /* Main Content Styling */
