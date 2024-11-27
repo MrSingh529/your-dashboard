@@ -1878,101 +1878,87 @@ def main():
     if not st.session_state.selected_department or not st.session_state.selected_report:
         st.markdown("""
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Geist&display=swap');
-                body {
-                    font-family: 'Geist', sans-serif !important;
-                }
-                .welcome-container {
-                    padding: 50px 20px;
+                .minimal-container {
                     text-align: center;
-                    background: linear-gradient(120deg, #f093fb 0%, #f5576c 100%);
-                    color: #ffffff;
-                    border-radius: 15px;
+                    padding: 80px 30px;
+                    background-color: #ffffff;
+                    border-radius: 20px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
                     margin-bottom: 30px;
                 }
-                .welcome-title {
+                .minimal-title {
                     font-size: 3em;
                     font-weight: bold;
-                    animation: fadeIn 1s ease-in-out;
+                    color: #0b3d91;
+                    margin-bottom: 10px;
                 }
-                .welcome-subtitle {
+                .minimal-subtitle {
                     font-size: 1.5em;
-                    margin: 20px 0;
+                    color: #333333;
+                    margin-bottom: 30px;
                 }
-                .steps-container {
+                .minimal-button {
+                    background-color: #ff6347;
+                    color: #ffffff;
+                    font-size: 1.2em;
+                    font-weight: bold;
+                    padding: 15px 25px;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    transition: all 0.3s;
+                }
+                .minimal-button:hover {
+                    background-color: #e54e35;
+                }
+                .actions-container {
                     display: flex;
+                    justify-content: center;
                     gap: 20px;
-                    justify-content: space-between;
-                    margin-top: 40px;
-                    flex-wrap: wrap;
+                    margin-top: 50px;
                 }
-                .step {
-                    width: calc(33% - 20px);
-                    background-color: #ffffff;
-                    border-radius: 15px;
+                .action-card {
+                    background-color: #f9f9f9;
                     padding: 20px;
-                    color: #333;
-                    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+                    border-radius: 10px;
+                    width: 300px;
+                    text-align: center;
                     transition: transform 0.3s;
                 }
-                .step:hover {
+                .action-card:hover {
                     transform: scale(1.05);
                 }
-                .step-icon {
-                    font-size: 2.5em;
-                    color: #f5576c;
-                    animation: shake 0.5s;
-                }
-                .step-title {
-                    margin-top: 10px;
+                .action-title {
+                    font-size: 1.3em;
                     font-weight: bold;
-                    font-size: 1.4em;
+                    color: #0b3d91;
                 }
-                .step-description {
+                .action-description {
                     margin-top: 15px;
-                    font-size: 1.1em;
-                }
-                @keyframes fadeIn {
-                    0% { opacity: 0; }
-                    100% { opacity: 1; }
-                }
-                @keyframes shake {
-                    0% { transform: translateX(0); }
-                    25% { transform: translateX(-2px); }
-                    50% { transform: translateX(2px); }
-                    75% { transform: translateX(-2px); }
-                    100% { transform: translateX(0); }
+                    font-size: 1em;
+                    color: #333;
                 }
             </style>
 
-            <div class="welcome-container">
-                <div class="welcome-title">Hello Harpinder! 👋🏻</div>
-                <div class="welcome-subtitle">
-                    Ready to uncover powerful insights and drive decisions with data? 🚀
+            <div class="minimal-container">
+                <div class="minimal-title">Welcome, Harpinder</div>
+                <div class="minimal-subtitle">
+                    Access your analytics and make data-driven decisions with ease. 🚀
                 </div>
+                <a href="#explore-dashboard" class="minimal-button">Explore Dashboard</a>
             </div>
 
-            <div class="steps-container">
-                <div class="step">
-                    <div class="step-icon">📂</div>
-                    <div class="step-title">Step 1: Choose Department</div>
-                    <div class="step-description">
-                        Select the department from the dropdown menu on the left to get started.
-                    </div>
+            <div id="explore-dashboard" class="actions-container">
+                <div class="action-card">
+                    <div class="action-title">🔍 Step 1: Choose Department</div>
+                    <div class="action-description">Select a department to proceed with your analysis.</div>
                 </div>
-                <div class="step">
-                    <div class="step-icon">📊</div>
-                    <div class="step-title">Step 2: Pick Your Report</div>
-                    <div class="step-description">
-                        Select the specific report you'd like to explore and discover its insights.
-                    </div>
+                <div class="action-card">
+                    <div class="action-title">📊 Step 2: Select Report</div>
+                    <div class="action-description">View the insights and get a comprehensive view.</div>
                 </div>
-                <div class="step">
-                    <div class="step-icon">📈</div>
-                    <div class="step-title">Step 3: Analyze Data</div>
-                    <div class="step-description">
-                        Dive deep into trends, graphs, and insights for informed decision-making.
-                    </div>
+                <div class="action-card">
+                    <div class="action-title">🔎 Step 3: Get Insights</div>
+                    <div class="action-description">Analyze data and derive meaningful insights.</div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
