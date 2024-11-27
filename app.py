@@ -231,6 +231,30 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 
+# Define logout button using the image in HTML
+st.sidebar.markdown(
+    """
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="#" id="logout-button" style="text-decoration: none;">
+            <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logout.png" alt="Logout" style="width: 100px; cursor: pointer;">
+        </a>
+    </divMrSingh529/your-dashboard/main/assets
+l       document.getElementById('logout-button').onclick = function() {
+            const logoutButton = window.parent.document.querySelectorAll('button[kind="primary"]')[0];
+            if (logoutButton) {
+                logoutButton.click();
+            }
+        };
+    </script>
+    """,
+    unsafe_allow_html=True
+)
+
+# Ensure the logout function is still triggered in the main code
+if st.sidebar.button("Logout"):
+    st.session_state.clear()
+    st.rerun()
+
 # Enhanced security with password hashing
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
