@@ -915,21 +915,23 @@ def show_collections_dashboard():
     st.title("Branch Reco Dashboard")
 
     # Sidebar Controls for Filtering - Moved to the Sidebar
-    st.sidebar.title("Analysis Controls")
+    st.sidebar.title("Options & Filters")
 
-    # Branch Selection with Search (in sidebar)
-    all_branches = sorted(df['Branch Name'].unique().tolist())
-    selected_branches = st.sidebar.multiselect(
-        "Select Branches (Search/Select)",
-        options=all_branches,
-        default=all_branches
-    )
-
-    # Date selection (in sidebar)
-    available_dates = sorted(df['Date'].dropna().unique(), reverse=True)
-    selected_date_1 = st.sidebar.selectbox("Select Analysis Date 1", available_dates, index=0)
-    selected_date_2 = st.sidebar.selectbox("Select Analysis Date 2 (for comparison)", available_dates, index=1)
-
+    # Branch Filters Section with Expander
+    with st.sidebar.expander("Branch Filters", expanded=True):
+        all_branches = sorted(df['Branch Name'].unique().tolist())  # Example branch names
+        selected_branches = st.multiselect(
+            "Select Branches (Search/Select)",
+            options=all_branches,
+            default=all_branches
+        )
+    
+    # Date Selection Section with Expander
+    with st.sidebar.expander("Date Selection", expanded=True):
+        available_dates = sorted(df['Date'].dropna().unique(), reverse=True)  # Example dates
+        selected_date_1 = st.selectbox("Select Analysis Date 1", available_dates, index=0)
+        selected_date_2 = st.selectbox("Select Analysis Date 2 (for comparison)", available_dates, index=1)
+    
     if selected_date_1 is None or selected_date_2 is None:
         st.error("No valid dates found in the dataset for analysis.")
         return
@@ -1173,23 +1175,22 @@ def show_collections_dashboard():
             st.write("Error details:", str(e))
 
     # Export Options
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("Export Options")
+    with st.sidebar.expander("Export Options"):
+        st.subheader("Export Analysis")
+        if st.button("Export Complete Analysis"):
+            try:
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                    filtered_df.to_excel(writer, sheet_name='Raw Data', index=False)
 
-    if st.sidebar.button("Export Complete Analysis"):
-        try:
-            output = io.BytesIO()
-            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                filtered_df.to_excel(writer, sheet_name='Raw Data', index=False)
-
-            st.sidebar.download_button(
-                label="📥 Download Full Report",
-                data=output.getvalue(),
-                file_name=f"collection_analysis_{selected_date_1}_vs_{selected_date_2}.xlsx",
-                mime="application/vnd.ms-excel"
-            )
-        except Exception as e:
-            st.sidebar.error(f"Error exporting data: {str(e)}")
+                st.sidebar.download_button(
+                    label="📥 Download Full Report",
+                    data=output.getvalue(),
+                    file_name=f"collection_analysis_{selected_date_1}_vs_{selected_date_2}.xlsx",
+                    mime="application/vnd.ms-excel"
+                )
+            except Exception as e:
+                st.sidebar.error(f"Error exporting data: {str(e)}")
 
 def style_sdr_trend(df):
     """
@@ -1878,11 +1879,13 @@ def main():
         selected_report_function()
 
     st.sidebar.markdown("---")
+    st.sidebar.subheader("General Options")
     if st.sidebar.button("Logout"):
         st.session_state.clear()
         st.rerun()
+        st.sidebar.info("Logged out successfully!")
 
-    # Add footer to the sidebar
+    # Footer Branding in Sidebar
     st.sidebar.markdown(
         """
         ---
