@@ -1377,24 +1377,24 @@ def show_sdr_dashboard():
                     st.error(f"Error in plotting bar chart: {str(e)}")
 
         # Export Option
-    with st.sidebar.expander("Export Options"):
-    st.subheader("Export Analysis")
-    try:
-        if st.button("Export SDR Analysis"):
-            buffer = io.BytesIO()
-            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-                df.to_excel(writer, sheet_name='SDR Data', index=False)
-                trend_df.to_excel(writer, sheet_name='Trend Analysis', index=False)
+        with st.sidebar.expander("Export Options"):
+            st.subheader("Export Analysis")
+            try:
+                if st.button("Export SDR Analysis"):
+                    buffer = io.BytesIO()
+                    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                        df.to_excel(writer, sheet_name='SDR Data', index=False)
+                        trend_df.to_excel(writer, sheet_name='Trend Analysis', index=False)
 
-            st.sidebar.download_button(
-                label="📥 Download SDR Report",
-                data=buffer.getvalue(),
-                file_name=f"sdr_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                mime="application/vnd.ms-excel"
-            )
-    except Exception as e:
-        st.error(f"Error in SDR analysis: {str(e)}")
-        st.write("Error details:", str(e))
+                    st.sidebar.download_button(
+                        label="📥 Download SDR Report",
+                        data=buffer.getvalue(),
+                        file_name=f"sdr_analysis_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                        mime="application/vnd.ms-excel"
+                    )
+            except Exception as e:
+                st.error(f"Error in SDR analysis: {str(e)}")
+                st.write("Error details:", str(e))
 
 # Make sure the try-except block is closed before starting a new function definition
 def style_itss_data(df, aging_categories):
