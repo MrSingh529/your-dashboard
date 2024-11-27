@@ -21,7 +21,7 @@ st.set_page_config(
     page_title="TSG Payment Receivables Dashboard",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # CSS with loading animation, custom font, and sidebar styling
