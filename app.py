@@ -37,10 +37,20 @@ st.markdown("""
         font-family: 'Geist', sans-serif !important;
     }
 
+    /* Target Streamlit Root Container for Background */
+    [data-testid="stAppViewContainer"] {
+        background-image: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/refs/heads/main/assets/bg.jpg');
+        background-size: cover;
+        background-attachment: fixed;
+        background-position: center;
+    }
+
     /* Main Content Styling */
-    .main {
+    [data-testid="stApp"] {
+        background: rgba(255, 255, 255, 0.8); /* Adding a slight transparency to main content */
         padding: 20px;
-        background: #f7f9fc; /* Lightened main content background for a softer look */
+        border-radius: 15px;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
 
     .metric-card {
@@ -137,24 +147,24 @@ st.markdown("""
 
     /* Custom Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: #f0f2f6; /* Light grey background for sidebar */
-        color: black; /* Text color for better contrast */
+        background-color: rgba(240, 242, 246, 0.9); /* Light grey background with transparency for sidebar */
+        color: black;
         border-right: 1px solid #e6e6e6;
     }
-    
+
     [data-testid="stSidebar"] .sidebar-content {
         padding: 20px;
     }
 
     [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
-        color: #333333;  /* Dark text color for readability */
+        color: #333333;
     }
 
     [data-testid="stSidebar"] a {
-        color: #007BFF;  /* Theme color for links */
+        color: #007BFF;
         text-decoration: none;
     }
-    
+
     [data-testid="stSidebar"] a:hover {
         text-decoration: underline;
     }
@@ -179,12 +189,12 @@ st.markdown("""
         font-weight: bold;
         text-align: center;
         margin-bottom: 20px;
-        color: #007BFF; /* Consistent primary color */
+        color: #007BFF;
     }
 
     /* Enhanced Header Styling */
     .header-title {
-        color: #007BFF;  /* Consistent theme color */
+        color: #007BFF;
         font-weight: bold;
         margin-bottom: 15px;
     }
@@ -216,20 +226,6 @@ st.markdown("""
     .tooltip:hover .tooltiptext {
         visibility: visible;
         opacity: 1;
-    }
-    
-    /* Target Streamlit Root Container */
-    [data-testid="stAppViewContainer"] {
-        background-image: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/refs/heads/main/assets/bg.jpg');
-        background-size: cover;
-        background-attachment: fixed;
-    }
-
-    .main {
-        padding: 20px;
-        background: rgba(255, 255, 255, 0.9); /* Adding a slight transparency to main content */
-        border-radius: 15px;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
     </style>
 """, unsafe_allow_html=True)
