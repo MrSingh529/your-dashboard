@@ -249,6 +249,21 @@ FILE_IDS = {
     'tsg_trend': st.secrets["google_drive"]["tsg_trend"]
 }
 
+# Replace logout button with icon-based logout button
+logout_icon = "https://fonts.gstatic.com/s/i/materialiconsoutlined/logout/v24/24px.svg"
+
+st.sidebar.markdown(
+    f"""
+    <div style="text-align: center; margin-top: 20px;">
+        <button style="background: none; border: none; cursor: pointer;" onclick="document.location.href='{st.experimental_rerun()}'">
+            <img src="{logout_icon}" alt="Logout Icon" style="width: 24px; height: 24px;">
+            <span style="font-size: 16px; font-weight: bold; color: #007BFF;">Logout</span>
+        </button>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 @st.cache_resource(ttl=3600)  # Cache authentication for 1 hour
 def authenticate_drive():
     try:
