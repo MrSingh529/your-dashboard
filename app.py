@@ -250,11 +250,6 @@ l       document.getElementById('logout-button').onclick = function() {
     unsafe_allow_html=True
 )
 
-# Ensure the logout function is still triggered in the main code
-if st.sidebar.button("Logout"):
-    st.session_state.clear()
-    st.rerun()
-
 # Enhanced security with password hashing
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -1900,8 +1895,7 @@ def main():
     else:
         # Display the selected report if both department and report are chosen
         selected_report_function()
-
-    st.sidebar.markdown("---")
+        
     if st.sidebar.button("Logout"):
         st.session_state.clear()
         st.rerun()
