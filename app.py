@@ -1877,10 +1877,29 @@ def main():
         # Display the selected report if both department and report are chosen
         selected_report_function()
 
+    # Add a separator line in the sidebar
     st.sidebar.markdown("---")
-    if st.sidebar.button("Logout"):
-        st.session_state.clear()
-        st.rerun()
+
+    # Custom Logout Button using the image link
+    logout_image_url = "https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png"
+
+    # Replace default logout button with custom image button
+    st.sidebar.markdown(
+        f"""
+        <a href="#" onclick="logout()">
+            <img src="{logout_image_url}" alt="Logout Button" style="width: 150px; cursor: pointer;">
+        </a>
+        <script>
+            function logout() {{
+                const logoutButton = document.querySelector('button.streamlit-button');
+                if (logoutButton) {{
+                    logoutButton.click();
+                }}
+            }}
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
 
     # Add footer to the sidebar
     st.sidebar.markdown(
