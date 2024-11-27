@@ -1879,77 +1879,82 @@ def main():
         # Applying a fresh, cohesive look for the welcome screen
         st.markdown("""
             <style>
-                @keyframes gradientBackground {
-                    0% { background-position: 0% 50%; }
-                    50% { background-position: 100% 50%; }
-                    100% { background-position: 0% 50%; }
-                }
-                .cinematic-container {
-                    padding: 50px 20px;
-                    text-align: center;
-                    background: linear-gradient(270deg, #ff416c, #ff4b2b, #ff9a00, #ffd700, #007bff, #0056b3);
-                    background-size: 800% 800%;
-                    animation: gradientBackground 10s ease infinite;
+                .welcome-container {
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    margin: 60px auto;
+                    max-width: 800px;
+                    padding: 40px;
+                    background: rgba(255, 255, 255, 0.9);
                     border-radius: 20px;
-                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-                    margin-bottom: 30px;
+                    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+                    animation: fadeIn 1.5s ease-in-out;
                 }
-                .cinematic-title {
-                    font-size: 3em;
+                .welcome-title {
+                    font-size: 2.5em;
                     font-weight: bold;
-                    color: #ffffff;
-                    text-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
-                    opacity: 0;
-                    animation: fadeIn 2.5s ease-in-out forwards;
-                }
-                @keyframes fadeIn {
-                    0% { opacity: 0; transform: translateY(20px); }
-                    100% { opacity: 1; transform: translateY(0); }
-                }
-                .card-container-unified {
-                    margin: 30px auto;
-                    padding: 30px;
-                    max-width: 1000px;
-                    background: rgba(255, 255, 255, 0.85);
-                    border-radius: 15px;
-                    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-                    animation: fadeIn 3s ease-in-out;
-                    transition: all 0.4s ease-in-out;
-                }
-                .card-text-unified {
-                    font-size: 1.4em;
                     color: #333333;
-                    text-align: left;
-                    line-height: 1.6;
+                    text-align: center;
+                    margin-bottom: 20px;
+                    letter-spacing: 0.05em;
                 }
-                .card-text-unified strong {
-                    color: #007bff;
+                .step-card {
+                    background: rgba(247, 247, 247, 0.95);
+                    padding: 20px;
+                    border-radius: 15px;
+                    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+                    margin: 10px;
+                    width: 90%;
+                    display: flex;
+                    align-items: center;
                 }
                 .icon {
-                    font-size: 2em;
+                    font-size: 1.8em;
                     margin-right: 15px;
-                    vertical-align: middle;
+                    color: #007bff;
                 }
-                .card-container-unified:hover {
-                    transform: translateY(-10px);
-                    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
+                .step-text {
+                    font-size: 1.2em;
+                    color: #444444;
+                    line-height: 1.5;
+                }
+                .step-text strong {
+                    color: #007bff;
+                }
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(30px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
                 }
             </style>
 
-            <div class="cinematic-container">
-                <div class="cinematic-title">Hey there! Good Evening, Harpinder! 👋🏻</div>
-            </div>
-
-            <div class="card-container-unified">
-                <p class="card-text-unified">
-                    <span class="icon">✨</span> <strong>To get started</strong>, please choose a department from the <strong>Select Department</strong> dropdown on the left.
-                </p>
-                <p class="card-text-unified">
-                    <span class="icon">📊</span> After that, <strong>pick the report</strong> you'd like to explore.
-                </p>
-                <p class="card-text-unified">
-                    <span class="icon">🗂️</span> Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
-                </p>
+            <div class="welcome-container">
+                <div class="welcome-title">Welcome, Harpinder! 👋</div>
+                <div class="step-card">
+                    <span class="icon">✨</span>
+                    <p class="step-text">
+                        <strong>To get started</strong>, please choose a department from the <strong>Select Department</strong> dropdown on the left.
+                    </p>
+                </div>
+                <div class="step-card">
+                    <span class="icon">📊</span>
+                    <p class="step-text">
+                        After that, <strong>pick the report</strong> you'd like to explore.
+                    </p>
+                </div>
+                <div class="step-card">
+                    <span class="icon">🗂️</span>
+                    <p class="step-text">
+                        Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
+                    </p>
+                </div>
             </div>
         """, unsafe_allow_html=True)
 
