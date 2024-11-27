@@ -119,7 +119,7 @@ st.markdown("""
     .stButton>button:hover {
         background-color: #0056b3;
     }
-
+    
     /* Loading animation */
     .loading {
         display: inline-block;
@@ -218,15 +218,17 @@ st.markdown("""
         opacity: 1;
     }
     
-    /* Style for the Logout button */
-    .logout-button-container {
+    /* Style for buttons container at the top right */
+    .top-right-buttons-container {
         position: fixed;
         top: 20px;
         right: 20px;
-        z-index: 1000; /* Keep it on top */
+        z-index: 1000; /* Keeps the buttons above other elements */
+        display: flex;
+        gap: 15px;
     }
 
-    .logout-button-container a {
+    .top-right-buttons-container a {
         text-decoration: none;
         color: #333333;
         font-size: 14px;
@@ -237,26 +239,35 @@ st.markdown("""
         padding: 8px 12px;
         border-radius: 8px;
         box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-        transition: background-color 0.3s;
+        transition: background-color 0.3s, transform 0.2s;
     }
 
-    .logout-button-container a:hover {
+    .top-right-buttons-container a:hover {
         background-color: #f8f8f8;
+        transform: scale(1.05);
     }
 
-    .logout-button-container img {
+    .top-right-buttons-container img {
         width: 20px;
         height: 20px;
         margin-right: 5px;
     }
     </style>
 
-    <div class="logout-button-container">
-        <a href="javascript:document.forms['logout'].submit();">
+    <div class="top-right-buttons-container">
+        <a href="javascript:document.forms['exportForm'].submit();" title="Export Analysis">
+            <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/export.png" alt="Export Icon">
+            Export
+        </a>
+        <form action="" method="post" name="exportForm">
+            <input type="hidden" name="export" value="true">
+        </form>
+
+        <a href="javascript:document.forms['logoutForm'].submit();" title="Logout">
             <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logout.png" alt="Logout Icon">
             Logout
         </a>
-        <form action="" method="post" name="logout">
+        <form action="" method="post" name="logoutForm">
             <input type="hidden" name="logout" value="true">
         </form>
     </div>
@@ -1824,13 +1835,23 @@ def define_department_structure():
     }
 
 def show_department_menu():
-    """Display hierarchical department menu"""
     st.sidebar.title("Select Department and Report")
+    DEPARTMENT_REPORTS = {
+        "CSD": {
+            "Branch Reco Trend": show_collections_dashboard,
+            "CSD SDR Trend": show_sdr_dashboard
+        },
+        "TSG": {
+            "TSG Payment Receivables": show_tsg_dashboard
+        },
+        "ITSS": {
+            "ITSS SDR Analysis": show_itss_dashboard
+        },
+        "Finance": {
+            # Add Finance reports here
+        }
+    }
 
-    # Get department structure
-    DEPARTMENT_REPORTS = define_department_structure()
-
-    # Initialize session state for menu
     if 'selected_department' not in st.session_state:
         st.session_state.selected_department = None
     if 'selected_report' not in st.session_state:
@@ -1844,14 +1865,12 @@ def show_department_menu():
         index=0
     )
 
-    # Update department selection
     if selected_department != "Select a Department":
-        # Check if department has changed
         if st.session_state.selected_department != selected_department:
             st.session_state.selected_department = selected_department
-            st.session_state.selected_report = None  # Reset report selection when department changes
+            st.session_state.selected_report = None
 
-    # Show reports for selected department
+    # Report selection based on department
     if st.session_state.selected_department:
         reports = list(DEPARTMENT_REPORTS[st.session_state.selected_department].keys())
         selected_report = st.sidebar.selectbox(
@@ -1862,10 +1881,8 @@ def show_department_menu():
         if selected_report != "Select a Report":
             st.session_state.selected_report = selected_report
 
-    # Return the selected report function, if both department and report are selected
     if st.session_state.selected_department and st.session_state.selected_report:
-        report_function = DEPARTMENT_REPORTS[st.session_state.selected_department][st.session_state.selected_report]
-        return report_function
+        return DEPARTMENT_REPORTS[st.session_state.selected_department][st.session_state.selected_report]
 
     return None
 
@@ -1945,10 +1962,8 @@ def main():
     if not check_password():
         return
 
-    # Display the department and report menu
     selected_report_function = show_department_menu()
 
-    # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
         st.title(get_custom_greeting())
         st.markdown("""
@@ -1956,52 +1971,32 @@ def main():
 
             - **To get started**, please choose a department from the **Select Department** dropdown on the left.
             - After that, **pick the report** you'd like to explore. 📊
-
-            Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
         """)
     else:
-        # Display the selected report if both department and report are chosen
         selected_report_function()
 
-    # Sidebar: Export and Logout Icons
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("Export Options")
-
-    # Add export icon
-    export_clicked = add_clickable_icon("https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/export.png", "Export", key="export_analysis")
-    if export_clicked:
+    # Handling export and logout form submission
+    if st.session_state.get("export", False):
         try:
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                # You should pass the specific data here to be exported
+                # Example dataframe:
                 filtered_df.to_excel(writer, sheet_name='Raw Data', index=False)
-
-            st.sidebar.download_button(
+            
+            st.download_button(
                 label="📥 Download Full Report",
                 data=output.getvalue(),
-                file_name=f"collection_analysis_{selected_date_1}_vs_{selected_date_2}.xlsx",
+                file_name=f"collection_analysis.xlsx",
                 mime="application/vnd.ms-excel"
             )
         except Exception as e:
-            st.sidebar.error(f"Error exporting data: {str(e)}")
+            st.error(f"Error exporting data: {str(e)}")
+        st.session_state.export = False
 
-    # Sidebar: Logout icon
-    st.sidebar.markdown("---")
-    logout_clicked = add_clickable_icon("https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logout.png", "Logout", key="logout")
-    if logout_clicked:
+    if st.session_state.get("logout", False):
         st.session_state.clear()
         st.rerun()
-
-    # Add footer to the sidebar
-    st.sidebar.markdown(
-        """
-        ---
-        <div style="text-align: center; font-size: 12px; color: #555;">
-            Designed to inform, built to empower – by the CEO Office. <br>
-            <a href="https://rvsolutions.in" target="_blank" style="color: black; text-decoration: none;">RV Solutions</a>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
 if __name__ == "__main__":
     main()
