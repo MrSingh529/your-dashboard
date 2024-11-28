@@ -1947,7 +1947,7 @@ def main():
             <p style="color: #D5DCF9 !important;">
                 <span class="icon">📊</span> After that, <strong style="color: #ffd700 !important;">pick the report</strong> you'd like to explore.
             </p>
-            <p style="color: #D5DCF9 !important;">
+            <p style="color: #D5DCF9 !important; text-align: center;">
                 <span class="icon">🗂️</span> Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
             </p>
         </div>
