@@ -1900,7 +1900,7 @@ def main():
             .cinematic-title {{
                 font-size: 3em;
                 font-weight: bold;
-                color: #ffffff;
+                color: #ffffff !important;
                 text-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
                 opacity: 0;
                 animation: fadeIn 2.5s ease-in-out forwards;
@@ -1914,7 +1914,7 @@ def main():
                 max-width: 1200px;
                 padding: 15px 20px;
                 font-size: 1.4em;
-                color: rgb(213, 220, 249) !important;
+                color: #ffffff !important;
                 text-align: left;
                 line-height: 1.6;
                 background: rgba(0, 0, 0, 0.4);
@@ -1922,13 +1922,17 @@ def main():
                 animation: fadeIn 3s ease-in-out;
                 transition: all 0.4s ease-in-out;
             }}
+            .transparent-instructions p {{
+                color: #ffffff !important;
+            }}
             .transparent-instructions strong {{
-                color: #DBDFAC; /* Emphasizing the key points */
+                color: #ffd700 !important;
             }}
             .icon {{
                 font-size: 2em;
                 margin-right: 15px;
                 vertical-align: middle;
+                color: #ffd700 !important;
             }}
         </style>
 
@@ -1937,13 +1941,13 @@ def main():
         </div>
 
         <div class="transparent-instructions">
-            <p>
-                <span class="icon">✨</span> <strong>To get started</strong>, please choose a department from the <strong>Select Department</strong> dropdown on the left.
+            <p style="color: #D5DCF9 !important;">
+                <span class="icon">✨</span> <strong style="color: #ffd700 !important;">To get started</strong>, please choose a department from the <strong style="color: #ffd700 !important;">Select Department</strong> dropdown on the left.
             </p>
-            <p>
-                <span class="icon">📊</span> After that, <strong>pick the report</strong> you'd like to explore.
+            <p style="color: #D5DCF9 !important;">
+                <span class="icon">📊</span> After that, <strong style="color: #ffd700 !important;">pick the report</strong> you'd like to explore.
             </p>
-            <p>
+            <p style="color: #D5DCF9 !important;">
                 <span class="icon">🗂️</span> Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
             </p>
         </div>
