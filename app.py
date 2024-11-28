@@ -1876,15 +1876,18 @@ def main():
 
     # Show a greeting message when no department or report is selected
     if not st.session_state.selected_department or not st.session_state.selected_report:
+        # Get the custom greeting
+        greeting_text = get_custom_greeting()
+        
         # Applying a fresh, cohesive look for the welcome screen
-        st.markdown("""
+        st.markdown(f"""
             <style>
-                @keyframes gradientBackground {
-                    0% { background-position: 0% 50%; }
-                    50% { background-position: 100% 50%; }
-                    100% { background-position: 0% 50%; }
-                }
-                .cinematic-container {
+                @keyframes gradientBackground {{
+                    0% {{ background-position: 0% 50%; }}
+                    50% {{ background-position: 100% 50%; }}
+                    100% {{ background-position: 0% 50%; }}
+                }}
+                .cinematic-container {{
                     padding: 50px 20px;
                     text-align: center;
                     background: linear-gradient(270deg, #ff416c, #ff4b2b, #ff9a00, #ffd700, #007bff, #0056b3);
@@ -1893,20 +1896,20 @@ def main():
                     border-radius: 20px;
                     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
                     margin-bottom: 30px;
-                }
-                .cinematic-title {
+                }}
+                .cinematic-title {{
                     font-size: 3em;
                     font-weight: bold;
                     color: #ffffff;
                     text-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
                     opacity: 0;
                     animation: fadeIn 2.5s ease-in-out forwards;
-                }
-                @keyframes fadeIn {
-                    0% { opacity: 0; transform: translateY(20px); }
-                    100% { opacity: 1; transform: translateY(0); }
-                }
-                .card-container-unified {
+                }}
+                @keyframes fadeIn {{
+                    0% {{ opacity: 0; transform: translateY(20px); }}
+                    100% {{ opacity: 1; transform: translateY(0); }}
+                }}
+                .card-container-unified {{
                     margin: 30px auto;
                     padding: 30px;
                     max-width: 1200px;
@@ -1915,29 +1918,29 @@ def main():
                     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
                     animation: fadeIn 3s ease-in-out;
                     transition: all 0.4s ease-in-out;
-                }
-                .card-text-unified {
+                }}
+                .card-text-unified {{
                     font-size: 1.4em;
                     color: #333333;
                     text-align: left;
                     line-height: 1.6;
-                }
-                .card-text-unified strong {
+                }}
+                .card-text-unified strong {{
                     color: #007bff;
-                }
-                .icon {
+                }}
+                .icon {{
                     font-size: 2em;
                     margin-right: 15px;
                     vertical-align: middle;
-                }
-                .card-container-unified:hover {
+                }}
+                .card-container-unified:hover {{
                     transform: translateY(-10px);
                     box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
-                }
+                }}
             </style>
 
             <div class="cinematic-container">
-                <div class="cinematic-title">Hey there! Good Evening, Harpinder! 👋🏻</div>
+                <div class="cinematic-title">{greeting_text}</div>
             </div>
 
             <div class="card-container-unified">
