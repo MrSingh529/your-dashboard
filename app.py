@@ -1331,10 +1331,6 @@ def show_sdr_dashboard():
 
             trend_df = pd.DataFrame(trend_data)
 
-            # Check if trend_df is correct
-            st.write("Debug - Trend Data Columns:", trend_df.columns.tolist())  # Verify trend data columns
-            st.write("Debug - Trend Data Preview:", trend_df.head())  # Preview trend data
-
             # Line chart for trends
             try:
                 fig = px.line(
