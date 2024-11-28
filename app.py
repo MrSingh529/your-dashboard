@@ -1914,7 +1914,7 @@ def main():
                 max-width: 1200px;
                 padding: 15px 20px;
                 font-size: 1.4em;
-                color: #ffffff;
+                color: #D5DCF9;
                 text-align: left;
                 line-height: 1.6;
                 background: rgba(0, 0, 0, 0.4);
@@ -1923,7 +1923,7 @@ def main():
                 transition: all 0.4s ease-in-out;
             }}
             .transparent-instructions strong {{
-                color: #ffd700; /* Emphasizing the key points */
+                color: #DBDFAC; /* Emphasizing the key points */
             }}
             .icon {{
                 font-size: 2em;
