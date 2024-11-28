@@ -1914,7 +1914,7 @@ def main():
                 max-width: 1200px;
                 padding: 15px 20px;
                 font-size: 1.4em;
-                color: #D5DCF9;
+                color: rgb(213, 220, 249);
                 text-align: left;
                 line-height: 1.6;
                 background: rgba(0, 0, 0, 0.4);
