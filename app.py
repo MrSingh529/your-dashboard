@@ -1931,6 +1931,7 @@ def main():
                 cursor: pointer;
                 box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.2);
                 transition: transform 0.3s, box-shadow 0.3s;
+                width: 100px;
             }}
             .get-started-button:hover {{
                 transform: translateY(-5px);
