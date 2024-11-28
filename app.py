@@ -1878,8 +1878,8 @@ def main():
     if not st.session_state.get('selected_department') or not st.session_state.get('selected_report'):
         # Get the custom greeting
         greeting_text = get_custom_greeting()
-
-        # Check if 'start_clicked' has been set in session state
+        
+        # Initialize session state variables
         if 'start_clicked' not in st.session_state:
             st.session_state['start_clicked'] = False
 
@@ -1961,10 +1961,10 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-        # Display the "Get Started" button only if it has not been clicked
+        # Display the "Get Started" button
         if not st.session_state['start_clicked']:
-            # Use a custom HTML button to have more control over the styling
-            if st.markdown('<button class="get-started-button" onclick="document.getElementById(\'start-btn\').style.display=\'none\';">Get Started</button>', unsafe_allow_html=True):
+            # Use the Streamlit button to track the click
+            if st.button('Get Started', key='get_started_button'):
                 st.session_state['start_clicked'] = True
 
         # Show the instructions after the button click, one by one
