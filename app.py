@@ -1923,7 +1923,7 @@ def main():
             .get-started-button {{
                 background: linear-gradient(45deg, #007bff, #00c6ff);
                 color: #ffffff;
-                padding: 15px 30px;
+                padding: 15px 15px;
                 font-size: 1.5em;
                 font-weight: bold;
                 border: none;
