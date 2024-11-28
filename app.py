@@ -1920,30 +1920,39 @@ def main():
                 0% {{ opacity: 1; }}
                 100% {{ opacity: 0; }}
             }}
-            .transparent-instructions {{
-                margin: 30px auto;
-                max-width: 1200px;
-                padding: 15px 20px;
-                font-size: 1.4em;
-                color: #ffffff !important;
+            .get-started-button {{
+                background: linear-gradient(45deg, #007bff, #00c6ff);
+                color: #ffffff;
+                padding: 15px 30px;
+                font-size: 1.5em;
+                font-weight: bold;
+                border: none;
+                border-radius: 50px;
+                cursor: pointer;
+                box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.2);
+                transition: transform 0.3s, box-shadow 0.3s;
+            }}
+            .get-started-button:hover {{
+                transform: translateY(-5px);
+                box-shadow: 0px 12px 25px rgba(0, 0, 0, 0.3);
+            }}
+            .card {{
+                margin: 20px auto;
+                max-width: 800px;
+                padding: 20px;
+                font-size: 1.2em;
+                color: #333;
                 text-align: left;
                 line-height: 1.6;
-                background: rgba(0, 0, 0, 0.4);
-                border-radius: 10px;
-                animation: fadeIn 3s ease-in-out;
-                transition: all 0.4s ease-in-out;
+                background: rgba(255, 255, 255, 0.8);
+                border-radius: 15px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                opacity: 0;
+                animation: fadeInStep 2s ease-in-out forwards;
             }}
-            .transparent-instructions p {{
-                color: #ffffff !important;
-            }}
-            .transparent-instructions strong {{
-                color: #ffd700 !important;
-            }}
-            .icon {{
-                font-size: 2em;
-                margin-right: 15px;
-                vertical-align: middle;
-                color: #ffd700 !important;
+            @keyframes fadeInStep {{
+                0% {{ opacity: 0; transform: translateY(20px); }}
+                100% {{ opacity: 1; transform: translateY(0); }}
             }}
         </style>
 
@@ -1954,24 +1963,34 @@ def main():
 
         # Display the "Get Started" button only if it has not been clicked
         if not st.session_state['start_clicked']:
-            if st.button("Get Started"):
+            # Use a custom HTML button to have more control over the styling
+            if st.markdown('<button class="get-started-button" onclick="document.getElementById(\'start-btn\').style.display=\'none\';">Get Started</button>', unsafe_allow_html=True):
                 st.session_state['start_clicked'] = True
 
-        # Show the instructions after the button click
+        # Show the instructions after the button click, one by one
         if st.session_state['start_clicked']:
-            st.markdown(f"""
-            <div class="transparent-instructions">
-                <p style="color: #D5DCF9 !important;">
-                    <span class="icon">✨</span> <strong style="color: #ffd700 !important;">To get started</strong>, please choose a department from the <strong style="color: #ffd700 !important;">Select Department</strong> dropdown on the left.
-                </p>
-                <p style="color: #D5DCF9 !important;">
-                    <span class="icon">📊</span> After that, <strong style="color: #ffd700 !important;">pick the report</strong> you'd like to explore.
-                </p>
-                <p style="color: #D5DCF9 !important; text-align: center;">
-                    <span class="icon">🗂️</span> Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
+            # Delay to create step-by-step feel
+            with st.spinner("Loading steps..."):
+                time.sleep(0.5)
+                st.markdown("""
+                <div class="card">
+                    ✨ <strong>To get started</strong>, please choose a department from the <strong>Select Department</strong> dropdown on the left.
+                </div>
+                """, unsafe_allow_html=True)
+
+                time.sleep(1)
+                st.markdown("""
+                <div class="card">
+                    📊 After that, <strong>pick the report</strong> you'd like to explore.
+                </div>
+                """, unsafe_allow_html=True)
+
+                time.sleep(1)
+                st.markdown("""
+                <div class="card" style="text-align: center;">
+                    🗂️ Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
+                </div>
+                """, unsafe_allow_html=True)
 
     else:
         # Display the selected report if both department and report are chosen
