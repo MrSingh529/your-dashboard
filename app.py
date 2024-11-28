@@ -1875,10 +1875,14 @@ def main():
     selected_report_function = show_department_menu()
 
     # Show a greeting message when no department or report is selected
-    if not st.session_state.selected_department or not st.session_state.selected_report:
+    if not st.session_state.get('selected_department') or not st.session_state.get('selected_report'):
         # Get the custom greeting
         greeting_text = get_custom_greeting()
-        
+
+        # Check if 'start_clicked' has been set in session state
+        if 'start_clicked' not in st.session_state:
+            st.session_state['start_clicked'] = False
+
         # Applying a fresh, cohesive look for the welcome screen
         st.markdown(f"""
         <style>
@@ -1908,6 +1912,13 @@ def main():
             @keyframes fadeIn {{
                 0% {{ opacity: 0; transform: translateY(20px); }}
                 100% {{ opacity: 1; transform: translateY(0); }}
+            }}
+            .fade-out {{
+                animation: fadeOut 2s ease-in-out forwards;
+            }}
+            @keyframes fadeOut {{
+                0% {{ opacity: 1; }}
+                100% {{ opacity: 0; }}
             }}
             .transparent-instructions {{
                 margin: 30px auto;
@@ -1939,19 +1950,28 @@ def main():
         <div class="cinematic-container">
             <div class="cinematic-title">{greeting_text}</div>
         </div>
+        """, unsafe_allow_html=True)
 
-        <div class="transparent-instructions">
-            <p style="color: #D5DCF9 !important;">
-                <span class="icon">✨</span> <strong style="color: #ffd700 !important;">To get started</strong>, please choose a department from the <strong style="color: #ffd700 !important;">Select Department</strong> dropdown on the left.
-            </p>
-            <p style="color: #D5DCF9 !important;">
-                <span class="icon">📊</span> After that, <strong style="color: #ffd700 !important;">pick the report</strong> you'd like to explore.
-            </p>
-            <p style="color: #D5DCF9 !important; text-align: center;">
-                <span class="icon">🗂️</span> Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
+        # Display the "Get Started" button only if it has not been clicked
+        if not st.session_state['start_clicked']:
+            if st.button("Get Started"):
+                st.session_state['start_clicked'] = True
+
+        # Show the instructions after the button click
+        if st.session_state['start_clicked']:
+            st.markdown(f"""
+            <div class="transparent-instructions">
+                <p style="color: #D5DCF9 !important;">
+                    <span class="icon">✨</span> <strong style="color: #ffd700 !important;">To get started</strong>, please choose a department from the <strong style="color: #ffd700 !important;">Select Department</strong> dropdown on the left.
+                </p>
+                <p style="color: #D5DCF9 !important;">
+                    <span class="icon">📊</span> After that, <strong style="color: #ffd700 !important;">pick the report</strong> you'd like to explore.
+                </p>
+                <p style="color: #D5DCF9 !important; text-align: center;">
+                    <span class="icon">🗂️</span> Harpinder has hosted several insightful reports available to help you make informed decisions. 😊
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
 
     else:
         # Display the selected report if both department and report are chosen
