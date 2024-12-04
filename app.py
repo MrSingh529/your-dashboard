@@ -89,41 +89,30 @@ st.write("This is a version to add back some elements and check if they cause an
 if st.button("Click Me"):
     st.success("Button clicked successfully!")
 
-# Simplified bubble background script
+# Simplified bubble creation script with debugging logs
 bubble_script = """
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    console.log("Bubble script is running");
+
     const bubbleBg = document.createElement('div');
     bubbleBg.id = 'bubble-bg';
     document.body.appendChild(bubbleBg);
 
-    for (let i = 0; i < 5; i++) {  // Reduced the number of bubbles even further
+    // Adding a few bubbles
+    for (let i = 0; i < 3; i++) {
+        console.log(`Creating bubble ${i + 1}`);
+        
         let bubble = document.createElement('div');
         bubble.classList.add('bubble');
-        bubble.style.width = bubble.style.height = `${Math.random() * 50 + 10}px`;  // Smaller bubbles
-        bubble.style.background = `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.6)`;
-        bubble.style.left = `${Math.random() * 100}%`;
-        bubble.style.animationDuration = `${Math.random() * 15 + 5}s`;  // Shorter duration
+        bubble.style.width = bubble.style.height = `${Math.random() * 40 + 10}px`;  // Set a fixed size
+        bubble.style.background = `rgba(100, 100, 255, 0.6)`;  // Using a fixed color to simplify
         bubble.style.position = 'absolute';
-        bubble.style.bottom = '0';  // Start at the bottom of the page
-        bubble.style.animationName = 'bubbleMove';
+        bubble.style.left = `${Math.random() * 100}%`;
+        bubble.style.bottom = '0';  // Place at bottom of screen without animation
+
         bubbleBg.appendChild(bubble);
     }
-
-    const styleElement = document.createElement('style');
-    styleElement.innerHTML = `
-        @keyframes bubbleMove {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(-100vh); }
-        }
-        .bubble {
-            border-radius: 50%;
-            position: absolute;
-            opacity: 0.8;
-            animation: bubbleMove 20s infinite linear;  // Lower speed and infinite animation
-        }
-    `;
-    document.head.appendChild(styleElement);
 });
 </script>
 """
