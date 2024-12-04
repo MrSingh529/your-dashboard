@@ -38,22 +38,22 @@ st.markdown("""
     }
 
     /* Animated Background Styling */
-    body, 
-    html {
-      width: 100%;
-      height: 100%;
-    }
-
     body {
-      background: radial-gradient(circle, rgb(10 60 202) 0%, #042e52 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
     }
 
-    svg {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
+    :root {
+      --white-grad-1: linear-gradient(to top, #e6e9f0 0%, #eef1f5 100%);
     }
+
+    .bg-white-grad-1 {
+      background: var(--white-grad-1);
+    }
+
 
     /* Main Content Styling */
     [data-testid="stApp"] {
