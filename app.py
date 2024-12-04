@@ -37,23 +37,20 @@ st.markdown("""
         font-family: 'Geist', sans-serif !important;
     }
 
-    /* Animated Background Styling */
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
+    /* Animated Background Gradient */
+    @keyframes gradientBackground {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
     }
 
-    :root {
-      --white-grad-1: linear-gradient(to top, #e6e9f0 0%, #eef1f5 100%);
+    [data-testid="stAppViewContainer"] {
+        background: linear-gradient(45deg, #ff9a9e, #fad0c4, #fad0c4, #fbc2eb, #a18cd1, #fbc2eb, #fad0c4);
+        background-size: 200% 200%;
+        animation: gradientBackground 15s ease infinite;
+        background-attachment: fixed;
+        background-position: center;
     }
-
-    .bg-white-grad-1 {
-      background: var(--white-grad-1);
-    }
-
 
     /* Main Content Styling */
     [data-testid="stApp"] {
@@ -247,7 +244,8 @@ st.sidebar.markdown(
     <div class="sidebar-logo-container">
         <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo">
     </div>
-    <hr>""",
+    <hr>
+    """,
     unsafe_allow_html=True
 )
 
