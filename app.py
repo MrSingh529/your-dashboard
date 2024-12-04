@@ -52,6 +52,25 @@ st.markdown("""
         background-position: center;
     }
 
+    /* Moving Patterns Overlay */
+    @keyframes movingPatterns {
+        0% { background-position: 0 0; }
+        100% { background-position: 100% 100%; }
+    }
+
+    [data-testid="stAppViewContainer"]::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        background: url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
+        opacity: 0.1;
+        animation: movingPatterns 20s linear infinite;
+    }
+
     /* Main Content Styling */
     [data-testid="stApp"] {
         background: rgba(255, 255, 255, 0.8); /* Adding a slight transparency to main content */
