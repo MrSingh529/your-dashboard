@@ -19,7 +19,7 @@ import hashlib
 # Configure page settings
 st.set_page_config(
     page_title="TSG Payment Receivables Dashboard",
-    page_icon="📊",
+    page_icon="\ud83d\udcca",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -37,12 +37,22 @@ st.markdown("""
         font-family: 'Geist', sans-serif !important;
     }
 
-    /* Target Streamlit Root Container for Background */
-    [data-testid="stAppViewContainer"] {
-        background-image: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/refs/heads/main/assets/bg.jpg');
-        background-size: cover;
-        background-attachment: fixed;
-        background-position: center;
+    /* Animated Background Styling */
+    body, 
+    html {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      background: radial-gradient(circle, rgb(10 60 202) 0%, #042e52 100%);
+    }
+
+    svg {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
     }
 
     /* Main Content Styling */
@@ -238,7 +248,7 @@ st.sidebar.markdown(
         <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo">
     </div>
     <hr>
-    """,
+    "",
     unsafe_allow_html=True
 )
 
