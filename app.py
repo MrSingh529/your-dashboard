@@ -66,7 +66,7 @@ st.markdown("""
         width: 100%;
         height: 100%;
         pointer-events: none;
-        background: url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
+        background: url('https://www.transparenttextures.com/patterns/diagmonds.png');
         opacity: 0.1;
         animation: movingPatterns 25s linear infinite;
     }
