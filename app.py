@@ -58,19 +58,6 @@ st.markdown("""
         100% { background-position: 100% 100%; }
     }
 
-    [data-testid="stAppViewContainer"]::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        background: url('https://www.transparenttextures.com/patterns/diagmonds.png');
-        opacity: 0.1;
-        animation: movingPatterns 25s linear infinite;
-    }
-
     /* Main Content Styling */
     [data-testid="stApp"] {
         background: rgba(255, 255, 255, 0.85); /* Adding a slight transparency to main content */
