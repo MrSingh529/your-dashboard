@@ -89,7 +89,7 @@ st.write("This is a version to add back some elements and check if they cause an
 if st.button("Click Me"):
     st.success("Button clicked successfully!")
 
-# Re-add the bubble background with a simpler version to test browser compatibility
+# Simplified bubble background script
 bubble_script = """
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -97,13 +97,13 @@ document.addEventListener("DOMContentLoaded", function() {
     bubbleBg.id = 'bubble-bg';
     document.body.appendChild(bubbleBg);
 
-    for (let i = 0; i < 10; i++) {  // Reduced the number of bubbles for simplicity
+    for (let i = 0; i < 5; i++) {  // Reduced the number of bubbles even further
         let bubble = document.createElement('div');
         bubble.classList.add('bubble');
-        bubble.style.width = bubble.style.height = `${Math.random() * 80 + 20}px`;
+        bubble.style.width = bubble.style.height = `${Math.random() * 50 + 10}px`;  // Smaller bubbles
         bubble.style.background = `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.6)`;
         bubble.style.left = `${Math.random() * 100}%`;
-        bubble.style.animationDuration = `${Math.random() * 20 + 10}s`;
+        bubble.style.animationDuration = `${Math.random() * 15 + 5}s`;  // Shorter duration
         bubble.style.position = 'absolute';
         bubble.style.bottom = '0';  // Start at the bottom of the page
         bubble.style.animationName = 'bubbleMove';
@@ -120,7 +120,7 @@ document.addEventListener("DOMContentLoaded", function() {
             border-radius: 50%;
             position: absolute;
             opacity: 0.8;
-            animation: bubbleMove 25s infinite linear;
+            animation: bubbleMove 20s infinite linear;  // Lower speed and infinite animation
         }
     `;
     document.head.appendChild(styleElement);
