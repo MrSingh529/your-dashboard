@@ -24,60 +24,87 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# New CSS with a clean and professional background design
+# CSS with loading animation, custom font, and sidebar styling
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Geist&display=swap');
 
     * {
-        font-family: 'Roboto', sans-serif !important;
+        font-family: 'Geist', sans-serif !important;
     }
 
     html, body, .main, .stTextInput > div > input, .stButton > button, .stMarkdown, label, h1, h2, h3, h4, h5, h6, p, div, span, li, a, input, textarea, button, select {
-        font-family: 'Roboto', sans-serif !important;
+        font-family: 'Geist', sans-serif !important;
     }
 
-    /* Professional Background with Light Color Gradient */
+    /* Animated Background Gradient */
+    @keyframes gradientBackground {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
     [data-testid="stAppViewContainer"] {
-        background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+        background: linear-gradient(45deg, #ff9a9e, #fad0c4, #fad0c4, #fbc2eb, #a18cd1, #fbc2eb, #fad0c4);
+        background-size: 200% 200%;
+        animation: gradientBackground 15s ease infinite;
         background-attachment: fixed;
         background-position: center;
-        background-size: cover;
+    }
+
+    /* Moving Patterns Overlay */
+    @keyframes movingPatterns {
+        0% { background-position: 0 0; }
+        100% { background-position: 100% 100%; }
+    }
+
+    [data-testid="stAppViewContainer"]::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        background: url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
+        opacity: 0.1;
+        animation: movingPatterns 20s linear infinite;
     }
 
     /* Main Content Styling */
     [data-testid="stApp"] {
-        background: rgba(255, 255, 255, 0.95); /* Light background for main content */
+        background: rgba(255, 255, 255, 0.8); /* Adding a slight transparency to main content */
         padding: 20px;
         border-radius: 15px;
         box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
 
     .metric-card {
-        background: #ffffff; /* Solid white background for a clean and professional look */
+        background: linear-gradient(135deg, #FFEBCD, #FFDAB9); /* Light peach gradient for a warm, sunset-like feel */
         padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border-radius: 15px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         margin: 15px;
-        height: 180px;
-        width: 220px;
+        height: 180px; /* Ensures all tiles are of the same height */
+        width: 220px;  /* Ensures all tiles are of the same width */
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         text-align: center;
-        transition: all 0.3s ease-in-out;
+        transition: all 0.5s ease-in-out;
         cursor: pointer;
-        color: #333;
+        color: #333; /* Darker color for readability against lighter background */
     }
 
     .metric-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        transform: perspective(500px) rotateX(3deg) rotateY(3deg) scale(1.05);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        border: 1px solid rgba(0, 123, 255, 0.4);
     }
 
     .filter-container {
-        background-color: #f7f9fc;
+        background-color: #f9e8d6; /* Light cream to complement the sunset colors */
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 20px;
@@ -93,7 +120,7 @@ st.markdown("""
     }
 
     .comparison-card:hover {
-        transform: translateY(-5px);
+        transform: translateY(-3px);
     }
 
     .trend-positive {
@@ -147,7 +174,7 @@ st.markdown("""
 
     /* Custom Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: rgba(255, 255, 255, 0.95);
+        background-color: rgba(240, 242, 246, 0.9); /* Light grey background with transparency for sidebar */
         color: black;
         border-right: 1px solid #e6e6e6;
     }
@@ -167,6 +194,29 @@ st.markdown("""
 
     [data-testid="stSidebar"] a:hover {
         text-decoration: underline;
+    }
+
+    /* Custom Sidebar Branding */
+    .sidebar-logo-container {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .sidebar-logo-container img {
+        max-width: 150px;
+        transition: transform 0.3s;
+    }
+
+    .sidebar-logo-container img:hover {
+        transform: scale(1.1);
+    }
+
+    .sidebar-title {
+        font-size: 1.6em;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20px;
+        color: #007BFF;
     }
 
     /* Enhanced Header Styling */
