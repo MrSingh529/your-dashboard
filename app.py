@@ -24,7 +24,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for basic styling
+# Add back some of the custom CSS styles
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Geist&display=swap');
@@ -43,6 +43,30 @@ st.markdown("""
         border-radius: 15px;
         box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
+
+    .metric-card {
+        background: linear-gradient(135deg, #FFEBCD, #FFDAB9);
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin: 15px;
+        height: 180px;
+        width: 220px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        transition: all 0.5s ease-in-out;
+        cursor: pointer;
+        color: #333;
+    }
+
+    .metric-card:hover {
+        transform: perspective(500px) rotateX(3deg) rotateY(3deg) scale(1.05);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        border: 1px solid rgba(0, 123, 255, 0.4);
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -57,13 +81,55 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 
-# Removing JavaScript temporarily to identify if it causes blank screen
+# Content for testing
 st.write("Welcome to TSG Payment Receivables Dashboard! 🚀")
-st.write("This is a simplified version to help debug the blank screen issue.")
+st.write("This is a version to add back some elements and check if they cause any issues.")
 
 # Adding a basic button to test interactivity
 if st.button("Click Me"):
     st.success("Button clicked successfully!")
+
+# Re-add the bubble background with a simpler version to test browser compatibility
+bubble_script = """
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const bubbleBg = document.createElement('div');
+    bubbleBg.id = 'bubble-bg';
+    document.body.appendChild(bubbleBg);
+
+    for (let i = 0; i < 10; i++) {  // Reduced the number of bubbles for simplicity
+        let bubble = document.createElement('div');
+        bubble.classList.add('bubble');
+        bubble.style.width = bubble.style.height = `${Math.random() * 80 + 20}px`;
+        bubble.style.background = `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.6)`;
+        bubble.style.left = `${Math.random() * 100}%`;
+        bubble.style.animationDuration = `${Math.random() * 20 + 10}s`;
+        bubble.style.position = 'absolute';
+        bubble.style.bottom = '0';  // Start at the bottom of the page
+        bubble.style.animationName = 'bubbleMove';
+        bubbleBg.appendChild(bubble);
+    }
+
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = `
+        @keyframes bubbleMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-100vh); }
+        }
+        .bubble {
+            border-radius: 50%;
+            position: absolute;
+            opacity: 0.8;
+            animation: bubbleMove 25s infinite linear;
+        }
+    `;
+    document.head.appendChild(styleElement);
+});
+</script>
+"""
+
+# Embed the JavaScript for bubbles using components.html
+components.html(bubble_script, height=0, width=0)
 
 # Enhanced security with password hashing
 def hash_password(password):
