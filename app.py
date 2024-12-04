@@ -24,7 +24,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS with loading animation, custom font, and sidebar styling
+# Custom CSS for basic styling
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Geist&display=swap');
@@ -33,54 +33,8 @@ st.markdown("""
         font-family: 'Geist', sans-serif !important;
     }
 
-    html, body, .main, .stTextInput > div > input, .stButton > button, .stMarkdown, label, h1, h2, h3, h4, h5, h6, p, div, span, li, a, input, textarea, button, select {
-        font-family: 'Geist', sans-serif !important;
-    }
-
-    /* Bubble Background Animation */
     body {
-        position: relative;
-        overflow: hidden;
-    }
-
-    #bubble-bg {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        background: linear-gradient(-45deg, #f3e7e9, #d3d3d3, #e0e4e8, #f5f5f7);
-        background-size: 400% 400%;
-        animation: waveBackground 10s ease infinite;
-    }
-
-    .bubble {
-        position: absolute;
-        border-radius: 50%;
-        opacity: 0.8;
-        animation: bubbleMove 25s infinite linear;
-    }
-
-    @keyframes bubbleMove {
-        0% {
-            transform: translateY(100%);
-        }
-        100% {
-            transform: translateY(-100%);
-        }
-    }
-
-    /* Animated Background Gradient */
-    @keyframes waveBackground {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-
-    /* Additional Styles for Dashboard */
-    [data-testid="stAppViewContainer"] {
-        background: none;
+        overflow: hidden; /* Remove overflow initially */
     }
 
     [data-testid="stApp"] {
@@ -89,221 +43,27 @@ st.markdown("""
         border-radius: 15px;
         box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
-
-    .metric-card {
-        background: linear-gradient(135deg, #FFEBCD, #FFDAB9);
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        margin: 15px;
-        height: 180px;
-        width: 220px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        transition: all 0.5s ease-in-out;
-        cursor: pointer;
-        color: #333;
-    }
-
-    .metric-card:hover {
-        transform: perspective(500px) rotateX(3deg) rotateY(3deg) scale(1.05);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-        border: 1px solid rgba(0, 123, 255, 0.4);
-    }
-
-    .filter-container {
-        background-color: #f9e8d6;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-
-    .comparison-card {
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-        margin: 15px 0;
-        transition: transform 0.3s;
-    }
-
-    .comparison-card:hover {
-        transform: translateY(-3px);
-    }
-
-    .trend-positive {
-        color: #27ae60;
-        font-weight: bold;
-    }
-
-    .trend-negative {
-        color: #c0392b;
-        font-weight: bold;
-    }
-
-    .login-container {
-        max-width: 400px;
-        margin: auto;
-        padding: 25px;
-        background-color: #ffffff;
-        border-radius: 10px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-    }
-
-    .stButton>button {
-        width: 100%;
-        margin-top: 15px;
-        background-color: #007BFF;
-        color: #ffffff;
-        border: none;
-        border-radius: 8px;
-        padding: 10px;
-        transition: background-color 0.3s;
-    }
-
-    .stButton>button:hover {
-        background-color: #0056b3;
-    }
-
-    /* Loading animation */
-    .loading {
-        display: inline-block;
-        width: 30px;
-        height: 30px;
-        border: 4px solid rgba(0,0,0,.1);
-        border-radius: 50%;
-        border-top-color: #007BFF;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-
-    /* Custom Sidebar Styling */
-    [data-testid="stSidebar"] {
-        background-color: rgba(240, 242, 246, 0.9);
-        color: black;
-        border-right: 1px solid #e6e6e6;
-    }
-
-    [data-testid="stSidebar"] .sidebar-content {
-        padding: 20px;
-    }
-
-    [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
-        color: #333333;
-    }
-
-    [data-testid="stSidebar"] a {
-        color: #007BFF;
-        text-decoration: none;
-    }
-
-    [data-testid="stSidebar"] a:hover {
-        text-decoration: underline;
-    }
-
-    /* Custom Sidebar Branding */
-    .sidebar-logo-container {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    .sidebar-logo-container img {
-        max-width: 150px;
-        transition: transform 0.3s;
-    }
-
-    .sidebar-logo-container img:hover {
-        transform: scale(1.1);
-    }
-
-    .sidebar-title {
-        font-size: 1.6em;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 20px;
-        color: #007BFF;
-    }
-
-    /* Enhanced Header Styling */
-    .header-title {
-        color: #007BFF;
-        font-weight: bold;
-        margin-bottom: 15px;
-    }
-
-    /* Tooltip styling for better user guidance */
-    .tooltip {
-        position: relative;
-        display: inline-block;
-        cursor: pointer;
-    }
-
-    .tooltip .tooltiptext {
-        visibility: hidden;
-        width: 160px;
-        background-color: #555;
-        color: #fff;
-        text-align: center;
-        border-radius: 6px;
-        padding: 5px;
-        position: absolute;
-        z-index: 1;
-        bottom: 100%;
-        left: 50%;
-        margin-left: -80px;
-        opacity: 0;
-        transition: opacity 0.3s;
-    }
-
-    .tooltip:hover .tooltiptext {
-        visibility: visible;
-        opacity: 1;
-    }
     </style>
 """, unsafe_allow_html=True)
 
 # Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
 st.sidebar.markdown(
     """
-    <div class="sidebar-logo-container">
-        <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="max-width: 150px;">
     </div>
     <hr>
     """,
     unsafe_allow_html=True
 )
 
-# JavaScript for Creating and Moving Bubbles
-bubble_script = """
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    if (!document.getElementById('bubble-bg')) {
-        const bubbleBg = document.createElement('div');
-        bubbleBg.id = 'bubble-bg';
-        document.body.appendChild(bubbleBg);
+# Removing JavaScript temporarily to identify if it causes blank screen
+st.write("Welcome to TSG Payment Receivables Dashboard! 🚀")
+st.write("This is a simplified version to help debug the blank screen issue.")
 
-        for (let i = 0; i < 30; i++) {
-            let bubble = document.createElement('div');
-            bubble.classList.add('bubble');
-            bubble.style.width = bubble.style.height = `${Math.random() * 50 + 10}px`;
-            bubble.style.background = `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.6)`;
-            bubble.style.left = `${Math.random() * 100}%`;
-            bubble.style.animationDuration = `${Math.random() * 20 + 5}s`;
-            bubbleBg.appendChild(bubble);
-        }
-    }
-});
-</script>
-"""
-
-# Embed the JavaScript for bubbles using components.html
-components.html(bubble_script, height=0, width=0)
+# Adding a basic button to test interactivity
+if st.button("Click Me"):
+    st.success("Button clicked successfully!")
 
 # Enhanced security with password hashing
 def hash_password(password):
