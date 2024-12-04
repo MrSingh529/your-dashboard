@@ -24,88 +24,98 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# HTML and CSS for the animated background elements
-st.markdown("""
-    <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
+# Custom HTML Component for Background Animation
+components.html("""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-    body {
-        background: #222222;
-        overflow: hidden;
-    }
+            body {
+                background: #222222;
+                overflow: hidden;
+                position: fixed; /* Keep the background fixed to the viewport */
+                width: 100vw;
+                height: 100vh;
+            }
 
-    .square, .circle, .triangle {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 50px;
-        height: 50px;
-        z-index: -1; /* Keep it in the background */
-    }
+            .square, .circle, .triangle {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 50px;
+                height: 50px;
+            }
 
-    .square {
-        background: linear-gradient(#303030, #757575);
-    }
+            .square {
+                background: linear-gradient(#303030, #757575);
+            }
 
-    .circle {
-        background: #1cd99d;
-        border-radius: 50%;
-    }
+            .circle {
+                background: #1cd99d;
+                border-radius: 50%;
+            }
 
-    .triangle {
-        background: #f5f5f5;
-        clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-    }
-    </style>
+            .triangle {
+                background: #f5f5f5;
+                clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
 
-    <div class="square"></div>
-    <div class="square"></div>
-    <div class="square"></div>
-    <div class="square"></div>
-    <div class="square"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
 
-    <div class="circle"></div>
-    <div class="circle"></div>
-    <div class="circle"></div>
-    <div class="circle"></div>
-    <div class="circle"></div>
+        <div class="triangle"></div>
+        <div class="triangle"></div>
+        <div class="triangle"></div>
+        <div class="triangle"></div>
+        <div class="triangle"></div>
 
-    <div class="triangle"></div>
-    <div class="triangle"></div>
-    <div class="triangle"></div>
-    <div class="triangle"></div>
-    <div class="triangle"></div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
-    <script>
-        function randomValues() {
-            anime({
-                targets: '.square, .circle, .triangle',
-                translateX: function() {
-                    return anime.random(-500, 500);
-                },
-                translateY: function() {
-                    return anime.random(-300, 300);
-                },
-                rotate: function() {
-                    return anime.random(0, 360);
-                },
-                scale: function() {
-                    return anime.random(.2, 2);
-                },
-                duration: 1000,
-                easing: 'easeInOutQuad',
-                complete: randomValues,
-            });
-        }
-        randomValues();
-    </script>
-""", unsafe_allow_html=True)
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+        <script>
+            function randomValues() {
+                anime({
+                    targets: '.square, .circle, .triangle',
+                    translateX: function() {
+                        return anime.random(-500, 500);
+                    },
+                    translateY: function() {
+                        return anime.random(-300, 300);
+                    },
+                    rotate: function() {
+                        return anime.random(0, 360);
+                    },
+                    scale: function() {
+                        return anime.random(.2, 2);
+                    },
+                    duration: 1000,
+                    easing: 'easeInOutQuad',
+                    complete: randomValues,
+                });
+            }
+            randomValues();
+        </script>
+    </body>
+    </html>
+""", height=600, width=800)
 
 # Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
 st.sidebar.markdown(
