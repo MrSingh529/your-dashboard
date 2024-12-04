@@ -45,9 +45,9 @@ st.markdown("""
     }
 
     [data-testid="stAppViewContainer"] {
-        background: linear-gradient(45deg, #ff9a9e, #fad0c4, #fad0c4, #fbc2eb, #a18cd1, #fbc2eb, #fad0c4);
-        background-size: 200% 200%;
-        animation: gradientBackground 15s ease infinite;
+        background: linear-gradient(120deg, #ff9a9e 0%, #fad0c4 20%, #fad0c4 40%, #fbc2eb 60%, #a18cd1 80%, #fad0c4 100%);
+        background-size: 300% 300%;
+        animation: gradientBackground 20s ease infinite;
         background-attachment: fixed;
         background-position: center;
     }
@@ -68,25 +68,25 @@ st.markdown("""
         pointer-events: none;
         background: url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
         opacity: 0.1;
-        animation: movingPatterns 20s linear infinite;
+        animation: movingPatterns 25s linear infinite;
     }
 
     /* Main Content Styling */
     [data-testid="stApp"] {
-        background: rgba(255, 255, 255, 0.8); /* Adding a slight transparency to main content */
+        background: rgba(255, 255, 255, 0.85); /* Adding a slight transparency to main content */
         padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+        border-radius: 20px;
+        box-shadow: 0px 6px 15px rgba(0,0,0,0.15);
     }
 
     .metric-card {
         background: linear-gradient(135deg, #FFEBCD, #FFDAB9); /* Light peach gradient for a warm, sunset-like feel */
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        margin: 15px;
-        height: 180px; /* Ensures all tiles are of the same height */
-        width: 220px;  /* Ensures all tiles are of the same width */
+        padding: 25px;
+        border-radius: 20px;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        margin: 20px;
+        height: 200px; /* Ensures all tiles are of the same height */
+        width: 240px;  /* Ensures all tiles are of the same width */
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -98,29 +98,29 @@ st.markdown("""
     }
 
     .metric-card:hover {
-        transform: perspective(500px) rotateX(3deg) rotateY(3deg) scale(1.05);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        transform: perspective(500px) rotateX(5deg) rotateY(5deg) scale(1.08);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         border: 1px solid rgba(0, 123, 255, 0.4);
     }
 
     .filter-container {
         background-color: #f9e8d6; /* Light cream to complement the sunset colors */
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
+        padding: 25px;
+        border-radius: 15px;
+        margin-bottom: 25px;
     }
 
     .comparison-card {
         background-color: #ffffff;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-        margin: 15px 0;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        margin: 20px 0;
         transition: transform 0.3s;
     }
 
     .comparison-card:hover {
-        transform: translateY(-3px);
+        transform: translateY(-5px);
     }
 
     .trend-positive {
@@ -134,22 +134,22 @@ st.markdown("""
     }
 
     .login-container {
-        max-width: 400px;
+        max-width: 450px;
         margin: auto;
-        padding: 25px;
+        padding: 30px;
         background-color: #ffffff;
-        border-radius: 10px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        border-radius: 15px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
     }
 
     .stButton>button {
         width: 100%;
-        margin-top: 15px;
+        margin-top: 20px;
         background-color: #007BFF;
         color: #ffffff;
         border: none;
-        border-radius: 8px;
-        padding: 10px;
+        border-radius: 10px;
+        padding: 12px;
         transition: background-color 0.3s;
     }
 
@@ -180,7 +180,7 @@ st.markdown("""
     }
 
     [data-testid="stSidebar"] .sidebar-content {
-        padding: 20px;
+        padding: 25px;
     }
 
     [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
@@ -199,7 +199,7 @@ st.markdown("""
     /* Custom Sidebar Branding */
     .sidebar-logo-container {
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
 
     .sidebar-logo-container img {
@@ -212,10 +212,10 @@ st.markdown("""
     }
 
     .sidebar-title {
-        font-size: 1.6em;
+        font-size: 1.8em;
         font-weight: bold;
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
         color: #007BFF;
     }
 
@@ -223,7 +223,7 @@ st.markdown("""
     .header-title {
         color: #007BFF;
         font-weight: bold;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
     }
 
     /* Tooltip styling for better user guidance */
@@ -235,7 +235,7 @@ st.markdown("""
 
     .tooltip .tooltiptext {
         visibility: hidden;
-        width: 160px;
+        width: 180px;
         background-color: #555;
         color: #fff;
         text-align: center;
@@ -245,7 +245,7 @@ st.markdown("""
         z-index: 1;
         bottom: 100%;
         left: 50%;
-        margin-left: -80px;
+        margin-left: -90px;
         opacity: 0;
         transition: opacity 0.3s;
     }
