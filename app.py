@@ -71,15 +71,6 @@ st.markdown("""
         }
     }
 
-    /* Interaction with Mouse */
-    body:hover .bubble {
-        transition: transform 0.3s ease-out;
-    }
-
-    body:hover .bubble:hover {
-        transform: translateX(100px) translateY(100px);
-    }
-
     /* Animated Background Gradient */
     @keyframes waveBackground {
         0% { background-position: 0% 50%; }
@@ -93,20 +84,20 @@ st.markdown("""
     }
 
     [data-testid="stApp"] {
-        background: rgba(255, 255, 255, 0.8); /* Adding a slight transparency to main content */
+        background: rgba(255, 255, 255, 0.8);
         padding: 20px;
         border-radius: 15px;
         box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
 
     .metric-card {
-        background: linear-gradient(135deg, #FFEBCD, #FFDAB9); /* Light peach gradient for a warm, sunset-like feel */
+        background: linear-gradient(135deg, #FFEBCD, #FFDAB9);
         padding: 20px;
         border-radius: 15px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         margin: 15px;
-        height: 180px; /* Ensures all tiles are of the same height */
-        width: 220px;  /* Ensures all tiles are of the same width */
+        height: 180px;
+        width: 220px;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -114,7 +105,7 @@ st.markdown("""
         text-align: center;
         transition: all 0.5s ease-in-out;
         cursor: pointer;
-        color: #333; /* Darker color for readability against lighter background */
+        color: #333;
     }
 
     .metric-card:hover {
@@ -124,7 +115,7 @@ st.markdown("""
     }
 
     .filter-container {
-        background-color: #f9e8d6; /* Light cream to complement the sunset colors */
+        background-color: #f9e8d6;
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 20px;
@@ -194,7 +185,7 @@ st.markdown("""
 
     /* Custom Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: rgba(240, 242, 246, 0.9); /* Light grey background with transparency for sidebar */
+        background-color: rgba(240, 242, 246, 0.9);
         color: black;
         border-right: 1px solid #e6e6e6;
     }
@@ -292,18 +283,20 @@ st.sidebar.markdown(
 bubble_script = """
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const bubbleBg = document.createElement('div');
-    bubbleBg.id = 'bubble-bg';
-    document.body.appendChild(bubbleBg);
+    if (!document.getElementById('bubble-bg')) {
+        const bubbleBg = document.createElement('div');
+        bubbleBg.id = 'bubble-bg';
+        document.body.appendChild(bubbleBg);
 
-    for (let i = 0; i < 50; i++) {
-        let bubble = document.createElement('div');
-        bubble.classList.add('bubble');
-        bubble.style.width = bubble.style.height = `${Math.random() * 80 + 20}px`;
-        bubble.style.background = `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.6)`;
-        bubble.style.left = `${Math.random() * 100}%`;
-        bubble.style.animationDuration = `${Math.random() * 20 + 10}s`;
-        bubbleBg.appendChild(bubble);
+        for (let i = 0; i < 30; i++) {
+            let bubble = document.createElement('div');
+            bubble.classList.add('bubble');
+            bubble.style.width = bubble.style.height = `${Math.random() * 50 + 10}px`;
+            bubble.style.background = `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.6)`;
+            bubble.style.left = `${Math.random() * 100}%`;
+            bubble.style.animationDuration = `${Math.random() * 20 + 5}s`;
+            bubbleBg.appendChild(bubble);
+        }
     }
 });
 </script>
