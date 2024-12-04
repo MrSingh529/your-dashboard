@@ -24,7 +24,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Add back some of the custom CSS styles
+# CSS with loading animation, custom font, and sidebar styling
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Geist&display=swap');
@@ -33,25 +33,58 @@ st.markdown("""
         font-family: 'Geist', sans-serif !important;
     }
 
-    body {
-        overflow: hidden; /* Remove overflow initially */
+    html, body, .main, .stTextInput > div > input, .stButton > button, .stMarkdown, label, h1, h2, h3, h4, h5, h6, p, div, span, li, a, input, textarea, button, select {
+        font-family: 'Geist', sans-serif !important;
     }
 
+    /* Animated Background Gradient */
+    @keyframes waveBackground {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    [data-testid="stAppViewContainer"] {
+        background: linear-gradient(-45deg, #f3e7e9, #d3d3d3, #e0e4e8, #f5f5f7);
+        background-size: 400% 400%;
+        animation: waveBackground 10s ease infinite;
+        background-attachment: fixed;
+    }
+    /* Moving Patterns Overlay */
+    @keyframes movingPatterns {
+        0% { background-position: 0 0; }
+        100% { background-position: 100% 100%; }
+    }
+
+    [data-testid="stAppViewContainer"]::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        background: url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
+        opacity: 0.1;
+        animation: movingPatterns 20s linear infinite;
+    }
+
+    /* Main Content Styling */
     [data-testid="stApp"] {
-        background: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.8); /* Adding a slight transparency to main content */
         padding: 20px;
         border-radius: 15px;
         box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
 
     .metric-card {
-        background: linear-gradient(135deg, #FFEBCD, #FFDAB9);
+        background: linear-gradient(135deg, #FFEBCD, #FFDAB9); /* Light peach gradient for a warm, sunset-like feel */
         padding: 20px;
         border-radius: 15px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         margin: 15px;
-        height: 180px;
-        width: 220px;
+        height: 180px; /* Ensures all tiles are of the same height */
+        width: 220px;  /* Ensures all tiles are of the same width */
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -59,7 +92,7 @@ st.markdown("""
         text-align: center;
         transition: all 0.5s ease-in-out;
         cursor: pointer;
-        color: #333;
+        color: #333; /* Darker color for readability against lighter background */
     }
 
     .metric-card:hover {
@@ -67,58 +100,171 @@ st.markdown("""
         box-shadow: 0 8px 20px rgba(0,0,0,0.2);
         border: 1px solid rgba(0, 123, 255, 0.4);
     }
+
+    .filter-container {
+        background-color: #f9e8d6; /* Light cream to complement the sunset colors */
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .comparison-card {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        margin: 15px 0;
+        transition: transform 0.3s;
+    }
+
+    .comparison-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .trend-positive {
+        color: #27ae60;
+        font-weight: bold;
+    }
+
+    .trend-negative {
+        color: #c0392b;
+        font-weight: bold;
+    }
+
+    .login-container {
+        max-width: 400px;
+        margin: auto;
+        padding: 25px;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+
+    .stButton>button {
+        width: 100%;
+        margin-top: 15px;
+        background-color: #007BFF;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px;
+        transition: background-color 0.3s;
+    }
+
+    .stButton>button:hover {
+        background-color: #0056b3;
+    }
+
+    /* Loading animation */
+    .loading {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        border: 4px solid rgba(0,0,0,.1);
+        border-radius: 50%;
+        border-top-color: #007BFF;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Custom Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background-color: rgba(240, 242, 246, 0.9); /* Light grey background with transparency for sidebar */
+        color: black;
+        border-right: 1px solid #e6e6e6;
+    }
+
+    [data-testid="stSidebar"] .sidebar-content {
+        padding: 20px;
+    }
+
+    [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
+        color: #333333;
+    }
+
+    [data-testid="stSidebar"] a {
+        color: #007BFF;
+        text-decoration: none;
+    }
+
+    [data-testid="stSidebar"] a:hover {
+        text-decoration: underline;
+    }
+
+    /* Custom Sidebar Branding */
+    .sidebar-logo-container {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .sidebar-logo-container img {
+        max-width: 150px;
+        transition: transform 0.3s;
+    }
+
+    .sidebar-logo-container img:hover {
+        transform: scale(1.1);
+    }
+
+    .sidebar-title {
+        font-size: 1.6em;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20px;
+        color: #007BFF;
+    }
+
+    /* Enhanced Header Styling */
+    .header-title {
+        color: #007BFF;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+
+    /* Tooltip styling for better user guidance */
+    .tooltip {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+    }
+
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 160px;
+        background-color: #555;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px;
+        position: absolute;
+        z-index: 1;
+        bottom: 100%;
+        left: 50%;
+        margin-left: -80px;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
 st.sidebar.markdown(
     """
-    <div style="text-align: center; margin-bottom: 20px;">
-        <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="max-width: 150px;">
+    <div class="sidebar-logo-container">
+        <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo">
     </div>
     <hr>
     """,
     unsafe_allow_html=True
 )
-
-# Content for testing
-st.write("Welcome to TSG Payment Receivables Dashboard! 🚀")
-st.write("This is a version to add back some elements and check if they cause any issues.")
-
-# Adding a basic button to test interactivity
-if st.button("Click Me"):
-    st.success("Button clicked successfully!")
-
-# Simplified bubble creation script with debugging logs
-bubble_script = """
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    console.log("Bubble script is running");
-
-    const bubbleBg = document.createElement('div');
-    bubbleBg.id = 'bubble-bg';
-    document.body.appendChild(bubbleBg);
-
-    // Adding a few bubbles
-    for (let i = 0; i < 3; i++) {
-        console.log(`Creating bubble ${i + 1}`);
-        
-        let bubble = document.createElement('div');
-        bubble.classList.add('bubble');
-        bubble.style.width = bubble.style.height = `${Math.random() * 40 + 10}px`;  // Set a fixed size
-        bubble.style.background = `rgba(100, 100, 255, 0.6)`;  // Using a fixed color to simplify
-        bubble.style.position = 'absolute';
-        bubble.style.left = `${Math.random() * 100}%`;
-        bubble.style.bottom = '0';  // Place at bottom of screen without animation
-
-        bubbleBg.appendChild(bubble);
-    }
-});
-</script>
-"""
-
-# Embed the JavaScript for bubbles using components.html
-components.html(bubble_script, height=0, width=0)
 
 # Enhanced security with password hashing
 def hash_password(password):
