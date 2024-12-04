@@ -37,14 +37,38 @@ st.markdown("""
         font-family: 'Geist', sans-serif !important;
     }
 
-    /* Animated Background Gradient */
+    /* Interactive Bubble Background */
+    [data-testid="stAppViewContainer"] {
+        background: transparent !important;
+        overflow: hidden;
+    }
+
+    #bubble-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    .bubble {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        opacity: 0.7;
+        transition: transform 0.5s ease, opacity 0.5s ease;
+    }
+
+    /* Fallback for browsers without JS */
     @keyframes waveBackground {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
 
-    [data-testid="stAppViewContainer"] {
+    [data-testid="stAppViewContainer"]:not(:has(#bubble-container)) {
         background: linear-gradient(-45deg, #f3e7e9, #d3d3d3, #e0e4e8, #f5f5f7);
         background-size: 400% 400%;
         animation: waveBackground 10s ease infinite;
@@ -253,6 +277,85 @@ st.markdown("""
         opacity: 1;
     }
     </style>
+
+    <div id="bubble-container"></div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('bubble-container');
+        const bubbleCount = 25;
+        const bubbles = [];
+
+        // Color palette for bubbles
+        const colors = [
+            'rgba(135, 206, 250, 0.4)',   // Light Sky Blue
+            'rgba(173, 216, 230, 0.4)',   // Light Blue
+            'rgba(255, 182, 193, 0.4)',   // Light Pink
+            'rgba(152, 251, 152, 0.4)',   // Pale Green
+            'rgba(240, 230, 140, 0.4)'    // Khaki
+        ];
+
+        // Create bubbles
+        function createBubbles() {
+            for (let i = 0; i < bubbleCount; i++) {
+                const bubble = document.createElement('div');
+                bubble.classList.add('bubble');
+                
+                // Random initial position
+                bubble.style.left = `${Math.random() * 100}%`;
+                bubble.style.top = `${Math.random() * 100}%`;
+                
+                // Random size between 20 and 100 pixels
+                const size = Math.random() * 80 + 20;
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                
+                // Random color from palette
+                bubble.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                container.appendChild(bubble);
+                bubbles.push(bubble);
+            }
+        }
+
+        // Mouse move event to make bubbles run away
+        function handleMouseMove(event) {
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+
+            bubbles.forEach(bubble => {
+                const rect = bubble.getBoundingClientRect();
+                const bubbleCenterX = rect.left + rect.width / 2;
+                const bubbleCenterY = rect.top + rect.height / 2;
+
+                // Calculate distance from mouse
+                const distanceX = mouseX - bubbleCenterX;
+                const distanceY = mouseY - bubbleCenterY;
+                const distance = Math.sqrt(distanceX ** 2 + distanceY ** 2);
+
+                // Determine run away intensity based on proximity
+                const maxRunDistance = 200;
+                if (distance < maxRunDistance) {
+                    const runIntensity = (maxRunDistance - distance) / maxRunDistance;
+                    
+                    // Move bubble away from mouse
+                    bubble.style.transform = `translate(${distanceX * runIntensity * -1}px, ${distanceY * runIntensity * -1}px)`;
+                    bubble.style.opacity = 0.2;
+                } else {
+                    // Reset bubble position when far from mouse
+                    bubble.style.transform = 'translate(0, 0)';
+                    bubble.style.opacity = 0.4;
+                }
+            });
+        }
+
+        // Initialize bubbles
+        createBubbles();
+
+        // Add mouse move listener
+        document.addEventListener('mousemove', handleMouseMove);
+    });
+    </script>
 """, unsafe_allow_html=True)
 
 # Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
