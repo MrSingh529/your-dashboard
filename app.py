@@ -247,8 +247,7 @@ st.sidebar.markdown(
     <div class="sidebar-logo-container">
         <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo">
     </div>
-    <hr>
-    "",
+    <hr>""",
     unsafe_allow_html=True
 )
 
