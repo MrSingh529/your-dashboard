@@ -48,16 +48,15 @@ st.markdown("""
         left: 0;
         width: 100vw;
         height: 100vh;
-        z-index: -1; /* Keep it in the background */
+        z-index: -10; /* Keep it in the background */
+        overflow: hidden;
     }
 
     .square, .circle, .triangle {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
         width: 50px;
         height: 50px;
+        z-index: -1; /* Stay behind main content */
     }
 
     .square {
@@ -97,27 +96,29 @@ st.markdown("""
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script>
-        function randomValues() {
-            anime({
-                targets: '.square, .circle, .triangle',
-                translateX: function() {
-                    return anime.random(-500, 500);
-                },
-                translateY: function() {
-                    return anime.random(-300, 300);
-                },
-                rotate: function() {
-                    return anime.random(0, 360);
-                },
-                scale: function() {
-                    return anime.random(.2, 2);
-                },
-                duration: 1000,
-                easing: 'easeInOutQuad',
-                complete: randomValues,
-            });
-        }
-        randomValues();
+        document.addEventListener('DOMContentLoaded', function() {
+            function randomValues() {
+                anime({
+                    targets: '.square, .circle, .triangle',
+                    translateX: function() {
+                        return anime.random(-window.innerWidth / 2, window.innerWidth / 2);
+                    },
+                    translateY: function() {
+                        return anime.random(-window.innerHeight / 2, window.innerHeight / 2);
+                    },
+                    rotate: function() {
+                        return anime.random(0, 360);
+                    },
+                    scale: function() {
+                        return anime.random(.2, 2);
+                    },
+                    duration: 3000,
+                    easing: 'easeInOutQuad',
+                    complete: randomValues,
+                });
+            }
+            randomValues();
+        });
     </script>
 """, unsafe_allow_html=True)
 
