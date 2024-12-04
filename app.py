@@ -1934,7 +1934,7 @@ def main():
             }}
             .card {{
                 margin: 20px auto;
-                max-width: 800px;
+                max-width: 1200px;
                 padding: 20px;
                 font-size: 1.2em;
                 color: #333;
