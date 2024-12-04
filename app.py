@@ -37,24 +37,27 @@ st.markdown("""
         font-family: 'Geist', sans-serif !important;
     }
 
-    /* Animated Background Gradient */
+    /* Enhanced Animated Background Gradient */
     @keyframes gradientBackground {
         0% { background-position: 0% 50%; }
+        25% { background-position: 50% 0%; }
         50% { background-position: 100% 50%; }
+        75% { background-position: 50% 100%; }
         100% { background-position: 0% 50%; }
     }
 
     [data-testid="stAppViewContainer"] {
-        background: linear-gradient(120deg, #ff9a9e 0%, #fad0c4 20%, #fad0c4 40%, #fbc2eb 60%, #a18cd1 80%, #fad0c4 100%);
+        background: linear-gradient(45deg, #ff9a9e, #fad0c4, #fad0c4, #fbc2eb, #a18cd1, #fbc2eb, #fad0c4);
         background-size: 300% 300%;
         animation: gradientBackground 20s ease infinite;
         background-attachment: fixed;
         background-position: center;
     }
 
-    /* Moving Patterns Overlay */
+    /* Moving Patterns Overlay - More Vivid and Engaging */
     @keyframes movingPatterns {
         0% { background-position: 0 0; }
+        50% { background-position: 50% 50%; }
         100% { background-position: 100% 100%; }
     }
 
@@ -66,27 +69,29 @@ st.markdown("""
         width: 100%;
         height: 100%;
         pointer-events: none;
-        background: url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
-        opacity: 0.1;
+        background: url('https://www.transparenttextures.com/patterns/asfalt-light.png');
+        opacity: 0.08;
         animation: movingPatterns 25s linear infinite;
     }
 
-    /* Main Content Styling */
+    /* Main Content Styling with Glassmorphism Effect */
     [data-testid="stApp"] {
-        background: rgba(255, 255, 255, 0.85); /* Adding a slight transparency to main content */
-        padding: 20px;
+        background: rgba(255, 255, 255, 0.85); /* Adding glassmorphism effect */
+        backdrop-filter: blur(10px);
+        padding: 25px;
         border-radius: 20px;
-        box-shadow: 0px 6px 15px rgba(0,0,0,0.15);
+        box-shadow: 0px 4px 15px rgba(0,0,0,0.1);
     }
 
+    /* Metric Card Styling with Subtle 3D Effect */
     .metric-card {
         background: linear-gradient(135deg, #FFEBCD, #FFDAB9); /* Light peach gradient for a warm, sunset-like feel */
         padding: 25px;
         border-radius: 20px;
         box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-        margin: 20px;
-        height: 200px; /* Ensures all tiles are of the same height */
-        width: 240px;  /* Ensures all tiles are of the same width */
+        margin: 15px;
+        height: 180px; /* Ensures all tiles are of the same height */
+        width: 220px;  /* Ensures all tiles are of the same width */
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -98,11 +103,12 @@ st.markdown("""
     }
 
     .metric-card:hover {
-        transform: perspective(500px) rotateX(5deg) rotateY(5deg) scale(1.08);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        transform: perspective(500px) rotateX(5deg) rotateY(5deg) scale(1.1);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.2);
         border: 1px solid rgba(0, 123, 255, 0.4);
     }
 
+    /* Filter Container Styling */
     .filter-container {
         background-color: #f9e8d6; /* Light cream to complement the sunset colors */
         padding: 25px;
@@ -110,66 +116,47 @@ st.markdown("""
         margin-bottom: 25px;
     }
 
+    /* Comparison Card with Interactive Elevation */
     .comparison-card {
         background-color: #ffffff;
         padding: 25px;
         border-radius: 15px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
         margin: 20px 0;
-        transition: transform 0.3s;
+        transition: transform 0.3s, box-shadow 0.3s;
     }
 
     .comparison-card:hover {
         transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
     }
 
-    .trend-positive {
-        color: #27ae60;
-        font-weight: bold;
-    }
-
-    .trend-negative {
-        color: #c0392b;
-        font-weight: bold;
-    }
-
+    /* Login Container Enhanced with Glassmorphism */
     .login-container {
         max-width: 450px;
         margin: auto;
         padding: 30px;
-        background-color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
         border-radius: 15px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.1);
     }
 
+    /* Enhanced Button Styling */
     .stButton>button {
         width: 100%;
-        margin-top: 20px;
+        margin-top: 15px;
         background-color: #007BFF;
         color: #ffffff;
         border: none;
         border-radius: 10px;
         padding: 12px;
-        transition: background-color 0.3s;
+        transition: background-color 0.3s, transform 0.2s;
     }
 
     .stButton>button:hover {
         background-color: #0056b3;
-    }
-
-    /* Loading animation */
-    .loading {
-        display: inline-block;
-        width: 30px;
-        height: 30px;
-        border: 4px solid rgba(0,0,0,.1);
-        border-radius: 50%;
-        border-top-color: #007BFF;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        to { transform: rotate(360deg); }
+        transform: translateY(-3px);
     }
 
     /* Custom Sidebar Styling */
@@ -180,7 +167,7 @@ st.markdown("""
     }
 
     [data-testid="stSidebar"] .sidebar-content {
-        padding: 25px;
+        padding: 20px;
     }
 
     [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
@@ -208,7 +195,7 @@ st.markdown("""
     }
 
     .sidebar-logo-container img:hover {
-        transform: scale(1.1);
+        transform: scale(1.15);
     }
 
     .sidebar-title {
@@ -240,14 +227,14 @@ st.markdown("""
         color: #fff;
         text-align: center;
         border-radius: 6px;
-        padding: 5px;
+        padding: 7px;
         position: absolute;
         z-index: 1;
-        bottom: 100%;
+        bottom: 125%;
         left: 50%;
         margin-left: -90px;
         opacity: 0;
-        transition: opacity 0.3s;
+        transition: opacity 0.4s;
     }
 
     .tooltip:hover .tooltiptext {
