@@ -37,29 +37,28 @@ st.markdown("""
         font-family: 'Geist', sans-serif !important;
     }
 
-    /* Animated Background with Cool Patterns */
-    @keyframes animatedPattern {
+    /* Animated Background Gradient */
+    @keyframes gradientBackground {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
 
-    @keyframes movingWaves {
+    [data-testid="stAppViewContainer"] {
+        background: linear-gradient(120deg, #ff9a9e 0%, #fad0c4 20%, #fad0c4 40%, #fbc2eb 60%, #a18cd1 80%, #fad0c4 100%);
+        background-size: 300% 300%;
+        animation: gradientBackground 20s ease infinite;
+        background-attachment: fixed;
+        background-position: center;
+    }
+
+    /* Moving Patterns Overlay */
+    @keyframes movingPatterns {
         0% { background-position: 0 0; }
         100% { background-position: 100% 100%; }
     }
 
-    [data-testid="stAppViewContainer"] {
-        background: linear-gradient(120deg, #89f7fe, #66a6ff, #ff7eb3, #ff758c, #ff6a88);
-        background-size: 400% 400%;
-        animation: animatedPattern 20s ease infinite;
-        background-attachment: fixed;
-        background-position: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    [data-testid="stAppViewContainer"]::before {
+    [data-testid="stAppViewContainer"]::after {
         content: "";
         position: absolute;
         top: 0;
@@ -67,9 +66,9 @@ st.markdown("""
         width: 100%;
         height: 100%;
         pointer-events: none;
-        background: url('https://www.transparenttextures.com/patterns/cubes.png');
-        opacity: 0.2;
-        animation: movingWaves 40s linear infinite;
+        background: url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
+        opacity: 0.1;
+        animation: movingPatterns 25s linear infinite;
     }
 
     /* Main Content Styling */
@@ -77,18 +76,17 @@ st.markdown("""
         background: rgba(255, 255, 255, 0.85); /* Adding a slight transparency to main content */
         padding: 20px;
         border-radius: 20px;
-        box-shadow: 0px 6px 20px rgba(0,0,0,0.2);
-        z-index: 1;
+        box-shadow: 0px 6px 15px rgba(0,0,0,0.15);
     }
 
     .metric-card {
-        background: linear-gradient(135deg, #FFEBCD, #FF9A76); /* Warm gradient to make cards pop */
-        padding: 30px;
-        border-radius: 25px;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        background: linear-gradient(135deg, #FFEBCD, #FFDAB9); /* Light peach gradient for a warm, sunset-like feel */
+        padding: 25px;
+        border-radius: 20px;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
         margin: 20px;
-        height: 220px; /* Ensures all tiles are of the same height */
-        width: 260px;  /* Ensures all tiles are of the same width */
+        height: 200px; /* Ensures all tiles are of the same height */
+        width: 240px;  /* Ensures all tiles are of the same width */
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -100,30 +98,29 @@ st.markdown("""
     }
 
     .metric-card:hover {
-        transform: perspective(600px) rotateX(7deg) rotateY(7deg) scale(1.1);
-        box-shadow: 0 15px 30px rgba(0,0,0,0.25);
-        border: 1px solid rgba(255, 159, 64, 0.4);
+        transform: perspective(500px) rotateX(5deg) rotateY(5deg) scale(1.08);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        border: 1px solid rgba(0, 123, 255, 0.4);
     }
 
     .filter-container {
-        background-color: rgba(255, 255, 255, 0.8); /* Light overlay with some transparency */
+        background-color: #f9e8d6; /* Light cream to complement the sunset colors */
         padding: 25px;
-        border-radius: 20px;
+        border-radius: 15px;
         margin-bottom: 25px;
-        backdrop-filter: blur(10px);
     }
 
     .comparison-card {
-        background: linear-gradient(to right, #ece9e6, #ffffff);
-        padding: 30px;
-        border-radius: 20px;
-        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        background-color: #ffffff;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         margin: 20px 0;
         transition: transform 0.3s;
     }
 
     .comparison-card:hover {
-        transform: translateY(-8px);
+        transform: translateY(-5px);
     }
 
     .trend-positive {
@@ -139,10 +136,10 @@ st.markdown("""
     .login-container {
         max-width: 450px;
         margin: auto;
-        padding: 35px;
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 20px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        padding: 30px;
+        background-color: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
     }
 
     .stButton>button {
@@ -152,20 +149,19 @@ st.markdown("""
         color: #ffffff;
         border: none;
         border-radius: 10px;
-        padding: 15px;
-        transition: background-color 0.3s, transform 0.3s;
+        padding: 12px;
+        transition: background-color 0.3s;
     }
 
     .stButton>button:hover {
         background-color: #0056b3;
-        transform: scale(1.05);
     }
 
     /* Loading animation */
     .loading {
         display: inline-block;
-        width: 40px;
-        height: 40px;
+        width: 30px;
+        height: 30px;
         border: 4px solid rgba(0,0,0,.1);
         border-radius: 50%;
         border-top-color: #007BFF;
@@ -178,13 +174,13 @@ st.markdown("""
 
     /* Custom Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: rgba(255, 255, 255, 0.9); /* Light background with transparency for sidebar */
+        background-color: rgba(240, 242, 246, 0.9); /* Light grey background with transparency for sidebar */
         color: black;
         border-right: 1px solid #e6e6e6;
     }
 
     [data-testid="stSidebar"] .sidebar-content {
-        padding: 30px;
+        padding: 25px;
     }
 
     [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
@@ -239,17 +235,17 @@ st.markdown("""
 
     .tooltip .tooltiptext {
         visibility: hidden;
-        width: 200px;
+        width: 180px;
         background-color: #555;
         color: #fff;
         text-align: center;
         border-radius: 6px;
-        padding: 8px;
+        padding: 5px;
         position: absolute;
         z-index: 1;
         bottom: 100%;
         left: 50%;
-        margin-left: -100px;
+        margin-left: -90px;
         opacity: 0;
         transition: opacity 0.3s;
     }
