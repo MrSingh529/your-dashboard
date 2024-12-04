@@ -38,18 +38,17 @@ st.markdown("""
     }
 
     /* Animated Background Gradient */
-    @keyframes gradientBackground {
+    @keyframes bubbleBackground {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
 
     [data-testid="stAppViewContainer"] {
-        background: linear-gradient(45deg, #ff9a9e, #fad0c4, #fad0c4, #fbc2eb, #a18cd1, #fbc2eb, #fad0c4);
-        background-size: 200% 200%;
-        animation: gradientBackground 15s ease infinite;
+        background: linear-gradient(135deg, #e0eafc, #cfdef3, #b1cbf0, #97b9e6);
+        background-size: 400% 400%;
+        animation: bubbleBackground 15s ease infinite;
         background-attachment: fixed;
-        background-position: center;
     }
 
     /* Moving Patterns Overlay */
