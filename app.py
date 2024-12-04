@@ -37,28 +37,23 @@ st.markdown("""
         font-family: 'Geist', sans-serif !important;
     }
 
-    /* Animated Background Gradient */
-    @keyframes gradientBackground {
+    /* Animated Nebula-Like Background Gradient */
+    @keyframes nebulaBackground {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
 
     [data-testid="stAppViewContainer"] {
-        background: linear-gradient(45deg, #ff9a9e, #fad0c4, #fad0c4, #fbc2eb, #a18cd1, #fbc2eb, #fad0c4);
-        background-size: 200% 200%;
-        animation: gradientBackground 15s ease infinite;
+        background: linear-gradient(135deg, #360033, #0b8793, #ff6e7f, #bfe9ff);
+        background-size: 300% 300%;
+        animation: nebulaBackground 20s ease infinite;
         background-attachment: fixed;
         background-position: center;
     }
 
-    /* Moving Patterns Overlay */
-    @keyframes movingPatterns {
-        0% { background-position: 0 0; }
-        100% { background-position: 100% 100%; }
-    }
-
-    [data-testid="stAppViewContainer"]::after {
+    /* Particle Effect Overlay */
+    [data-testid="stAppViewContainer"]::before {
         content: "";
         position: absolute;
         top: 0;
@@ -66,27 +61,27 @@ st.markdown("""
         width: 100%;
         height: 100%;
         pointer-events: none;
-        background: url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
-        opacity: 0.1;
-        animation: movingPatterns 20s linear infinite;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
+        background-size: 2px 2px;
+        opacity: 0.2;
     }
 
     /* Main Content Styling */
     [data-testid="stApp"] {
-        background: rgba(255, 255, 255, 0.8); /* Adding a slight transparency to main content */
+        background: rgba(255, 255, 255, 0.85); /* Adding a slight transparency to main content */
         padding: 20px;
         border-radius: 15px;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.15);
     }
 
     .metric-card {
-        background: linear-gradient(135deg, #FFEBCD, #FFDAB9); /* Light peach gradient for a warm, sunset-like feel */
+        background: linear-gradient(135deg, #d4fc79, #96e6a1); /* Fresh green gradient for a lively effect */
         padding: 20px;
         border-radius: 15px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         margin: 15px;
-        height: 180px; /* Ensures all tiles are of the same height */
-        width: 220px;  /* Ensures all tiles are of the same width */
+        height: 180px;
+        width: 220px;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -94,17 +89,17 @@ st.markdown("""
         text-align: center;
         transition: all 0.5s ease-in-out;
         cursor: pointer;
-        color: #333; /* Darker color for readability against lighter background */
+        color: #333;
     }
 
     .metric-card:hover {
-        transform: perspective(500px) rotateX(3deg) rotateY(3deg) scale(1.05);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-        border: 1px solid rgba(0, 123, 255, 0.4);
+        transform: perspective(500px) rotateX(3deg) rotateY(3deg) scale(1.1);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        border: 1px solid rgba(0, 123, 255, 0.5);
     }
 
     .filter-container {
-        background-color: #f9e8d6; /* Light cream to complement the sunset colors */
+        background-color: #f0f8ff;
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 20px;
@@ -114,22 +109,22 @@ st.markdown("""
         background-color: #ffffff;
         padding: 20px;
         border-radius: 10px;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 3px 6px rgba(0,0,0,0.15);
         margin: 15px 0;
         transition: transform 0.3s;
     }
 
     .comparison-card:hover {
-        transform: translateY(-3px);
+        transform: translateY(-5px);
     }
 
     .trend-positive {
-        color: #27ae60;
+        color: #2ecc71;
         font-weight: bold;
     }
 
     .trend-negative {
-        color: #c0392b;
+        color: #e74c3c;
         font-weight: bold;
     }
 
@@ -139,7 +134,7 @@ st.markdown("""
         padding: 25px;
         background-color: #ffffff;
         border-radius: 10px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
     }
 
     .stButton>button {
@@ -174,7 +169,7 @@ st.markdown("""
 
     /* Custom Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: rgba(240, 242, 246, 0.9); /* Light grey background with transparency for sidebar */
+        background-color: rgba(240, 242, 246, 0.9);
         color: black;
         border-right: 1px solid #e6e6e6;
     }
@@ -194,29 +189,6 @@ st.markdown("""
 
     [data-testid="stSidebar"] a:hover {
         text-decoration: underline;
-    }
-
-    /* Custom Sidebar Branding */
-    .sidebar-logo-container {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    .sidebar-logo-container img {
-        max-width: 150px;
-        transition: transform 0.3s;
-    }
-
-    .sidebar-logo-container img:hover {
-        transform: scale(1.1);
-    }
-
-    .sidebar-title {
-        font-size: 1.6em;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 20px;
-        color: #007BFF;
     }
 
     /* Enhanced Header Styling */
