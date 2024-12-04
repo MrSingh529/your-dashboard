@@ -19,7 +19,7 @@ import hashlib
 # Configure page settings
 st.set_page_config(
     page_title="TSG Payment Receivables Dashboard",
-    page_icon="\ud83d\udcca",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
