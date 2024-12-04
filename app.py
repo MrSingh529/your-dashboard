@@ -312,17 +312,6 @@ document.addEventListener("DOMContentLoaded", function() {
 # Embed the JavaScript for bubbles using components.html
 components.html(bubble_script, height=0, width=0)
 
-# Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
-st.sidebar.markdown(
-    """
-    <div class="sidebar-logo-container">
-        <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo">
-    </div>
-    <hr>
-    """,
-    unsafe_allow_html=True
-)
-
 # Enhanced security with password hashing
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
