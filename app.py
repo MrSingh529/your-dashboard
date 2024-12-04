@@ -44,14 +44,14 @@ st.markdown("""
         100% { background-position: 0% 50%; }
     }
 
-    @keyframes movingHexagons {
+    @keyframes movingWaves {
         0% { background-position: 0 0; }
-        100% { background-position: 200% 200%; }
+        100% { background-position: 100% 100%; }
     }
 
     [data-testid="stAppViewContainer"] {
-        background: linear-gradient(135deg, #89f7fe, #66a6ff, #ff7eb3, #ff758c, #ff6a88);
-        background-size: 300% 300%;
+        background: linear-gradient(120deg, #89f7fe, #66a6ff, #ff7eb3, #ff758c, #ff6a88);
+        background-size: 400% 400%;
         animation: animatedPattern 20s ease infinite;
         background-attachment: fixed;
         background-position: center;
@@ -67,9 +67,9 @@ st.markdown("""
         width: 100%;
         height: 100%;
         pointer-events: none;
-        background: url('https://www.transparenttextures.com/patterns/hexellence.png');
-        opacity: 0.15;
-        animation: movingHexagons 30s linear infinite;
+        background: url('https://www.transparenttextures.com/patterns/cubes.png');
+        opacity: 0.2;
+        animation: movingWaves 40s linear infinite;
     }
 
     /* Main Content Styling */
