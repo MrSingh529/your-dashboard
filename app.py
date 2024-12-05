@@ -1053,7 +1053,7 @@ def show_collections_dashboard():
         st.write("Please verify that the column names match the expected format.")
 
     # Analysis Tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["Trend Analysis", "Branch Performance", "Comparative Analysis", "Trend-Based Predictions"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Trend Analysis", "Branch Performance", "Comparative Analysis", "Advanced Insights"])
 
     with tab1:
         st.subheader("Balance & Pending Trends")
@@ -1202,53 +1202,136 @@ def show_collections_dashboard():
             st.write("Error details:", str(e))
 
     with tab4:
-        st.subheader("Trend-Based Predictions")
-        branch_to_forecast = st.selectbox("Select a Branch for Forecasting", filtered_df['Branch Name'].unique())
-        branch_data = filtered_df[filtered_df['Branch Name'] == branch_to_forecast]
-        
-        try:
+        st.subheader("Advanced Performance Insights")
+
+        # Predictive Performance Scoring
+        def calculate_performance_score(branch_data):
+            """
+            Calculate a comprehensive performance score for a branch
+            
+            Score Components:
+            1. Collection Consistency (40%)
+            2. Reduction Rate (30%)
+            3. Growth Stability (20%)
+            4. Recent Performance (10%)
+            """
+            try:
+                # Collection Consistency: How often pending amount decreases
+                dates = sorted(branch_data['Date'].unique())
+                pending_amounts = [
+                    branch_data[branch_data['Date'] == date]['Pending Amount'].values[0] 
+                    for date in dates
+                ]
+                
+                # Calculate reduction frequency
+                reduction_count = sum(
+                    1 for i in range(1, len(pending_amounts)) 
+                    if pending_amounts[i] < pending_amounts[i-1]
+                )
+                consistency_score = (reduction_count / (len(pending_amounts) - 1)) * 40 if len(pending_amounts) > 1 else 0
+
+                # Reduction Rate
+                first_pending = pending_amounts[0]
+                last_pending = pending_amounts[-1]
+                reduction_rate = max(0, (first_pending - last_pending) / first_pending * 30) if first_pending != 0 else 0
+
+                # Growth Stability (using variance of pending amounts)
+                import numpy as np
+                variance = np.var(pending_amounts)
+                stability_score = max(0, 20 * (1 - variance / (first_pending ** 2))) if first_pending != 0 else 0
+
+                # Recent Performance (last two periods comparison)
+                recent_performance = 10 if len(pending_amounts) >= 2 and pending_amounts[-1] < pending_amounts[-2] else 0
+
+                # Total Score
+                total_score = consistency_score + reduction_rate + stability_score + recent_performance
+                
+                return {
+                    'total_score': total_score,
+                    'consistency_score': consistency_score,
+                    'reduction_rate': reduction_rate,
+                    'stability_score': stability_score,
+                    'recent_performance': recent_performance
+                }
+            except Exception as e:
+                st.error(f"Error in performance scoring for branch: {str(e)}")
+                return None
+
+        # Risk Classification
+        def classify_branch_risk(score):
+            """Classify branch based on performance score"""
+            if score is None:
+                return "N/A"
+            elif score >= 80:
+                return "Low Risk"
+            elif 50 <= score < 80:
+                return "Medium Risk"
+            else:
+                return "High Risk"
+
+        # Prepare Performance Scoring Data
+        performance_scores = {}
+        for branch in selected_branches:
+            branch_data = filtered_df[filtered_df['Branch Name'] == branch].sort_values('Date')
             if not branch_data.empty:
-                branch_outstanding = branch_data['Balance As On'].values
-                model = ExponentialSmoothing(branch_outstanding, trend="add", seasonal=None, initialization_method="estimated")
-                model_fit = model.fit()
-                forecast = model_fit.forecast(steps=6)  # Forecast next 6 months
+                score_details = calculate_performance_score(branch_data)
+                if score_details:
+                    performance_scores[branch] = score_details
 
-                # Plot Forecast
-                forecast_fig, ax = plt.subplots()
-                ax.plot(branch_data['Date'], branch_outstanding, label="Actual")
-                future_dates = pd.date_range(start=branch_data['Date'].iloc[-1] + pd.Timedelta(days=1), periods=6, freq='M')
-                ax.plot(future_dates, forecast, label="Forecast", linestyle='--')
-                ax.set_title(f"Outstanding Forecast for {branch_to_forecast}")
-                ax.set_xlabel("Date")
-                ax.set_ylabel("Outstanding (₹)")
-                ax.legend()
-                st.pyplot(forecast_fig)
-        except Exception as e:
-            st.error(f"Error generating forecast: {str(e)}")
-        
-        # K-Means Clustering
-        st.subheader("Branch Clustering")
-        try:
-            if st.checkbox("Show Cluster Analysis"):
-                clustering_data = filtered_df[['Balance As On', 'Pending Amount']].dropna()
-                kmeans = KMeans(n_clusters=3, random_state=0).fit(clustering_data)
-                filtered_df['Cluster'] = kmeans.labels_
+        # Visualization of Performance Scores
+        if performance_scores:
+            # Prepare data for visualization
+            score_df = pd.DataFrame.from_dict(performance_scores, orient='index')
+            score_df.index.name = 'Branch Name'
+            score_df = score_df.reset_index()
 
-                # Visualization
-                fig = px.scatter(filtered_df, x="Balance As On", y="Pending Amount", color="Cluster",
-                                 hover_data=["Branch Name"], title="Branch Clustering")
-                st.plotly_chart(fig, use_container_width=True)
-        except Exception as e:
-            st.error(f"Error in clustering analysis: {str(e)}")
-        
-        # Heatmap Analysis
-        st.subheader("Heatmap Analysis")
-        try:
-            heatmap_data = filtered_df.pivot(index="Branch Name", columns="Date", values="Balance As On")
-            fig_heatmap = px.imshow(heatmap_data, title="Outstanding Amount Heatmap")
-            st.plotly_chart(fig_heatmap, use_container_width=True)
-        except Exception as e:
-            st.error("Unable to generate heatmap due to missing or invalid data.")
+            # Score Distribution
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.subheader("Performance Scores")
+                fig_scores = px.bar(
+                    score_df, 
+                    x='Branch Name', 
+                    y='total_score', 
+                    title='Branch Performance Scores',
+                    color='total_score',
+                    color_continuous_scale='RdYlGn'
+                )
+                st.plotly_chart(fig_scores, use_container_width=True)
+
+            with col2:
+                st.subheader("Risk Classification")
+                score_df['Risk Level'] = score_df['total_score'].apply(classify_branch_risk)
+                
+                # Risk Level Pie Chart
+                risk_counts = score_df['Risk Level'].value_counts()
+                fig_risk = px.pie(
+                    values=risk_counts.values, 
+                    names=risk_counts.index,
+                    title='Branch Risk Distribution',
+                    color_discrete_map={
+                        'Low Risk': '#92D050',  # Green
+                        'Medium Risk': '#FFC000',  # Yellow
+                        'High Risk': '#FF7575'  # Red
+                    }
+                )
+                st.plotly_chart(fig_risk, use_container_width=True)
+
+            # Detailed Performance Table
+            st.subheader("Detailed Branch Performance Metrics")
+            performance_table = score_df.copy()
+            performance_table['Risk Level'] = performance_table['total_score'].apply(classify_branch_risk)
+            performance_table = performance_table.style.apply(
+                lambda x: ['background-color: #92D050' if r == 'Low Risk' 
+                           else 'background-color: #FFC000' if r == 'Medium Risk' 
+                           else 'background-color: #FF7575' for r in x],
+                subset=['Risk Level']
+            )
+            st.dataframe(performance_table, use_container_width=True)
+
+        else:
+            st.warning("Insufficient data for advanced performance analysis")
 
     # Export Options
     with st.sidebar.expander("Export Options"):
