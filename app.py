@@ -8,6 +8,7 @@ import io
 import re
 from sklearn.cluster import KMeans
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
+import matplotlib.pyplot as plt
 import streamlit.components.v1 as components
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
