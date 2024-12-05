@@ -847,47 +847,6 @@ def show_comparative_analysis(filtered_df, dates, selected_branches):
                 delta=improvement,
                 delta_type="inverse"
             )
-
-        # Trend-Based Predictions
-        st.subheader("Trend-Based Predictions")
-        branch_to_forecast = st.selectbox("Select a Branch for Forecasting", filtered_df['Branch Name'].unique())
-        branch_data = filtered_df[filtered_df['Branch Name'] == branch_to_forecast]
-
-        # Simple Forecasting with Exponential Smoothing
-        if not branch_data.empty:
-            branch_outstanding = branch_data['Outstanding'].values
-            model = ExponentialSmoothing(branch_outstanding, trend="add", seasonal=None, initialization_method="estimated")
-            model_fit = model.fit()
-            forecast = model_fit.forecast(steps=6)  # Forecast next 6 months
-
-            # Plot Forecast
-            forecast_fig, ax = plt.subplots()
-            ax.plot(branch_data['Date'], branch_outstanding, label="Actual")
-            future_dates = pd.date_range(start=branch_data['Date'].iloc[-1] + pd.Timedelta(days=1), periods=6, freq='M')
-            ax.plot(future_dates, forecast, label="Forecast", linestyle='--')
-            ax.set_title(f"Outstanding Forecast for {branch_to_forecast}")
-            ax.set_xlabel("Date")
-            ax.set_ylabel("Outstanding (₹)")
-            ax.legend()
-            st.pyplot(forecast_fig)
-
-        # K-Means Clustering
-        st.subheader("Branch Clustering")
-        if st.checkbox("Show Cluster Analysis"):
-            clustering_data = filtered_df[['Outstanding', 'Collection Efficiency']]
-            kmeans = KMeans(n_clusters=3, random_state=0).fit(clustering_data)
-            filtered_df['Cluster'] = kmeans.labels_
-
-            # Visualization
-            fig = px.scatter(filtered_df, x="Outstanding", y="Collection Efficiency", color="Cluster",
-                             hover_data=["Branch Name"], title="Branch Clustering")
-            st.plotly_chart(fig, use_container_width=True)
-
-        # Heatmap
-        st.subheader("Heatmap Analysis")
-        heatmap_data = filtered_df.pivot(index="Branch Name", columns="Date", values="Outstanding")
-        fig_heatmap = px.imshow(heatmap_data, title="Outstanding Amount Heatmap")
-        st.plotly_chart(fig_heatmap, use_container_width=True)
         
     except Exception as e:
         st.error(f"Error in comparative analysis: {str(e)}")
@@ -1238,6 +1197,52 @@ def show_collections_dashboard():
         except Exception as e:
             st.error(f"Error in comparative analysis: {str(e)}")
             st.write("Error details:", str(e))
+
+    with tab4:
+        st.subheader("Trend-Based Predictions")
+        branch_to_forecast = st.selectbox("Select a Branch for Forecasting", filtered_df['Branch Name'].unique())
+        branch_data = filtered_df[filtered_df['Branch Name'] == branch_to_forecast]
+        try:
+            if not branch_data.empty:
+                branch_outstanding = branch_data['Balance As On'].values
+                model = ExponentialSmoothing(branch_outstanding, trend="add", seasonal=None, initialization_method="estimated")
+                model_fit = model.fit()
+                forecast = model_fit.forecast(steps=6)  # Forecast next 6 months
+
+                # Plot Forecast
+                forecast_fig, ax = plt.subplots()
+                ax.plot(branch_data['Date'], branch_outstanding, label="Actual")
+                future_dates = pd.date_range(start=branch_data['Date'].iloc[-1] + pd.Timedelta(days=1), periods=6, freq='M')
+                ax.plot(future_dates, forecast, label="Forecast", linestyle='--')
+                ax.set_title(f"Outstanding Forecast for {branch_to_forecast}")
+                ax.set_xlabel("Date")
+                ax.set_ylabel("Outstanding (₹)")
+                ax.legend()
+                st.pyplot(forecast_fig)
+
+        # K-Means Clustering
+        st.subheader("Branch Clustering")
+        if st.checkbox("Show Cluster Analysis"):
+            clustering_data = filtered_df[['Balance As On', 'Pending Amount']].dropna()
+            kmeans = KMeans(n_clusters=3, random_state=0).fit(clustering_data)
+            filtered_df['Cluster'] = kmeans.labels_
+
+            # Visualization
+            fig = px.scatter(filtered_df, x="Balance As On", y="Pending Amount", color="Cluster",
+                             hover_data=["Branch Name"], title="Branch Clustering")
+            st.plotly_chart(fig, use_container_width=True)
+
+        # Heatmap Analysis
+        st.subheader("Heatmap Analysis")
+        try:
+            heatmap_data = filtered_df.pivot(index="Branch Name", columns="Date", values="Balance As On")
+            fig_heatmap = px.imshow(heatmap_data, title="Outstanding Amount Heatmap")
+            st.plotly_chart(fig_heatmap, use_container_width=True)
+        except Exception as e:
+            st.error("Unable to generate heatmap due to missing or invalid data.")
+
+    except Exception as e:
+        st.error(f"Error integrating additional features: {str(e)}")
 
     # Export Options
     with st.sidebar.expander("Export Options"):
