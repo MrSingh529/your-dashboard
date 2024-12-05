@@ -1053,7 +1053,7 @@ def show_collections_dashboard():
         st.write("Please verify that the column names match the expected format.")
 
     # Analysis Tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["Trend Analysis", "Branch Performance", "Comparative Analysis", "Advanced Insights"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Trend Analysis", "Branch Performance", "Comparative Analysis", "Pending Amount Insights"])
 
     with tab1:
         st.subheader("Balance & Pending Trends")
@@ -1202,136 +1202,188 @@ def show_collections_dashboard():
             st.write("Error details:", str(e))
 
     with tab4:
-        st.subheader("Advanced Performance Insights")
+        st.subheader("Comprehensive Pending Amount Analysis")
 
-        # Predictive Performance Scoring
-        def calculate_performance_score(branch_data):
+        def analyze_pending_amounts(df, selected_branches):
             """
-            Calculate a comprehensive performance score for a branch
+            Comprehensive analysis of pending amounts for selected branches
             
-            Score Components:
-            1. Collection Consistency (40%)
-            2. Reduction Rate (30%)
-            3. Growth Stability (20%)
-            4. Recent Performance (10%)
+            Args:
+                df (pandas.DataFrame): DataFrame containing branch-level financial data
+                selected_branches (list): List of branches to analyze
+            
+            Returns:
+                Dictionary of analytical insights about pending amounts
             """
-            try:
-                # Collection Consistency: How often pending amount decreases
-                dates = sorted(branch_data['Date'].unique())
-                pending_amounts = [
-                    branch_data[branch_data['Date'] == date]['Pending Amount'].values[0] 
-                    for date in dates
-                ]
+            # Ensure Date is datetime
+            df['Date'] = pd.to_datetime(df['Date'])
+            df = df.sort_values(['Branch Name', 'Date'])
+            
+            # Filter for selected branches
+            df = df[df['Branch Name'].isin(selected_branches)]
+            
+            # Pending Amount Analysis Dictionary
+            pending_analysis = {}
+            
+            for branch in selected_branches:
+                branch_data = df[df['Branch Name'] == branch]
                 
-                # Calculate reduction frequency
-                reduction_count = sum(
-                    1 for i in range(1, len(pending_amounts)) 
-                    if pending_amounts[i] < pending_amounts[i-1]
-                )
-                consistency_score = (reduction_count / (len(pending_amounts) - 1)) * 40 if len(pending_amounts) > 1 else 0
-
-                # Reduction Rate
-                first_pending = pending_amounts[0]
-                last_pending = pending_amounts[-1]
-                reduction_rate = max(0, (first_pending - last_pending) / first_pending * 30) if first_pending != 0 else 0
-
-                # Growth Stability (using variance of pending amounts)
-                import numpy as np
-                variance = np.var(pending_amounts)
-                stability_score = max(0, 20 * (1 - variance / (first_pending ** 2))) if first_pending != 0 else 0
-
-                # Recent Performance (last two periods comparison)
-                recent_performance = 10 if len(pending_amounts) >= 2 and pending_amounts[-1] < pending_amounts[-2] else 0
-
-                # Total Score
-                total_score = consistency_score + reduction_rate + stability_score + recent_performance
-                
-                return {
-                    'total_score': total_score,
-                    'consistency_score': consistency_score,
-                    'reduction_rate': reduction_rate,
-                    'stability_score': stability_score,
-                    'recent_performance': recent_performance
+                # Basic Pending Amount Metrics
+                branch_metrics = {
+                    'total_pending_history': branch_data['Pending Amount'].sum(),
+                    'avg_pending_amount': branch_data['Pending Amount'].mean(),
+                    'max_pending_amount': branch_data['Pending Amount'].max(),
+                    'min_pending_amount': branch_data['Pending Amount'].min(),
+                    
+                    # Trend Analysis
+                    'pending_trend': {
+                        'start_amount': branch_data['Pending Amount'].iloc[0],
+                        'end_amount': branch_data['Pending Amount'].iloc[-1],
+                        'total_change': branch_data['Pending Amount'].iloc[-1] - branch_data['Pending Amount'].iloc[0],
+                        'percent_change': ((branch_data['Pending Amount'].iloc[-1] - branch_data['Pending Amount'].iloc[0]) / branch_data['Pending Amount'].iloc[0] * 100) if branch_data['Pending Amount'].iloc[0] != 0 else 0
+                    },
+                    
+                    # Volatility Metrics
+                    'pending_volatility': {
+                        'standard_deviation': branch_data['Pending Amount'].std(),
+                        'coefficient_of_variation': (branch_data['Pending Amount'].std() / branch_data['Pending Amount'].mean()) * 100 if branch_data['Pending Amount'].mean() != 0 else 0
+                    }
                 }
-            except Exception as e:
-                st.error(f"Error in performance scoring for branch: {str(e)}")
-                return None
+                
+                # Consecutive Reduction Analysis
+                pending_series = branch_data['Pending Amount']
+                consecutive_reductions = 0
+                max_consecutive_reductions = 0
+                
+                for i in range(1, len(pending_series)):
+                    if pending_series.iloc[i] < pending_series.iloc[i-1]:
+                        consecutive_reductions += 1
+                        max_consecutive_reductions = max(max_consecutive_reductions, consecutive_reductions)
+                    else:
+                        consecutive_reductions = 0
+                
+                branch_metrics['max_consecutive_reduction_periods'] = max_consecutive_reductions
+                
+                # Risk Classification Based on Pending Amount
+                def classify_branch_risk(metrics):
+                    score = 0
+                    
+                    # Trend Component
+                    if metrics['pending_trend']['percent_change'] < 0:
+                        score += 40  # Positive for reducing pending amount
+                    elif metrics['pending_trend']['percent_change'] > 0:
+                        score -= 30  # Negative for increasing pending amount
+                    
+                    # Volatility Component
+                    if metrics['pending_volatility']['coefficient_of_variation'] < 20:
+                        score += 30  # Lower volatility is better
+                    else:
+                        score -= 20
+                    
+                    # Consecutive Reduction Bonus
+                    score += min(metrics['max_consecutive_reduction_periods'] * 10, 30)
+                    
+                    # Final Risk Classification
+                    if score >= 50:
+                        return 'Low Risk'
+                    elif 20 <= score < 50:
+                        return 'Medium Risk'
+                    else:
+                        return 'High Risk'
+                
+                branch_metrics['risk_classification'] = classify_branch_risk(branch_metrics)
+                
+                pending_analysis[branch] = branch_metrics
+            
+            return pending_analysis
 
-        # Risk Classification
-        def classify_branch_risk(score):
-            """Classify branch based on performance score"""
-            if score is None:
-                return "N/A"
-            elif score >= 80:
-                return "Low Risk"
-            elif 50 <= score < 80:
-                return "Medium Risk"
-            else:
-                return "High Risk"
-
-        # Prepare Performance Scoring Data
-        performance_scores = {}
-        for branch in selected_branches:
-            branch_data = filtered_df[filtered_df['Branch Name'] == branch].sort_values('Date')
-            if not branch_data.empty:
-                score_details = calculate_performance_score(branch_data)
-                if score_details:
-                    performance_scores[branch] = score_details
-
-        # Visualization of Performance Scores
-        if performance_scores:
-            # Prepare data for visualization
-            score_df = pd.DataFrame.from_dict(performance_scores, orient='index')
-            score_df.index.name = 'Branch Name'
-            score_df = score_df.reset_index()
-
-            # Score Distribution
+        def visualize_pending_amount_insights(pending_analysis):
+            """
+            Create visualizations for pending amount analysis
+            
+            Args:
+                pending_analysis (dict): Dictionary of branch pending amount metrics
+            """
+            # Convert analysis to DataFrame for easier visualization
+            analysis_df = pd.DataFrame.from_dict(pending_analysis, orient='index')
+            analysis_df['Branch'] = analysis_df.index
+            
+            # Layout columns for different visualizations
             col1, col2 = st.columns(2)
             
             with col1:
-                st.subheader("Performance Scores")
-                fig_scores = px.bar(
-                    score_df, 
-                    x='Branch Name', 
-                    y='total_score', 
-                    title='Branch Performance Scores',
-                    color='total_score',
-                    color_continuous_scale='RdYlGn'
+                # Total Pending Amount Bar Chart
+                fig_total_pending = px.bar(
+                    analysis_df, 
+                    x='Branch', 
+                    y='total_pending_history', 
+                    title='Total Pending Amount by Branch',
+                    labels={'total_pending_history': 'Total Pending Amount'}
                 )
-                st.plotly_chart(fig_scores, use_container_width=True)
-
+                st.plotly_chart(fig_total_pending, use_container_width=True)
+            
             with col2:
-                st.subheader("Risk Classification")
-                score_df['Risk Level'] = score_df['total_score'].apply(classify_branch_risk)
-                
-                # Risk Level Pie Chart
-                risk_counts = score_df['Risk Level'].value_counts()
-                fig_risk = px.pie(
+                # Risk Classification Pie Chart
+                risk_counts = analysis_df['risk_classification'].value_counts()
+                fig_risk_pie = px.pie(
+                    names=risk_counts.index, 
                     values=risk_counts.values, 
-                    names=risk_counts.index,
                     title='Branch Risk Distribution',
+                    color='risk_classification',
                     color_discrete_map={
-                        'Low Risk': '#92D050',  # Green
-                        'Medium Risk': '#FFC000',  # Yellow
-                        'High Risk': '#FF7575'  # Red
+                        'Low Risk': 'green',
+                        'Medium Risk': 'orange',
+                        'High Risk': 'red'
                     }
                 )
-                st.plotly_chart(fig_risk, use_container_width=True)
+                st.plotly_chart(fig_risk_pie, use_container_width=True)
+            
+            # Detailed Risk and Performance Table
+            st.subheader("Branch Pending Amount Performance")
+            
+            # Prepare style for the table
+            def color_risk(val):
+                color = 'green' if val == 'Low Risk' else 'orange' if val == 'Medium Risk' else 'red'
+                return f'background-color: {color}; color: white;'
+            
+            # Select and format columns
+            performance_table = analysis_df[[
+                'total_pending_history', 
+                'avg_pending_amount', 
+                'pending_trend',
+                'max_consecutive_reduction_periods', 
+                'risk_classification'
+            ]].copy()
+            
+            # Extract percent change
+            performance_table['Trend %'] = performance_table['pending_trend'].apply(lambda x: x['percent_change'])
+            performance_table = performance_table.drop(columns=['pending_trend'])
+            
+            # Rename columns for clarity
+            performance_table.columns = [
+                'Total Pending', 
+                'Avg Pending', 
+                'Cons. Reduction Periods', 
+                'Risk Classification', 
+                'Trend %'
+            ]
+            
+            # Apply formatting and styling
+            styled_table = performance_table.style.format({
+                'Total Pending': '₹{:,.2f}',
+                'Avg Pending': '₹{:,.2f}',
+                'Trend %': '{:.2f}%'
+            }).applymap(color_risk, subset=['Risk Classification'])
+            
+            st.dataframe(styled_table, use_container_width=True)
 
-            # Detailed Performance Table
-            st.subheader("Detailed Branch Performance Metrics")
-            performance_table = score_df.copy()
-            performance_table['Risk Level'] = performance_table['total_score'].apply(classify_branch_risk)
-            performance_table = performance_table.style.apply(
-                lambda x: ['background-color: #92D050' if r == 'Low Risk' 
-                           else 'background-color: #FFC000' if r == 'Medium Risk' 
-                           else 'background-color: #FF7575' for r in x],
-                subset=['Risk Level']
-            )
-            st.dataframe(performance_table, use_container_width=True)
-
+        # Ensure we have selected branches from previous filter
+        if 'selected_branches' in locals():
+            # Analyze and visualize pending amounts
+            pending_analysis = analyze_pending_amounts(df, selected_branches)
+            visualize_pending_amount_insights(pending_analysis)
         else:
-            st.warning("Insufficient data for advanced performance analysis")
+            st.warning("Please select branches in the sidebar first.")
 
     # Export Options
     with st.sidebar.expander("Export Options"):
