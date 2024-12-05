@@ -1247,9 +1247,6 @@ def show_collections_dashboard():
         except Exception as e:
             st.error("Unable to generate heatmap due to missing or invalid data.")
 
-    except Exception as e:
-        st.error(f"Error integrating additional features: {str(e)}")
-
     # Export Options
     with st.sidebar.expander("Export Options"):
         st.subheader("Export Analysis")
