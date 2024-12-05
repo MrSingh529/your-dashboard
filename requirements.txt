@@ -9,3 +9,4 @@ cryptography
 pydrive
 streamlit_lottie
 scikit-learn
+statsmodels
