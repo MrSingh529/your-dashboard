@@ -1050,7 +1050,7 @@ def show_collections_dashboard():
         st.write("Please verify that the column names match the expected format.")
 
     # Analysis Tabs
-    tab1, tab2, tab3 = st.tabs(["Trend Analysis", "Branch Performance", "Comparative Analysis"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Trend Analysis", "Branch Performance", "Comparative Analysis", "Trend-Based Predictions"])
 
     with tab1:
         st.subheader("Balance & Pending Trends")
@@ -1202,6 +1202,7 @@ def show_collections_dashboard():
         st.subheader("Trend-Based Predictions")
         branch_to_forecast = st.selectbox("Select a Branch for Forecasting", filtered_df['Branch Name'].unique())
         branch_data = filtered_df[filtered_df['Branch Name'] == branch_to_forecast]
+        
         try:
             if not branch_data.empty:
                 branch_outstanding = branch_data['Balance As On'].values
@@ -1219,19 +1220,24 @@ def show_collections_dashboard():
                 ax.set_ylabel("Outstanding (₹)")
                 ax.legend()
                 st.pyplot(forecast_fig)
-
+        except Exception as e:
+            st.error(f"Error generating forecast: {str(e)}")
+        
         # K-Means Clustering
         st.subheader("Branch Clustering")
-        if st.checkbox("Show Cluster Analysis"):
-            clustering_data = filtered_df[['Balance As On', 'Pending Amount']].dropna()
-            kmeans = KMeans(n_clusters=3, random_state=0).fit(clustering_data)
-            filtered_df['Cluster'] = kmeans.labels_
+        try:
+            if st.checkbox("Show Cluster Analysis"):
+                clustering_data = filtered_df[['Balance As On', 'Pending Amount']].dropna()
+                kmeans = KMeans(n_clusters=3, random_state=0).fit(clustering_data)
+                filtered_df['Cluster'] = kmeans.labels_
 
-            # Visualization
-            fig = px.scatter(filtered_df, x="Balance As On", y="Pending Amount", color="Cluster",
-                             hover_data=["Branch Name"], title="Branch Clustering")
-            st.plotly_chart(fig, use_container_width=True)
-
+                # Visualization
+                fig = px.scatter(filtered_df, x="Balance As On", y="Pending Amount", color="Cluster",
+                                 hover_data=["Branch Name"], title="Branch Clustering")
+                st.plotly_chart(fig, use_container_width=True)
+        except Exception as e:
+            st.error(f"Error in clustering analysis: {str(e)}")
+        
         # Heatmap Analysis
         st.subheader("Heatmap Analysis")
         try:
