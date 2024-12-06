@@ -89,12 +89,6 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Now add the main content to the Streamlit page
-st.title("TSG Payment Receivables Dashboard")
-st.markdown("""
-    Welcome to the TSG Payment Receivables Dashboard.
-""")
-
 # Additional styling for other components
 st.markdown("""
     <style>
@@ -427,7 +421,7 @@ def check_password():
                 """,
                 unsafe_allow_html=True
             )
-            st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Dashboard Login</h2>", unsafe_allow_html=True)
+            st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Reports Dashboard Login</h2>", unsafe_allow_html=True)
             username = st.text_input("Username").lower()
             password = st.text_input("Password", type="password")
 
