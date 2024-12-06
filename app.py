@@ -63,15 +63,34 @@ st.markdown("""
     [data-testid="stApp"] {
         position: relative;
         z-index: 1;
-        background-color: rgba(255, 255, 255, 0.85);
-        min-height: 100vh;
+        background-color: rgba(255, 255, 255, 0.8); /* Adding a slight transparency to main content */
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
 
     /* Sidebar styling */
     [data-testid="stSidebar"] {
-        background-color: rgba(255, 255, 255, 0.9) !important;
-        z-index: 3 !important;
-        position: relative;
+        background-color: rgba(240, 242, 246, 0.9); /* Light grey background with transparency for sidebar */
+        color: black;
+        border-right: 1px solid #e6e6e6;
+    }
+
+    [data-testid="stSidebar"] .sidebar-content {
+        padding: 20px;
+    }
+
+    [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
+        color: #333333;
+    }
+
+    [data-testid="stSidebar"] a {
+        color: #007BFF;
+        text-decoration: none;
+    }
+
+    [data-testid="stSidebar"] a:hover {
+        text-decoration: underline;
     }
 
     /* Sidebar close button styling */
@@ -299,7 +318,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
-# Sidebar close functionality
 if 'sidebar_hidden' not in st.session_state:
     st.session_state.sidebar_hidden = False
 
