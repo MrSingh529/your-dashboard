@@ -33,18 +33,18 @@ st.markdown("""
         font-family: 'Geist', sans-serif !important;
     }
 
-    /* Container for video background */
+    /* Video container to hold the background video */
     .video-background-container {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        z-index: -1; /* Make sure it stays in the background */
+        z-index: -1; /* Keep the video behind everything */
         overflow: hidden;
     }
 
-    /* Style for the video element to ensure it covers the screen */
+    /* Video styling to make sure it fills the screen */
     .video-background-container video {
         position: absolute;
         top: 50%;
@@ -54,24 +54,21 @@ st.markdown("""
         width: auto;
         height: auto;
         transform: translate(-50%, -50%);
-        object-fit: cover; /* Ensure video covers the whole viewport */
-        opacity: 0.7; /* Add some transparency for better contrast with content */
+        object-fit: cover; /* Cover the entire screen */
+        opacity: 0.6; /* Add some transparency to the video */
     }
 
     /* Main content styling */
     [data-testid="stApp"] {
         position: relative;
-        z-index: 1; /* Content stays above the video */
-        background: rgba(255, 255, 255, 0.85); /* Adding a slight transparency to main content */
+        z-index: 1; /* Ensure content is above the video */
         padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
 
     /* Style to ensure the entire page uses 100% height */
     html, body, [data-testid="stAppViewContainer"] {
         height: 100%;
-        overflow: auto; /* Allow scrolling */
+        overflow: auto; /* Allow scrolling if necessary */
     }
     </style>
     <div class="video-background-container">
@@ -81,18 +78,26 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Continue with your Streamlit content
+# Now add the main content to the Streamlit page
 st.title("TSG Payment Receivables Dashboard")
 st.markdown("""
     Welcome to the TSG Payment Receivables Dashboard.
     Here you can visualize the receivables data and monitor performance metrics.
 """)
 
-# Add additional components like metrics, charts, and tables here
+# Adding example metrics
 st.metric("Total Receivables", "$1,250,000", "5% increase from last month")
 st.metric("Total Payables", "$850,000", "3% decrease from last month")
 
-# CSS with additional styles for the main content and sidebar
+# Adding some charts or additional content as an example
+st.markdown("### Sample Chart")
+chart_data = pd.DataFrame(
+    np.random.randn(20, 3),
+    columns=['a', 'b', 'c']
+)
+st.line_chart(chart_data)
+
+# Additional styling for other components
 st.markdown("""
     <style>
     .metric-card {
