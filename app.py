@@ -82,6 +82,21 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
+# Function to toggle sidebar
+def toggle_sidebar():
+    st.session_state.sidebar_expanded = not st.session_state.get('sidebar_expanded', False)
+
+# Initialize sidebar state in session state
+if 'sidebar_expanded' not in st.session_state:
+    st.session_state.sidebar_expanded = False
+
+# Sidebar toggle button
+st.markdown("""
+    <button class="sidebar-toggle" onclick="window.location.reload()">
+        Toggle Sidebar
+    </button>
+""", unsafe_allow_html=True)
+
 # Additional styling for other components
 st.markdown("""
     <style>
@@ -276,8 +291,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
-with st.sidebar:
-    st.markdown(
+if st.session_state.sidebar_expanded:
+    st.sidebar.markdown(
         """
         <div class="sidebar-logo-container">
             <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="max-width: 100%; height: auto;">
@@ -288,8 +303,8 @@ with st.sidebar:
     )
 
     # Sidebar controls
-    st.header("Dashboard Controls")
-    st.write("Configure your dashboard settings here.")
+    st.sidebar.header("Dashboard Controls")
+    st.sidebar.write("Configure your dashboard settings here.")
 
 # Enhanced security with password hashing
 def hash_password(password):
