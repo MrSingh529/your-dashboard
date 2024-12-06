@@ -82,9 +82,6 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Sidebar visibility control
-hide_sidebar = st.checkbox("Hide Sidebar")
-
 # Additional styling for other components
 st.markdown("""
     <style>
@@ -279,8 +276,22 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
-if not hide_sidebar:
+# Sidebar content
+if 'sidebar_hidden' not in st.session_state:
+    st.session_state.sidebar_hidden = False
+
+if not st.session_state.sidebar_hidden:
     with st.sidebar:
+        # Sidebar close button
+        st.markdown(
+            """
+            <button class="sidebar-close-button" onclick="window.location.reload()">
+                &times;
+            </button>
+            """,
+            unsafe_allow_html=True
+        )
+
         st.markdown(
             """
             <div class="sidebar-logo-container">
@@ -294,6 +305,19 @@ if not hide_sidebar:
         # Sidebar controls
         st.header("Dashboard Controls")
         st.write("Configure your dashboard settings here.")
+else:
+    # Ensure content is still centered if sidebar is hidden
+    st.markdown(
+        """
+        <style>
+        [data-testid="stAppViewContainer"] {
+            display: flex;
+            justify-content: center;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 # Enhanced security with password hashing
 def hash_password(password):
