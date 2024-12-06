@@ -50,11 +50,11 @@ st.markdown("""
         object-fit: cover; /* Ensure video covers the whole viewport */
     }
 
-    /* Ensures the content is visible above the video */
-    [data-testid="stApp"] {
+    /* Main content styling */
+    .main-content {
         position: relative;
-        z-index: 1; /* Ensures content stays above the video */
-        background: rgba(255, 255, 255, 0.8); /* Adding a slight transparency to main content */
+        z-index: 1; /* Content stays above the video */
+        background: rgba(255, 255, 255, 0.85); /* Adding a slight transparency to main content */
         padding: 20px;
         border-radius: 15px;
         box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
@@ -71,15 +71,26 @@ st.markdown("""
             <source src="https://github.com/MrSingh529/your-dashboard/blob/636870f9a8310e022a594c8efe84aad0d3b60af3/assets/bg.mp4?raw=true" type="video/mp4">
         </video>
     </div>
+    <div class="main-content">
 """, unsafe_allow_html=True)
+
+# Continue with your Streamlit content
+st.title("TSG Payment Receivables Dashboard")
+st.markdown("""
+    Welcome to the TSG Payment Receivables Dashboard.
+    Here you can visualize the receivables data and monitor performance metrics.
+""")
+
+# Add additional components like metrics, charts, and tables here
+st.metric("Total Receivables", "$1,250,000", "5% increase from last month")
+st.metric("Total Payables", "$850,000", "3% decrease from last month")
+
+# Close the main-content div
+st.markdown("</div>", unsafe_allow_html=True)
 
 # CSS with additional loading animation, custom font, and sidebar styling
 st.markdown("""
     <style>
-    html, body, .main, .stTextInput > div > input, .stButton > button, .stMarkdown, label, h1, h2, h3, h4, h5, h6, p, div, span, li, a, input, textarea, button, select {
-        font-family: 'Geist', sans-serif !important;
-    }
-
     .metric-card {
         background: linear-gradient(135deg, #FFEBCD, #FFDAB9); /* Light peach gradient for a warm, sunset-like feel */
         padding: 20px;
