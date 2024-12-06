@@ -81,6 +81,17 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
+# Continue with your Streamlit content
+st.title("TSG Payment Receivables Dashboard")
+st.markdown("""
+    Welcome to the TSG Payment Receivables Dashboard.
+    Here you can visualize the receivables data and monitor performance metrics.
+""")
+
+# Add additional components like metrics, charts, and tables here
+st.metric("Total Receivables", "$1,250,000", "5% increase from last month")
+st.metric("Total Payables", "$850,000", "3% decrease from last month")
+
 # CSS with additional styles for the main content and sidebar
 st.markdown("""
     <style>
