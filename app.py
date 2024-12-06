@@ -24,7 +24,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS with loading animation, custom font, and sidebar styling
+# HTML and CSS to embed the MP4 video background
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Geist&display=swap');
@@ -33,24 +33,45 @@ st.markdown("""
         font-family: 'Geist', sans-serif !important;
     }
 
-    html, body, .main, .stTextInput > div > input, .stButton > button, .stMarkdown, label, h1, h2, h3, h4, h5, h6, p, div, span, li, a, input, textarea, button, select {
-        font-family: 'Geist', sans-serif !important;
+    /* Create a container that positions the video in the background */
+    .video-background-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        min-width: 100%;
+        min-height: 100%;
+        z-index: -1; /* Ensures video stays in the background */
+        overflow: hidden;
     }
 
-    /* Target Streamlit Root Container for Background */
-    [data-testid="stAppViewContainer"] {
-        background-image: url('https://github.com/MrSingh529/your-dashboard/blob/c77d92d8f20b8e003c0e6009fb996ff9fae109a5/assets/bg.png?raw=true');
-        background-size: cover;
-        background-attachment: fixed;
-        background-position: center;
-    }
-
-    /* Main Content Styling */
+    /* Ensures the content is visible above the video */
     [data-testid="stApp"] {
+        position: relative;
+        z-index: 1;
         background: rgba(255, 255, 255, 0.8); /* Adding a slight transparency to main content */
         padding: 20px;
         border-radius: 15px;
         box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+    }
+
+    /* Style to keep the page elements visible */
+    html, body, [data-testid="stAppViewContainer"] {
+        height: 100%;
+        overflow: hidden;
+    }
+    </style>
+    <div class="video-background-container">
+        <video autoplay loop muted>
+            <source src="https://github.com/MrSingh529/your-dashboard/blob/636870f9a8310e022a594c8efe84aad0d3b60af3/assets/bg.mp4?raw=true" type="video/mp4">
+        </video>
+    </div>
+""", unsafe_allow_html=True)
+
+# CSS with additional loading animation, custom font, and sidebar styling
+st.markdown("""
+    <style>
+    html, body, .main, .stTextInput > div > input, .stButton > button, .stMarkdown, label, h1, h2, h3, h4, h5, h6, p, div, span, li, a, input, textarea, button, select {
+        font-family: 'Geist', sans-serif !important;
     }
 
     .metric-card {
