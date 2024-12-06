@@ -305,15 +305,10 @@ if 'sidebar_hidden' not in st.session_state:
 
 if not st.session_state.sidebar_hidden:
     with st.sidebar:
-        # Sidebar close button
-        st.markdown(
-            """
-            <button class="sidebar-close-button" onclick="window.location.reload()">
-                &times;
-            </button>
-            """,
-            unsafe_allow_html=True
-        )
+        # Sidebar close button with Python callback
+        if st.button("×", key="close_sidebar", help="Click to hide the sidebar", args=(True,)):
+            st.session_state.sidebar_hidden = True
+            st.experimental_rerun()
 
         st.markdown(
             """
