@@ -31,6 +31,7 @@ st.markdown("""
 
     * {
         font-family: 'Geist', sans-serif !important;
+        box-sizing: border-box;
     }
 
     /* Video container to hold the background video */
@@ -40,7 +41,7 @@ st.markdown("""
         left: 0;
         width: 100%;
         height: 100%;
-        z-index: -1; /* Keep the video behind everything */
+        z-index: -2; /* Lower z-index to ensure it stays behind content */
         overflow: hidden;
     }
 
@@ -55,25 +56,35 @@ st.markdown("""
         height: auto;
         transform: translate(-50%, -50%);
         object-fit: cover; /* Cover the entire screen */
-        opacity: 0.6; /* Add some transparency to the video */
+        opacity: 0.4; /* Reduced opacity for better content visibility */
     }
 
-    /* Main content styling */
+    /* Main content styling with improved z-index and background */
     [data-testid="stApp"] {
         position: relative;
-        z-index: 1; /* Ensure content is above the video */
-        padding: 20px;
+        z-index: 1;
+        background-color: rgba(255, 255, 255, 0.85); /* Slight white overlay */
+        min-height: 100vh;
+    }
+
+    /* Ensure main content container is above video */
+    [data-testid="stAppViewContainer"] {
+        background-color: transparent;
+        z-index: 2;
     }
 
     /* Style to ensure the entire page uses 100% height */
-    html, body, [data-testid="stAppViewContainer"] {
+    html, body {
         height: 100%;
-        overflow: auto; /* Allow scrolling if necessary */
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
     }
     </style>
     <div class="video-background-container">
-        <video autoplay loop muted preload="auto">
+        <video autoplay loop muted playsinline preload="auto">
             <source src="https://github.com/MrSingh529/your-dashboard/blob/636870f9a8310e022a594c8efe84aad0d3b60af3/assets/bg.mp4?raw=true" type="video/mp4">
+            Your browser does not support the video tag.
         </video>
     </div>
 """, unsafe_allow_html=True)
@@ -82,20 +93,7 @@ st.markdown("""
 st.title("TSG Payment Receivables Dashboard")
 st.markdown("""
     Welcome to the TSG Payment Receivables Dashboard.
-    Here you can visualize the receivables data and monitor performance metrics.
 """)
-
-# Adding example metrics
-st.metric("Total Receivables", "$1,250,000", "5% increase from last month")
-st.metric("Total Payables", "$850,000", "3% decrease from last month")
-
-# Adding some charts or additional content as an example
-st.markdown("### Sample Chart")
-chart_data = pd.DataFrame(
-    np.random.randn(20, 3),
-    columns=['a', 'b', 'c']
-)
-st.line_chart(chart_data)
 
 # Additional styling for other components
 st.markdown("""
@@ -274,6 +272,18 @@ st.markdown("""
     .tooltip:hover .tooltiptext {
         visibility: visible;
         opacity: 1;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+    <style>
+    /* (Previous styles remain unchanged) */
+    
+    /* Optional: Enhance readability of text over background */
+    body, .stMarkdown {
+        color: #333;
+        text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
     }
     </style>
 """, unsafe_allow_html=True)
