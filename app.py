@@ -73,6 +73,29 @@ st.markdown("""
         z-index: 3 !important;
         position: relative;
     }
+
+    /* Sidebar close button styling */
+    .sidebar-close-button {
+        background: none;
+        border: none;
+        font-size: 30px;
+        cursor: pointer;
+        color: #007BFF;
+        margin-left: auto;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    /* Button to reopen sidebar */
+    .reopen-sidebar-button {
+        background-color: #007BFF;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
     </style>
     <div class="video-background-container">
         <video autoplay loop muted playsinline preload="auto">
@@ -276,7 +299,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
-# Sidebar content
+# Sidebar close functionality
 if 'sidebar_hidden' not in st.session_state:
     st.session_state.sidebar_hidden = False
 
@@ -306,18 +329,16 @@ if not st.session_state.sidebar_hidden:
         st.header("Dashboard Controls")
         st.write("Configure your dashboard settings here.")
 else:
-    # Ensure content is still centered if sidebar is hidden
-    st.markdown(
-        """
-        <style>
-        [data-testid="stAppViewContainer"] {
-            display: flex;
-            justify-content: center;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+    # Display a button to reopen the sidebar
+    if st.button('Show Sidebar', key='show_sidebar', help="Click to reopen the sidebar"):
+        st.session_state.sidebar_hidden = False
+        st.experimental_rerun()
+
+# Toggle visibility button in the main content area
+if not st.session_state.sidebar_hidden:
+    if st.button('Hide Sidebar', key='hide_sidebar', help="Click to hide the sidebar"):
+        st.session_state.sidebar_hidden = True
+        st.experimental_rerun()
 
 # Enhanced security with password hashing
 def hash_password(password):
