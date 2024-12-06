@@ -33,25 +33,33 @@ st.markdown("""
         font-family: 'Geist', sans-serif !important;
     }
 
-    /* Container that positions the video in the background */
+    /* Container for video background */
     .video-background-container {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        z-index: -1; /* Ensures video stays strictly in the background */
+        z-index: -1; /* Make sure it stays in the background */
         overflow: hidden;
     }
 
-    video {
-        width: 100vw;
-        height: 100vh;
+    /* Style for the video element to ensure it covers the screen */
+    .video-background-container video {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        transform: translate(-50%, -50%);
         object-fit: cover; /* Ensure video covers the whole viewport */
+        opacity: 0.7; /* Add some transparency for better contrast with content */
     }
 
     /* Main content styling */
-    .main-content {
+    [data-testid="stApp"] {
         position: relative;
         z-index: 1; /* Content stays above the video */
         background: rgba(255, 255, 255, 0.85); /* Adding a slight transparency to main content */
@@ -60,35 +68,20 @@ st.markdown("""
         box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
 
-    /* Style to keep the page elements visible */
+    /* Style to ensure the entire page uses 100% height */
     html, body, [data-testid="stAppViewContainer"] {
         height: 100%;
-        overflow: auto; /* Allow scrolling if necessary */
+        overflow: auto; /* Allow scrolling */
     }
     </style>
     <div class="video-background-container">
-        <video autoplay loop muted>
+        <video autoplay loop muted preload="auto">
             <source src="https://github.com/MrSingh529/your-dashboard/blob/636870f9a8310e022a594c8efe84aad0d3b60af3/assets/bg.mp4?raw=true" type="video/mp4">
         </video>
     </div>
-    <div class="main-content">
 """, unsafe_allow_html=True)
 
-# Continue with your Streamlit content
-st.title("TSG Payment Receivables Dashboard")
-st.markdown("""
-    Welcome to the TSG Payment Receivables Dashboard.
-    Here you can visualize the receivables data and monitor performance metrics.
-""")
-
-# Add additional components like metrics, charts, and tables here
-st.metric("Total Receivables", "$1,250,000", "5% increase from last month")
-st.metric("Total Payables", "$850,000", "3% decrease from last month")
-
-# Close the main-content div
-st.markdown("</div>", unsafe_allow_html=True)
-
-# CSS with additional loading animation, custom font, and sidebar styling
+# CSS with additional styles for the main content and sidebar
 st.markdown("""
     <style>
     .metric-card {
