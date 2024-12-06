@@ -63,7 +63,7 @@ st.markdown("""
     [data-testid="stApp"] {
         position: relative;
         z-index: 1;
-        background-color: rgba(255, 255, 255, 0.8); /* Adding a slight transparency to main content */
+        background-color: rgba(255, 255, 255, 1); /* Changed to fully opaque background for visibility */
         padding: 20px;
         border-radius: 15px;
         box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
