@@ -326,11 +326,6 @@ if 'sidebar_hidden' not in st.session_state:
 
 if not st.session_state.sidebar_hidden:
     with st.sidebar:
-        # Sidebar close button with Python callback
-        if st.button("×", key="close_sidebar", help="Click to hide the sidebar", args=(True,)):
-            st.session_state.sidebar_hidden = True
-            st.experimental_rerun()
-
         st.markdown(
             """
             <div class="sidebar-logo-container">
@@ -341,19 +336,13 @@ if not st.session_state.sidebar_hidden:
             unsafe_allow_html=True
         )
 
-        # Sidebar controls
+# Sidebar controls
         st.header("Dashboard Controls")
         st.write("Configure your dashboard settings here.")
 else:
     # Display a button to reopen the sidebar
     if st.button('Show Sidebar', key='show_sidebar', help="Click to reopen the sidebar"):
         st.session_state.sidebar_hidden = False
-        st.experimental_rerun()
-
-# Toggle visibility button in the main content area
-if not st.session_state.sidebar_hidden:
-    if st.button('Hide Sidebar', key='hide_sidebar', help="Click to hide the sidebar"):
-        st.session_state.sidebar_hidden = True
         st.experimental_rerun()
 
 # Enhanced security with password hashing
