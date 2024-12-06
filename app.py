@@ -21,7 +21,7 @@ st.set_page_config(
     page_title="TSG Payment Receivables Dashboard",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # Start with sidebar collapsed
 )
 
 # HTML and CSS to embed the MP4 video background
@@ -41,7 +41,7 @@ st.markdown("""
         left: 0;
         width: 100%;
         height: 100%;
-        z-index: -2; /* Lower z-index to ensure it stays behind content */
+        z-index: -2;
         overflow: hidden;
     }
 
@@ -55,30 +55,42 @@ st.markdown("""
         width: auto;
         height: auto;
         transform: translate(-50%, -50%);
-        object-fit: cover; /* Cover the entire screen */
-        opacity: 0.4; /* Reduced opacity for better content visibility */
+        object-fit: cover;
+        opacity: 0.4;
     }
 
-    /* Main content styling with improved z-index and background */
+    /* Main content styling */
     [data-testid="stApp"] {
         position: relative;
         z-index: 1;
-        background-color: rgba(255, 255, 255, 0.85); /* Slight white overlay */
+        background-color: rgba(255, 255, 255, 0.85);
         min-height: 100vh;
     }
 
-    /* Ensure main content container is above video */
-    [data-testid="stAppViewContainer"] {
-        background-color: transparent;
-        z-index: 2;
+    /* Sidebar styling */
+    [data-testid="stSidebar"] {
+        background-color: rgba(255, 255, 255, 0.9) !important;
+        z-index: 3 !important;
+        position: relative;
     }
 
-    /* Style to ensure the entire page uses 100% height */
-    html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        overflow-x: hidden;
+    /* Sidebar toggle button styling */
+    .sidebar-toggle {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 1000;
+        background-color: #007BFF;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .sidebar-toggle:hover {
+        background-color: #0056b3;
     }
     </style>
     <div class="video-background-container">
@@ -87,6 +99,21 @@ st.markdown("""
             Your browser does not support the video tag.
         </video>
     </div>
+""", unsafe_allow_html=True)
+
+# Function to toggle sidebar
+def toggle_sidebar():
+    st.session_state.sidebar_expanded = not st.session_state.get('sidebar_expanded', False)
+
+# Initialize sidebar state in session state
+if 'sidebar_expanded' not in st.session_state:
+    st.session_state.sidebar_expanded = False
+
+# Sidebar toggle button
+st.markdown("""
+    <button class="sidebar-toggle" onclick="window.location.reload()">
+        Toggle Sidebar
+    </button>
 """, unsafe_allow_html=True)
 
 # Additional styling for other components
@@ -283,15 +310,20 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Branding for the sidebar - Custom HTML/CSS for sidebar logo and title
-st.sidebar.markdown(
-    """
-    <div class="sidebar-logo-container">
-        <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo">
-    </div>
-    <hr>
-    """,
-    unsafe_allow_html=True
-)
+if st.session_state.sidebar_expanded:
+    st.sidebar.markdown(
+        """
+        <div class="sidebar-logo-container">
+            <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="max-width: 100%; height: auto;">
+        </div>
+        <hr>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Sidebar controls
+    st.sidebar.header("Dashboard Controls")
+    st.sidebar.write("Configure your dashboard settings here.")
 
 # Enhanced security with password hashing
 def hash_password(password):
