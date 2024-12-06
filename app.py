@@ -39,7 +39,7 @@ st.markdown("""
 
     /* Target Streamlit Root Container for Background */
     [data-testid="stAppViewContainer"] {
-        background-image: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/blob/main/assets/bg.png');
+        background-image: url('https://github.com/MrSingh529/your-dashboard/blob/c77d92d8f20b8e003c0e6009fb996ff9fae109a5/assets/bg.png?raw=true');
         background-size: cover;
         background-attachment: fixed;
         background-position: center;
