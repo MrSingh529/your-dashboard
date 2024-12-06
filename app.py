@@ -37,43 +37,30 @@ st.markdown("""
         font-family: 'Geist', sans-serif !important;
     }
 
-    /* Animated Background Gradient */
-    @keyframes gradientBackground {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-
+    /* Target Streamlit Root Container for Background */
     [data-testid="stAppViewContainer"] {
-        background: linear-gradient(120deg, #ff9a9e 0%, #fad0c4 20%, #fad0c4 40%, #fbc2eb 60%, #a18cd1 80%, #fad0c4 100%);
-        background-size: 300% 300%;
-        animation: gradientBackground 20s ease infinite;
+        background-image: url('https://raw.githubusercontent.com/MrSingh529/your-dashboard/refs/heads/main/assets/bg.jpg');
+        background-size: cover;
         background-attachment: fixed;
         background-position: center;
     }
 
-    /* Moving Patterns Overlay */
-    @keyframes movingPatterns {
-        0% { background-position: 0 0; }
-        100% { background-position: 100% 100%; }
-    }
-
     /* Main Content Styling */
     [data-testid="stApp"] {
-        background: rgba(255, 255, 255, 0.85); /* Adding a slight transparency to main content */
+        background: rgba(255, 255, 255, 0.8); /* Adding a slight transparency to main content */
         padding: 20px;
-        border-radius: 20px;
-        box-shadow: 0px 6px 15px rgba(0,0,0,0.15);
+        border-radius: 15px;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
 
     .metric-card {
         background: linear-gradient(135deg, #FFEBCD, #FFDAB9); /* Light peach gradient for a warm, sunset-like feel */
-        padding: 25px;
-        border-radius: 20px;
-        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-        margin: 20px;
-        height: 200px; /* Ensures all tiles are of the same height */
-        width: 240px;  /* Ensures all tiles are of the same width */
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin: 15px;
+        height: 180px; /* Ensures all tiles are of the same height */
+        width: 220px;  /* Ensures all tiles are of the same width */
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -85,29 +72,29 @@ st.markdown("""
     }
 
     .metric-card:hover {
-        transform: perspective(500px) rotateX(5deg) rotateY(5deg) scale(1.08);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        transform: perspective(500px) rotateX(3deg) rotateY(3deg) scale(1.05);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
         border: 1px solid rgba(0, 123, 255, 0.4);
     }
 
     .filter-container {
         background-color: #f9e8d6; /* Light cream to complement the sunset colors */
-        padding: 25px;
-        border-radius: 15px;
-        margin-bottom: 25px;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
     }
 
     .comparison-card {
         background-color: #ffffff;
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        margin: 20px 0;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        margin: 15px 0;
         transition: transform 0.3s;
     }
 
     .comparison-card:hover {
-        transform: translateY(-5px);
+        transform: translateY(-3px);
     }
 
     .trend-positive {
@@ -121,22 +108,22 @@ st.markdown("""
     }
 
     .login-container {
-        max-width: 450px;
+        max-width: 400px;
         margin: auto;
-        padding: 30px;
+        padding: 25px;
         background-color: #ffffff;
-        border-radius: 15px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        border-radius: 10px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
     }
 
     .stButton>button {
         width: 100%;
-        margin-top: 20px;
+        margin-top: 15px;
         background-color: #007BFF;
         color: #ffffff;
         border: none;
-        border-radius: 10px;
-        padding: 12px;
+        border-radius: 8px;
+        padding: 10px;
         transition: background-color 0.3s;
     }
 
@@ -167,7 +154,7 @@ st.markdown("""
     }
 
     [data-testid="stSidebar"] .sidebar-content {
-        padding: 25px;
+        padding: 20px;
     }
 
     [data-testid="stSidebar"] h1, h2, h3, h4, p, div, span {
@@ -186,7 +173,7 @@ st.markdown("""
     /* Custom Sidebar Branding */
     .sidebar-logo-container {
         text-align: center;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
     }
 
     .sidebar-logo-container img {
@@ -199,10 +186,10 @@ st.markdown("""
     }
 
     .sidebar-title {
-        font-size: 1.8em;
+        font-size: 1.6em;
         font-weight: bold;
         text-align: center;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
         color: #007BFF;
     }
 
@@ -210,7 +197,7 @@ st.markdown("""
     .header-title {
         color: #007BFF;
         font-weight: bold;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
     }
 
     /* Tooltip styling for better user guidance */
@@ -222,7 +209,7 @@ st.markdown("""
 
     .tooltip .tooltiptext {
         visibility: hidden;
-        width: 180px;
+        width: 160px;
         background-color: #555;
         color: #fff;
         text-align: center;
@@ -232,7 +219,7 @@ st.markdown("""
         z-index: 1;
         bottom: 100%;
         left: 50%;
-        margin-left: -90px;
+        margin-left: -80px;
         opacity: 0;
         transition: opacity 0.3s;
     }
@@ -847,7 +834,7 @@ def show_comparative_analysis(filtered_df, dates, selected_branches):
                 delta=improvement,
                 delta_type="inverse"
             )
-        
+            
     except Exception as e:
         st.error(f"Error in comparative analysis: {str(e)}")
         st.write("Please check the data structure and selected filters")
