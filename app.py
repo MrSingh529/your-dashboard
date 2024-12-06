@@ -33,21 +33,27 @@ st.markdown("""
         font-family: 'Geist', sans-serif !important;
     }
 
-    /* Create a container that positions the video in the background */
+    /* Container that positions the video in the background */
     .video-background-container {
         position: fixed;
         top: 0;
         left: 0;
-        min-width: 100%;
-        min-height: 100%;
-        z-index: -1; /* Ensures video stays in the background */
+        width: 100%;
+        height: 100%;
+        z-index: -1; /* Ensures video stays strictly in the background */
         overflow: hidden;
+    }
+
+    video {
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover; /* Ensure video covers the whole viewport */
     }
 
     /* Ensures the content is visible above the video */
     [data-testid="stApp"] {
         position: relative;
-        z-index: 1;
+        z-index: 1; /* Ensures content stays above the video */
         background: rgba(255, 255, 255, 0.8); /* Adding a slight transparency to main content */
         padding: 20px;
         border-radius: 15px;
@@ -57,7 +63,7 @@ st.markdown("""
     /* Style to keep the page elements visible */
     html, body, [data-testid="stAppViewContainer"] {
         height: 100%;
-        overflow: hidden;
+        overflow: auto; /* Allow scrolling if necessary */
     }
     </style>
     <div class="video-background-container">
