@@ -121,7 +121,7 @@ st.markdown("""
     </style>
     <div class="video-background-container">
         <video autoplay loop muted playsinline preload="auto">
-            <source src="https://github.com/MrSingh529/your-dashboard/blob/32ad62ea477334f73f5dc26fa700219562b5aa54/assets/bg.mp4raw=true" type="video/mp4">
+            <source src="https://github.com/MrSingh529/your-dashboard/blob/32ad62ea477334f73f5dc26fa700219562b5aa54/assets/bg.mp4?raw=true" type="video/mp4">
             Your browser does not support the video tag.
         </video>
     </div>
