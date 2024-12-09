@@ -1858,14 +1858,22 @@ def show_tsg_dashboard():
 
 @st.cache_data(ttl=300)
 def load_task_status_data():
-    """Load task status data from Google Drive or local storage."""
+    """Load task status data."""
     try:
-        # Load data from Google Drive using the appropriate file_id
-        df = load_data_from_drive(FILE_IDS['task_status']) # Replace with the file ID of your sheet
+        df = load_data_from_drive(FILE_IDS['task_status'])  # Replace with the correct file ID
         if df is None:
             return None
         
-        # Return the dataframe as is for now (you can add further processing here)
+        # Check if the expected columns are present
+        expected_columns = [
+            "Task Description", "Assigned To", "Assigned on", 
+            "Due Date", "Status", "Completion Date", "Comments"
+        ]
+        
+        if not all(col in df.columns for col in expected_columns):
+            st.error(f"The uploaded data is missing required columns. Found columns: {df.columns.tolist()}")
+            return None
+
         return df
     except Exception as e:
         st.error(f"Error loading task status data: {str(e)}")
@@ -1881,11 +1889,21 @@ def show_task_status_dashboard():
     st.markdown("### Task Overview")
     st.dataframe(df, use_container_width=True)  # Display the dataframe
     
-    # Additional analysis or visualization can go here
-    st.markdown("### Summary")
+    # Display a summary of tasks by status
     if 'Status' in df.columns:
+        st.markdown("### Task Status Summary")
         status_counts = df['Status'].value_counts()
         st.bar_chart(status_counts)
+    
+    # Optionally display overdue tasks
+    st.markdown("### Overdue Tasks")
+    if 'Due Date' in df.columns:
+        today = pd.Timestamp.now().normalize()
+        overdue_tasks = df[df['Due Date'] < today]
+        if not overdue_tasks.empty:
+            st.dataframe(overdue_tasks, use_container_width=True)
+        else:
+            st.write("No overdue tasks!")
 
 # Define menu structure
 DEPARTMENT_REPORTS = {
