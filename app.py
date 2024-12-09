@@ -429,54 +429,6 @@ def load_data_from_drive(file_id):
         st.error(f"Error loading data: {str(e)}")
         return None
 
-@st.cache_data(ttl=300)
-def load_data_from_drive_second(file_id):
-    """Load data from Google Drive."""
-    try:
-        service = authenticate_drive()
-        if not service:
-            return None
-
-        # Download the file from Google Drive
-        request = service.files().get_media(fileId=file_id)
-        file_buffer = io.BytesIO()
-        downloader = MediaIoBaseDownload(file_buffer, request)
-        done = False
-        while not done:
-            status, done = downloader.next_chunk()
-
-        # Read the data as a DataFrame
-        file_buffer.seek(0)
-        df = pd.read_excel(file_buffer, header=0)  # Assuming the first row is the header
-
-        # Display the identified columns for debugging
-        st.write("Initial columns identified: ", df.columns.tolist())
-
-        # Clean up the column names to remove any potential issues
-        df.columns = [str(col).strip() for col in df.columns]
-
-        # Validate the expected columns
-        expected_columns = [
-            "Task Description", "Assigned To", "Assigned on",
-            "Due Date", "Status", "Completion Date", "Comments"
-        ]
-
-        if not all(col in df.columns for col in expected_columns):
-            st.error(f"The uploaded data is missing required columns. Found columns: {df.columns.tolist()}")
-            return None
-
-        # Convert the 'Due Date' and 'Assigned on' columns to datetime if they exist
-        date_columns = ['Due Date', 'Assigned on']
-        for col in date_columns:
-            if col in df.columns:
-                df[col] = pd.to_datetime(df[col], errors='coerce')
-
-        return df
-
-    except Exception as e:
-        st.error(f"Error loading data: {str(e)}")
-        return None
-
 def deduplicate_columns(columns):
     """Function to deduplicate column names."""
     new_columns = []
@@ -1909,20 +1861,31 @@ def load_task_status_data():
     """Load task status data."""
     try:
         # Fetch the data
-        df = load_data_from_drive_second(FILE_IDS['task_status'])  # Replace 'task_status' with your actual file ID key
+        df = load_data_from_drive(FILE_IDS['task_status'])  # Replace 'task_status' with your actual file ID key
         if df is None:
             return None
         
-        # Expected columns in your dataset
+        # If 'Account Name' or 'Branch Name' columns are expected but irrelevant for this report
+        if 'Account Name' not in df.columns and 'Branch Name' not in df.columns:
+            # Allow flexibility: for task status reports, we don't require these columns
+            st.warning("The 'Account Name' or 'Branch Name' columns are missing, but proceeding with the task status data.")
+        
+        # Expected columns for the Task Status dashboard
         expected_columns = [
             "Task Description", "Assigned To", "Assigned on", 
             "Due Date", "Status", "Completion Date", "Comments"
         ]
-        
-        # Check if all expected columns are present
+
+        # Check if all expected columns are present for Task Status data
         if not all(col in df.columns for col in expected_columns):
-            st.error(f"The uploaded data is missing required columns. Found columns: {df.columns.tolist()}")
+            st.error(f"The uploaded data is missing required columns for Task Status. Found columns: {df.columns.tolist()}")
             return None
+
+        # Convert the 'Due Date' and 'Assigned on' columns to datetime
+        date_columns = ['Due Date', 'Assigned on']
+        for col in date_columns:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], errors='coerce')
 
         return df
     except Exception as e:
