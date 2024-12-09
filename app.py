@@ -1860,34 +1860,30 @@ def show_tsg_dashboard():
 def load_task_status_data():
     """Load task status data."""
     try:
-        # Fetch the data
-        df = load_data_from_drive(FILE_IDS['task_status'])  # Replace 'task_status' with your actual file ID key
+        # Fetch the data from the shared load_data_from_drive function
+        df = load_data_from_drive(FILE_IDS['task_status'])  # Use the correct file ID for task_status
         if df is None:
             return None
-        
-        # If 'Account Name' or 'Branch Name' columns are expected but irrelevant for this report
-        if 'Account Name' not in df.columns and 'Branch Name' not in df.columns:
-            # Allow flexibility: for task status reports, we don't require these columns
-            st.warning("The 'Account Name' or 'Branch Name' columns are missing, but proceeding with the task status data.")
-        
-        # Expected columns for the Task Status dashboard
+
+        # Check if the columns are as expected for Task Status
         expected_columns = [
             "Task Description", "Assigned To", "Assigned on", 
             "Due Date", "Status", "Completion Date", "Comments"
         ]
 
-        # Check if all expected columns are present for Task Status data
+        # Handle missing columns gracefully
         if not all(col in df.columns for col in expected_columns):
             st.error(f"The uploaded data is missing required columns for Task Status. Found columns: {df.columns.tolist()}")
             return None
 
-        # Convert the 'Due Date' and 'Assigned on' columns to datetime
+        # Additional cleanup: convert dates if needed
         date_columns = ['Due Date', 'Assigned on']
         for col in date_columns:
             if col in df.columns:
                 df[col] = pd.to_datetime(df[col], errors='coerce')
 
         return df
+
     except Exception as e:
         st.error(f"Error loading task status data: {str(e)}")
         return None
