@@ -360,7 +360,8 @@ FILE_IDS = {
     'collections_data': st.secrets["google_drive"]["collections_data"],
     'itss_tender': st.secrets["google_drive"]["itss_tender"],
     'sdr_trend': st.secrets["google_drive"]["sdr_trend"],
-    'tsg_trend': st.secrets["google_drive"]["tsg_trend"]
+    'tsg_trend': st.secrets["google_drive"]["tsg_trend"],
+    'task_status': st.secrets["google_drive"]["task_status"]
 }
 
 @st.cache_resource(ttl=3600)  # Cache authentication for 1 hour
@@ -1855,6 +1856,37 @@ def show_tsg_dashboard():
         st.error(f"Error in TSG analysis: {str(e)}")
         st.write("Error details:", str(e))
 
+@st.cache_data(ttl=300)
+def load_task_status_data():
+    """Load task status data from Google Drive or local storage."""
+    try:
+        # Load data from Google Drive using the appropriate file_id
+        df = load_data_from_drive(FILE_IDS['task_status']) # Replace with the file ID of your sheet
+        if df is None:
+            return None
+        
+        # Return the dataframe as is for now (you can add further processing here)
+        return df
+    except Exception as e:
+        st.error(f"Error loading task status data: {str(e)}")
+        return None
+
+def show_task_status_dashboard():
+    """Display the Task Status Dashboard."""
+    df = load_task_status_data()
+    if df is None:
+        return
+    
+    st.title("Task Status Dashboard")
+    st.markdown("### Task Overview")
+    st.dataframe(df, use_container_width=True)  # Display the dataframe
+    
+    # Additional analysis or visualization can go here
+    st.markdown("### Summary")
+    if 'Status' in df.columns:
+        status_counts = df['Status'].value_counts()
+        st.bar_chart(status_counts)
+
 # Define menu structure
 DEPARTMENT_REPORTS = {
     "CSD": {
@@ -1869,6 +1901,9 @@ DEPARTMENT_REPORTS = {
     },
     "Finance": {
         # Add Finance reports here
+    },
+    "Tasks": {
+        "Task Status Dashboard": show_task_status_dashboard
     }
 }
 
@@ -1887,6 +1922,9 @@ def define_department_structure():
         },
         "Finance": {
             # Add Finance reports here
+        },
+        "Tasks": {
+            "Task Status Dashboard": show_task_status_dashboard
         }
     }
 
