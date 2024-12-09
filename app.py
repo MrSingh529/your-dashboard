@@ -1860,16 +1860,18 @@ def show_tsg_dashboard():
 def load_task_status_data():
     """Load task status data."""
     try:
-        df = load_data_from_drive(FILE_IDS['task_status'])  # Replace with the correct file ID
+        # Fetch the data
+        df = load_data_from_drive(FILE_IDS['task_status'])  # Replace 'task_status' with your actual file ID key
         if df is None:
             return None
         
-        # Check if the expected columns are present
+        # Expected columns in your dataset
         expected_columns = [
             "Task Description", "Assigned To", "Assigned on", 
             "Due Date", "Status", "Completion Date", "Comments"
         ]
         
+        # Check if all expected columns are present
         if not all(col in df.columns for col in expected_columns):
             st.error(f"The uploaded data is missing required columns. Found columns: {df.columns.tolist()}")
             return None
@@ -1887,7 +1889,7 @@ def show_task_status_dashboard():
     
     st.title("Task Status Dashboard")
     st.markdown("### Task Overview")
-    st.dataframe(df, use_container_width=True)  # Display the dataframe
+    st.dataframe(df, use_container_width=True)
     
     # Display a summary of tasks by status
     if 'Status' in df.columns:
@@ -1899,7 +1901,7 @@ def show_task_status_dashboard():
     st.markdown("### Overdue Tasks")
     if 'Due Date' in df.columns:
         today = pd.Timestamp.now().normalize()
-        overdue_tasks = df[df['Due Date'] < today]
+        overdue_tasks = df[pd.to_datetime(df['Due Date'], errors='coerce') < today]
         if not overdue_tasks.empty:
             st.dataframe(overdue_tasks, use_container_width=True)
         else:
