@@ -67,7 +67,7 @@ st.markdown("""
         width: 100%;
         height: 100%;
         z-index: 1;
-        background-color: rgba(255, 255, 255, 0.9); /* Slight transparency for better visibility of content */
+        background-color: transparent; /* Make the background fully transparent */
         padding: 20px;
         box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
