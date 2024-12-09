@@ -1883,17 +1883,25 @@ def show_task_status_dashboard():
     # Dashboard title
     st.title("Task Status Dashboard")
 
-    # Toggle form for adding a new task
+    # Buttons for toggling Add and Update functionality
     if "show_form" not in st.session_state:
         st.session_state.show_form = False
+    if "show_update" not in st.session_state:
+        st.session_state.show_update = False
 
-    col1, col2 = st.columns([6, 1])
+    col1, col2, col3 = st.columns([6, 1, 1])
     with col1:
         st.markdown("### Task Overview")
     with col2:
         if st.button("➕ Add New Task"):
             st.session_state.show_form = not st.session_state.show_form
+            st.session_state.show_update = False  # Close update form if open
+    with col3:
+        if st.button("🔄 Update Tasks"):
+            st.session_state.show_update = not st.session_state.show_update
+            st.session_state.show_form = False  # Close add form if open
 
+    # Add Task Form
     if st.session_state.show_form:
         st.markdown("### Add a New Task")
         with st.form("Add Task Form"):
@@ -1917,75 +1925,62 @@ def show_task_status_dashboard():
                 }
                 df = pd.concat([df, pd.DataFrame([new_task])], ignore_index=True)
                 st.success("Task added successfully!")
-                # Save to backend or sheet logic here
+                # Save to backend or Google Sheet
+                save_to_google_sheet(df)
                 st.session_state.show_form = False
                 st.experimental_rerun()
 
-    # Filters
-    st.sidebar.markdown("### Filters")
-    assigned_to_filter = st.sidebar.selectbox("Filter by Assigned To", options=["All"] + sorted(df["Assigned To"].unique().tolist()))
-    status_filter = st.sidebar.multiselect("Filter by Status", options=df["Status"].unique().tolist(), default=df["Status"].unique().tolist())
-    due_date_range = st.sidebar.date_input("Filter by Due Date Range", value=[df["Due Date"].min(), df["Due Date"].max()])
+    # Update Task Form
+    if st.session_state.show_update:
+        st.markdown("### Update Tasks")
+        task_to_update = st.selectbox("Select a Task to Update", options=df["Task Description"].tolist())
+        selected_task = df[df["Task Description"] == task_to_update]
 
-    # Apply filters
-    filtered_df = df.copy()
-    if assigned_to_filter != "All":
-        filtered_df = filtered_df[filtered_df["Assigned To"] == assigned_to_filter]
-    filtered_df = filtered_df[filtered_df["Status"].isin(status_filter)]
-    filtered_df = filtered_df[(filtered_df["Due Date"] >= pd.Timestamp(due_date_range[0])) & (filtered_df["Due Date"] <= pd.Timestamp(due_date_range[1]))]
+        if not selected_task.empty:
+            task_row = selected_task.iloc[0]
+            with st.form("Update Task Form"):
+                updated_status = st.selectbox(
+                    "Update Status",
+                    options=["Not Started", "In Progress", "Completed"],
+                    index=["Not Started", "In Progress", "Completed"].index(task_row["Status"])
+                )
+                updated_completion_date = st.date_input(
+                    "Completion Date",
+                    value=task_row["Completion Date"] if pd.notnull(task_row["Completion Date"]) else pd.Timestamp.now().date()
+                )
+                update_comments = st.text_area("Update Comments", value=task_row["Comments"] if pd.notnull(task_row["Comments"]) else "")
+                submitted_update = st.form_submit_button("Update Task")
 
-    # Task Metrics
-    st.markdown("### Key Metrics")
-    total_tasks = len(df)
-    overdue_tasks = len(df[df['Due Date'] < pd.Timestamp.now()])
-    completed_tasks = len(df[df['Status'] == "Completed"])
+                if submitted_update:
+                    # Update in DataFrame
+                    df.loc[df["Task Description"] == task_to_update, "Status"] = updated_status
+                    df.loc[df["Task Description"] == task_to_update, "Completion Date"] = updated_completion_date if updated_status == "Completed" else None
+                    df.loc[df["Task Description"] == task_to_update, "Comments"] = update_comments
+                    # Save changes to Google Sheet
+                    save_to_google_sheet(df)
+                    st.success("Task updated successfully!")
+                    st.experimental_rerun()
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total Tasks", total_tasks)
-    col2.metric("Overdue Tasks", overdue_tasks)
-    col3.metric("Completed Tasks", completed_tasks)
-
-    # Highlight overdue tasks
-    def highlight_tasks(row):
+    # Highlighted Task Table
+    st.markdown("### Highlighted Task Table")
+    def style_table(row):
         if row['Status'] != "Completed" and row['Due Date'] < pd.Timestamp.now():
-            return ['background-color: #FFCCCC'] * len(row)  # Red for overdue
+            return ['background-color: #FFCCCC; color: #900'] * len(row)  # Red for overdue
         elif row['Status'] != "Completed" and (row['Due Date'] - pd.Timestamp.now()).days <= 2:
-            return ['background-color: #FFFACD'] * len(row)  # Yellow for due soon
+            return ['background-color: #FFFACD; color: #000'] * len(row)  # Yellow for due soon
         else:
             return [''] * len(row)
 
-    st.markdown("### Task List")
-    styled_df = filtered_df.style.apply(highlight_tasks, axis=1)
-    st.dataframe(styled_df, use_container_width=True)
+    styled_table = df.style.apply(style_table, axis=1)
+    st.dataframe(styled_table, use_container_width=True)
 
-    # Mark as completed or update tasks
-    st.markdown("### Update Tasks")
-    task_to_update = st.selectbox("Select a Task to Update", options=filtered_df["Task Description"].tolist())
-    selected_task = filtered_df[filtered_df["Task Description"] == task_to_update]
-
-    if not selected_task.empty:
-        task_row = selected_task.iloc[0]
-        with st.form("Update Task Form"):
-            updated_status = st.selectbox("Update Status", options=["Not Started", "In Progress", "Completed"], index=["Not Started", "In Progress", "Completed"].index(task_row["Status"]))
-            updated_completion_date = st.date_input("Completion Date", value=task_row["Completion Date"] if pd.notnull(task_row["Completion Date"]) else pd.Timestamp.now().date())
-            update_comments = st.text_area("Update Comments", value=task_row["Comments"] if pd.notnull(task_row["Comments"]) else "")
-            submitted_update = st.form_submit_button("Update Task")
-
-            if submitted_update:
-                # Update in backend or sheet logic here
-                df.loc[df["Task Description"] == task_to_update, "Status"] = updated_status
-                df.loc[df["Task Description"] == task_to_update, "Completion Date"] = updated_completion_date if updated_status == "Completed" else None
-                df.loc[df["Task Description"] == task_to_update, "Comments"] = update_comments
-                st.success("Task updated successfully!")
-                st.experimental_rerun()
-
-    # Charts for CEO Monitoring
+    # Charts for Insights
     st.markdown("### Insights")
     col1, col2 = st.columns(2)
 
     with col1:
         status_chart = px.pie(
-            filtered_df,
+            df,
             names="Status",
             title="Tasks by Status",
             hole=0.3
@@ -1994,7 +1989,7 @@ def show_task_status_dashboard():
 
     with col2:
         overdue_chart = px.bar(
-            filtered_df,
+            df,
             x="Assigned To",
             y="Due Date",
             color="Status",
