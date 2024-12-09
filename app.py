@@ -378,7 +378,7 @@ def authenticate_drive():
         return None
 
 @st.cache_data(ttl=300)
-def load_data_from_drive(file_id):
+def load_data_from_drive(file_id, skip_validation=False):
     """Load data from Google Drive."""
     try:
         service = authenticate_drive()
@@ -395,33 +395,20 @@ def load_data_from_drive(file_id):
 
         # Read the data as a DataFrame
         file_buffer.seek(0)
+        df = pd.read_excel(file_buffer, header=0)
 
-        # Read the Excel file with explicit header selection
-        df = pd.read_excel(file_buffer, header=0)  # Assuming the first row is the header
+        # If validation is not skipped, enforce `Account Name` or `Branch Name` checks
+        if not skip_validation:
+            if df.columns[0] not in ["Branch Name", "Account Name"]:
+                st.write("Initial columns identified: ", df.columns.tolist())
+                df.columns = df.iloc[0]  # Assign the first row as the header
+                df = df.drop(0).reset_index(drop=True)
 
-        # Verify the columns to ensure correct headers
-        if df.columns[0] not in ["Branch Name", "Account Name"]:
-            # If the first column isn't "Branch Name" or "Account Name", assume that we may need to reassign columns
-            st.write("Initial columns identified: ", df.columns.tolist())
-            df.columns = df.iloc[0]  # Assign the first row as the header
-            df = df.drop(0).reset_index(drop=True)  # Drop the first row from the data
+            df.columns = [str(col).strip() for col in df.columns]
 
-        # Clean up the column names to remove any potential issues
-        df.columns = [str(col).strip() for col in df.columns]
-
-        # Ensure the expected 'Account Name' or 'Branch Name' column is present
-        if 'Account Name' not in df.columns and 'Branch Name' not in df.columns:
-            st.error("Failed to find the 'Account Name' or 'Branch Name' column. Please check the uploaded data format.")
-            return None
-
-        # Convert the 'Date' column to datetime if it exists
-        if 'Date' in df.columns:
-            df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-
-        # Convert numeric columns to the correct type
-        numeric_cols = df.columns.difference(['Branch Name', 'Account Name', 'Date'])
-        for col in numeric_cols:
-            df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', '').replace('-', '0'), errors='coerce')
+            if 'Account Name' not in df.columns and 'Branch Name' not in df.columns:
+                st.error("Failed to find the 'Account Name' or 'Branch Name' column. Please check the uploaded data format.")
+                return None
 
         return df
 
@@ -1860,23 +1847,22 @@ def show_tsg_dashboard():
 def load_task_status_data():
     """Load task status data."""
     try:
-        # Fetch the data from the shared load_data_from_drive function
-        df = load_data_from_drive(FILE_IDS['task_status'])  # Use the correct file ID for task_status
+        # Fetch the data with validation skipped
+        df = load_data_from_drive(FILE_IDS['task_status'], skip_validation=True)
         if df is None:
             return None
 
-        # Check if the columns are as expected for Task Status
+        # Validate task-specific columns
         expected_columns = [
             "Task Description", "Assigned To", "Assigned on", 
             "Due Date", "Status", "Completion Date", "Comments"
         ]
 
-        # Handle missing columns gracefully
         if not all(col in df.columns for col in expected_columns):
             st.error(f"The uploaded data is missing required columns for Task Status. Found columns: {df.columns.tolist()}")
             return None
 
-        # Additional cleanup: convert dates if needed
+        # Convert dates
         date_columns = ['Due Date', 'Assigned on']
         for col in date_columns:
             if col in df.columns:
