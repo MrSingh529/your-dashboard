@@ -959,11 +959,6 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
     delta_arrow = "↑" if delta_type == "normal" else "↓"
     delta_color = "#E74C3C" if delta_type == "normal" else "#27AE60"  # Red for increase, Green for decrease
 
-    # Set background color for different cards
-    background_color = "#FFF7E6" if title == "Total Outstanding" else \
-                       "#F6C6C6" if title == "High Risk Amount" else \
-                       "#CFF2C7"  # Light peach, muted red, and light green (all softer tones)
-
     # Inject CSS for the card styles
     st.markdown(f"""
         <style>
