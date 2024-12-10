@@ -959,8 +959,8 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
         <style>
             .metric-card {
                 background: rgba(255, 255, 255, 0.25); /* Semi-transparent white for glass effect */
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
+                backdrop-filter: blur(5px);
+                -webkit-backdrop-filter: blur(5px);
                 border-radius: 15px;
                 padding: 20px;
                 margin: 15px;
