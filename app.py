@@ -198,24 +198,27 @@ st.markdown("""
     }
 
     /* Glass styling for text inputs */
-    .stTextInput > div > div > input {
-        background: rgba(255, 255, 255, 0.25);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        border: 1px solid rgba(255,255,255,0.2);
-        border-radius: 8px;
-        padding: 10px;
-        color: #333;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    div[data-testid="stTextInput"] input[type="text"],
+    div[data-testid="stTextInput"] input[type="password"] {
+        background: rgba(255, 255, 255, 0.25) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        border: 1px solid rgba(255,255,255,0.2) !important;
+        border-radius: 8px !important;
+        padding: 10px !important;
+        color: #333 !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
     }
 
-    .stTextInput > div > div > input:hover,
-    .stTextInput > div > div > input:focus {
-        outline: none;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-        border: 1px solid rgba(0, 173, 239, 0.4);
-        transform: translateY(-2px);
+    div[data-testid="stTextInput"] input[type="text"]:hover,
+    div[data-testid="stTextInput"] input[type="text"]:focus,
+    div[data-testid="stTextInput"] input[type="password"]:hover,
+    div[data-testid="stTextInput"] input[type="password"]:focus {
+        outline: none !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
+        border: 1px solid rgba(0, 173, 239, 0.4) !important;
+        transform: translateY(-2px) !important;
     }
 
     .stButton > button {
