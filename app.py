@@ -1874,6 +1874,83 @@ def load_task_status_data():
         st.error(f"Error loading task status data: {str(e)}")
         return None
 
+def show_task_cards(df_page):
+    # Define some CSS for the cards
+    st.markdown("""
+    <style>
+    .task-card {
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: transform 0.2s ease-in-out;
+    }
+    .task-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .task-title {
+        font-size: 1.1em;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    .task-info {
+        font-size: 0.9em;
+        margin-bottom: 5px;
+    }
+    .overdue {
+        border-left: 5px solid #ff4d4d;
+    }
+    .due-soon {
+        border-left: 5px solid #FFD700;
+    }
+    .completed {
+        border-left: 5px solid #4CAF50;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # You can define how many cards per row you want
+    cards_per_row = 3
+    rows_needed = (len(df_page) + cards_per_row - 1) // cards_per_row
+
+    # Process each row of tasks
+    for row_idx in range(rows_needed):
+        cols = st.columns(cards_per_row)
+        # For each column in the row
+        for col_idx in range(cards_per_row):
+            task_index = row_idx * cards_per_row + col_idx
+            if task_index < len(df_page):
+                row = df_page.iloc[task_index]
+                
+                # Determine CSS class based on due date and status
+                card_class = "task-card"
+                if row["Status"] == "Completed":
+                    card_class += " completed"
+                else:
+                    due_date = row["Due Date"]
+                    if pd.notnull(due_date):
+                        days_left = (due_date - pd.Timestamp.now()).days
+                        if days_left < 0:
+                            card_class += " overdue"
+                        elif days_left <= 2:
+                            card_class += " due-soon"
+
+                with cols[col_idx]:
+                    # Build card HTML
+                    card_html = f"""
+                    <div class="{card_class}">
+                        <div class="task-title">{row['Task Description']}</div>
+                        <div class="task-info"><strong>Assigned To:</strong> {row['Assigned To']}</div>
+                        <div class="task-info"><strong>Assigned On:</strong> {row['Assigned on']}</div>
+                        <div class="task-info"><strong>Due Date:</strong> {row['Due Date'] if pd.notnull(row['Due Date']) else 'None'}</div>
+                        <div class="task-info"><strong>Status:</strong> {row['Status']}</div>
+                        <div class="task-info"><strong>Comments:</strong> {row['Comments'] if pd.notnull(row['Comments']) else 'N/A'}</div>
+                    </div>
+                    """
+                    st.markdown(card_html, unsafe_allow_html=True)
+
 def show_task_status_dashboard():
     """Display the Task Status Dashboard with enhancements."""
     df = load_task_status_data()
@@ -2035,10 +2112,10 @@ def show_task_status_dashboard():
             return [''] * len(row)
 
     if df_page.empty:
-        st.info("No tasks found for the given filters and search criteria.")
+        st.info("No tasks found for the given filters.")
     else:
-        styled_table = df_page.style.apply(style_table, axis=1)
-        st.dataframe(styled_table, use_container_width=True)
+        st.markdown("### Tasks List")
+        show_task_cards(df_page)
 
     # Enhanced Visualizations and Insights
     st.markdown("### Insights")
