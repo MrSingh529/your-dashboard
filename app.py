@@ -1880,45 +1880,47 @@ def show_task_cards(df_page):
     <style>
     .task-card {
         background: #fff;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 15px;
+        border-radius: 5px;
+        padding: 20px;
         margin-bottom: 20px;
-        position: relative;
-        transition: box-shadow 0.3s;
-        font-family: 'Helvetica', sans-serif;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: box-shadow 0.2s;
     }
     .task-card:hover {
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.15);
     }
     .task-title {
-        font-size: 1.15em;
-        font-weight: 600;
-        margin-bottom: 8px;
-        color: #333;
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #3f51b5;
+        position: relative;
+        margin-bottom: 10px;
+    }
+    .task-title::after {
+        content: "";
+        display: block;
+        width: 40px;
+        height: 3px;
+        background: #3f51b5;
+        margin-top: 5px;
+        border-radius: 2px;
     }
     .task-info {
         font-size: 0.9em;
-        color: #555;
-        margin-bottom: 3px;
+        color: #333;
+        margin-bottom: 5px;
     }
-    .status-badge {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        font-size: 0.8em;
-        padding: 5px 8px;
-        border-radius: 12px;
-        color: #fff;
+    .overdue {
+        border-left: 4px solid #F44336;
+        padding-left: 16px;
     }
-    .overdue .status-badge {
-        background: #d9534f;
+    .due-soon {
+        border-left: 4px solid #FFC107;
+        padding-left: 16px;
     }
-    .due-soon .status-badge {
-        background: #f0ad4e;
-    }
-    .completed .status-badge {
-        background: #5cb85c;
+    .completed {
+        border-left: 4px solid #4CAF50;
+        padding-left: 16px;
     }
     </style>
     """, unsafe_allow_html=True)
