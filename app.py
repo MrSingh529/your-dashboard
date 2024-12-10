@@ -72,11 +72,12 @@ st.markdown("""
         box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
 
-    /* Sidebar styling */
     [data-testid="stSidebar"] {
-        background-color: rgba(240, 242, 246, 0.9); /* Light grey background with transparency for sidebar */
+        background: rgba(255, 255, 255, 0.25) !important;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-right: 1px solid rgba(255,255,255,0.2);
         color: black;
-        border-right: 1px solid #e6e6e6;
     }
 
     [data-testid="stSidebar"] .sidebar-content {
