@@ -967,14 +967,15 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
     # Inject CSS for the card styles
     st.markdown(f"""
         <style>
-            .metric-card {{
-                background-color: {background_color};
-                padding: 20px;
+            .metric-card {
+                background: rgba(255, 255, 255, 0.25);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
                 border-radius: 15px;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                padding: 20px;
                 margin: 15px;
-                width: 230px;  /* Fixed width for consistency across all cards */
-                height: 160px; /* Fixed height for consistency */
+                height: 180px; /* Uniform height */
+                width: 220px;  /* Uniform width */
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
@@ -982,12 +983,16 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
                 text-align: center;
                 transition: all 0.5s ease-in-out;
                 cursor: pointer;
-            }}
-            .metric-card:hover {{
-                transform: perspective(500px) rotateX(3deg) rotateY(3deg) scale(1.05);
-                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+                color: #333;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                border: 1px solid rgba(255,255,255,0.2); /* Subtle border for definition */
+            }
+
+            .metric-card:hover {
+                transform: translateY(-5px) scale(1.05);
+                box-shadow: 0 8px 20px rgba(0,0,0,0.2);
                 border: 1px solid rgba(0, 173, 239, 0.4);
-            }}
+            }
         </style>
     """, unsafe_allow_html=True)
 
