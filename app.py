@@ -2324,7 +2324,7 @@ def main():
         if 'start_clicked' not in st.session_state:
             st.session_state['start_clicked'] = False
 
-        # Applying a fresh, cohesive look for the welcome screen
+        # Updated CSS for the welcome screen cards to match glass/blur effect
         st.markdown(f"""
         <style>
             @keyframes gradientBackground {{
@@ -2377,6 +2377,8 @@ def main():
                 transform: translateY(-5px);
                 box-shadow: 0px 12px 25px rgba(0, 0, 0, 0.3);
             }}
+
+            /* Updated card styling for glass/blur effect */
             .card {{
                 margin: 20px auto;
                 max-width: 1200px;
@@ -2385,12 +2387,21 @@ def main():
                 color: #333;
                 text-align: left;
                 line-height: 1.6;
-                background: rgba(255, 255, 255, 0.8);
+                background: rgba(255, 255, 255, 0.25);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
                 border-radius: 15px;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
                 opacity: 0;
                 animation: fadeInStep 2s ease-in-out forwards;
+                transition: all 0.3s ease;
             }}
+
+            .card:hover {{
+                box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+                transform: translateY(-5px);
+            }}
+
             @keyframes fadeInStep {{
                 0% {{ opacity: 0; transform: translateY(20px); }}
                 100% {{ opacity: 1; transform: translateY(0); }}
