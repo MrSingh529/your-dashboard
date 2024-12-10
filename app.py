@@ -1879,39 +1879,46 @@ def show_task_cards(df_page):
     st.markdown("""
     <style>
     .task-card {
-        background: rgba(255, 255, 255, 0.3);
-        backdrop-filter: blur(10px);
-        border-radius: 15px;
-        padding: 20px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
         margin-bottom: 20px;
-        box-shadow: 0 4px 30px rgba(0,0,0,0.1);
-        transition: transform 0.2s ease-in-out;
+        position: relative;
+        transition: box-shadow 0.3s;
+        font-family: 'Helvetica', sans-serif;
     }
     .task-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
     .task-title {
-        font-size: 1.2em;
-        font-weight: bold;
-        margin-bottom: 10px;
-        color: #3015F8;
-        text-shadow: 0 0 5px rgba(255, 255, 255, 1);
+        font-size: 1.15em;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #333;
     }
     .task-info {
-        font-size: 0.95em;
-        color: #eee;
-        margin-bottom: 5px;
-        text-shadow: 0 0 3px rgba(0,0,0,0.2);
+        font-size: 0.9em;
+        color: #555;
+        margin-bottom: 3px;
     }
-    .overdue {
-        border-left: 5px solid #FF6B6B;
+    .status-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 0.8em;
+        padding: 5px 8px;
+        border-radius: 12px;
+        color: #fff;
     }
-    .due-soon {
-        border-left: 5px solid #FFD93D;
+    .overdue .status-badge {
+        background: #d9534f;
     }
-    .completed {
-        border-left: 5px solid #4CAF50;
+    .due-soon .status-badge {
+        background: #f0ad4e;
+    }
+    .completed .status-badge {
+        background: #5cb85c;
     }
     </style>
     """, unsafe_allow_html=True)
