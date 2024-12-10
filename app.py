@@ -132,13 +132,14 @@ st.markdown("""
 st.markdown("""
     <style>
     .metric-card {
-        background: linear-gradient(135deg, #FFEBCD, #FFDAB9); /* Light peach gradient for a warm, sunset-like feel */
-        padding: 20px;
+        background: rgba(255, 255, 255, 0.25); /* Semi-transparent white for glass effect */
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         border-radius: 15px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        padding: 20px;
         margin: 15px;
-        height: 180px; /* Ensures all tiles are of the same height */
-        width: 220px;  /* Ensures all tiles are of the same width */
+        height: 180px; /* Uniform height */
+        width: 220px;  /* Uniform width */
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -146,13 +147,15 @@ st.markdown("""
         text-align: center;
         transition: all 0.5s ease-in-out;
         cursor: pointer;
-        color: #333; /* Darker color for readability against lighter background */
+        color: #333;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2); /* Subtle border for definition */
     }
 
     .metric-card:hover {
-        transform: perspective(500px) rotateX(3deg) rotateY(3deg) scale(1.05);
+        transform: translateY(-5px) scale(1.05);
         box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-        border: 1px solid rgba(0, 123, 255, 0.4);
+        border: 1px solid rgba(0, 173, 239, 0.4);
     }
 
     .filter-container {
