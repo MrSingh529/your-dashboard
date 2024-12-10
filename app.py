@@ -1878,30 +1878,8 @@ def load_task_status_data():
 
 def send_reminder_notification(task_description, due_date):
     """Send an email reminder for a task using SMTP credentials from st.secrets."""
-    try:
-        username = st.secrets["email"]["username"]
-        password = st.secrets["email"]["password"]
-        smtp_host = st.secrets["email"]["host"]
-        smtp_port = st.secrets["email"]["port"]
-        from_email = st.secrets["email"]["from_email"]
-        to_email = st.secrets["email"]["to_email"]
-
-        subject = f"Task Reminder: {task_description} Due Soon"
-        body = f"Reminder: Task '{task_description}' is due on {due_date.strftime('%Y-%m-%d')}. Please review and take action."
-
-        msg = MIMEText(body)
-        msg['Subject'] = subject
-        msg['From'] = from_email
-        msg['To'] = to_email
-
-        with smtplib.SMTP(smtp_host, smtp_port) as server:
-            server.starttls()
-            server.login(username, password)
-            server.send_message(msg)
-
-        # Optional: st.success(f"Email reminder sent for task: {task_description}")
-    except Exception as e:
-        st.error(f"Failed to send email: {str(e)}")
+    
+    pass
 
 def show_task_cards(df_page):
     # Add CSS for cards and modal + quick actions
