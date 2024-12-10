@@ -197,19 +197,26 @@ st.markdown("""
         box-shadow: 0 4px 16px rgba(0,0,0,0.1);
     }
 
-    .stButton>button {
-        width: 100%;
-        margin-top: 15px;
-        background-color: #007BFF;
-        color: #ffffff;
-        border: none;
+    .stButton > button {
+        background: rgba(255, 255, 255, 0.25); /* semi-transparent white for glass effect */
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: #333; /* Dark text for contrast */
+        border: 1px solid rgba(255,255,255,0.2);
         border-radius: 8px;
         padding: 10px;
-        transition: background-color 0.3s;
+        width: 100%; /* If you want full-width buttons */
+        margin-top: 15px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
-    .stButton>button:hover {
-        background-color: #0056b3;
+    .stButton > button:hover {
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        border: 1px solid rgba(0, 173, 239, 0.4);
     }
 
     /* Loading animation */
