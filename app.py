@@ -1875,20 +1875,32 @@ def load_task_status_data():
         return None
 
 def show_task_cards(df_page):
-    # Define some CSS for the cards
+    # Define CSS for the glass/blur material design cards with expanders
     st.markdown("""
     <style>
-    .task-card {
-        background: #fff;
-        border-radius: 5px;
-        padding: 20px;
+    .task-card-container {
+        position: relative;
         margin-bottom: 20px;
+    }
+
+    .task-card {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 10px;
+        padding: 20px;
+        margin: 10px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        transition: box-shadow 0.2s;
+        transition: all 0.3s ease;
+        overflow: hidden;
+        position: relative;
     }
+
     .task-card:hover {
-        box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        transform: translateY(-5px);
     }
+
     .task-title {
         font-size: 1.2em;
         font-weight: bold;
@@ -1896,6 +1908,7 @@ def show_task_cards(df_page):
         position: relative;
         margin-bottom: 10px;
     }
+
     .task-title::after {
         content: "";
         display: block;
@@ -1905,11 +1918,18 @@ def show_task_cards(df_page):
         margin-top: 5px;
         border-radius: 2px;
     }
-    .task-info {
+
+    .task-quickinfo {
         font-size: 0.9em;
         color: #333;
         margin-bottom: 5px;
     }
+
+    .task-expander {
+        margin-top: 10px;
+    }
+
+    /* Status-based colored border */
     .overdue {
         border-left: 4px solid #F44336;
         padding-left: 16px;
@@ -1922,48 +1942,87 @@ def show_task_cards(df_page):
         border-left: 4px solid #4CAF50;
         padding-left: 16px;
     }
+
+    /* Hover overlay for expander hint */
+    .task-card:hover .expander-hint {
+        opacity: 1;
+    }
+
+    .expander-hint {
+        position: absolute;
+        bottom: 10px;
+        right: 15px;
+        font-size: 0.8em;
+        color: #555;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
     </style>
     """, unsafe_allow_html=True)
 
-    # You can define how many cards per row you want
     cards_per_row = 3
     rows_needed = (len(df_page) + cards_per_row - 1) // cards_per_row
 
-    # Process each row of tasks
     for row_idx in range(rows_needed):
         cols = st.columns(cards_per_row)
-        # For each column in the row
         for col_idx in range(cards_per_row):
             task_index = row_idx * cards_per_row + col_idx
             if task_index < len(df_page):
                 row = df_page.iloc[task_index]
-                
-                # Determine CSS class based on due date and status
+
+                # Determine card class based on status and due date
                 card_class = "task-card"
-                if row["Status"] == "Completed":
+                due_date = row.get("Due Date", None)
+                status = row.get("Status", "Not Started")
+                is_completed = (status == "Completed")
+                is_overdue = False
+                is_due_soon = False
+
+                if not is_completed and pd.notnull(due_date):
+                    days_left = (due_date - pd.Timestamp.now()).days
+                    if days_left < 0:
+                        is_overdue = True
+                    elif days_left <= 2:
+                        is_due_soon = True
+
+                if is_completed:
                     card_class += " completed"
-                else:
-                    due_date = row["Due Date"]
-                    if pd.notnull(due_date):
-                        days_left = (due_date - pd.Timestamp.now()).days
-                        if days_left < 0:
-                            card_class += " overdue"
-                        elif days_left <= 2:
-                            card_class += " due-soon"
+                elif is_overdue:
+                    card_class += " overdue"
+                elif is_due_soon:
+                    card_class += " due-soon"
+
+                assigned_to = row.get("Assigned To", "N/A")
+                assigned_on = row.get("Assigned on", "N/A")
+                comments = row.get("Comments", "N/A")
+                if pd.isna(assigned_on):
+                    assigned_on = "N/A"
+                if pd.isna(comments):
+                    comments = "N/A"
+                due_date_str = due_date.strftime('%Y-%m-%d') if pd.notnull(due_date) else "None"
 
                 with cols[col_idx]:
-                    # Build card HTML
-                    card_html = f"""
-                    <div class="{card_class}">
-                        <div class="task-title">{row['Task Description']}</div>
-                        <div class="task-info"><strong>Assigned To:</strong> {row['Assigned To']}</div>
-                        <div class="task-info"><strong>Assigned On:</strong> {row['Assigned on']}</div>
-                        <div class="task-info"><strong>Due Date:</strong> {row['Due Date'] if pd.notnull(row['Due Date']) else 'None'}</div>
-                        <div class="task-info"><strong>Status:</strong> {row['Status']}</div>
-                        <div class="task-info"><strong>Comments:</strong> {row['Comments'] if pd.notnull(row['Comments']) else 'N/A'}</div>
-                    </div>
-                    """
-                    st.markdown(card_html, unsafe_allow_html=True)
+                    # Create the card HTML
+                    # Basic visible info: Title, Status, Due Date
+                    # More details inside an expander
+                    st.markdown(f"""
+                    <div class="task-card-container">
+                        <div class="{card_class}">
+                            <div class="task-title">{row['Task Description']}</div>
+                            <div class="task-quickinfo"><strong>Status:</strong> {status}</div>
+                            <div class="task-quickinfo"><strong>Due Date:</strong> {due_date_str}</div>
+                            <div class="expander-hint">Hover & Expand for more</div>
+                    """, unsafe_allow_html=True)
+
+                    # Using Streamlit expander for additional info
+                    with st.expander("Show more details", expanded=False):
+                        st.write(f"**Assigned To:** {assigned_to}")
+                        st.write(f"**Assigned On:** {assigned_on}")
+                        st.write(f"**Comments:** {comments}")
+
+                    # Close the div
+                    st.markdown("</div></div>", unsafe_allow_html=True)
 
 def show_task_status_dashboard():
     """Display the Task Status Dashboard with enhancements."""
@@ -2126,7 +2185,7 @@ def show_task_status_dashboard():
             return [''] * len(row)
 
     if df_page.empty:
-        st.info("No tasks found for the given filters.")
+        st.info("No tasks found for the given filters and search criteria.")
     else:
         st.markdown("### Tasks List")
         show_task_cards(df_page)
