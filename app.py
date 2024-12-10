@@ -1879,31 +1879,36 @@ def show_task_cards(df_page):
     st.markdown("""
     <style>
     .task-card {
-        background-color: #ffffff;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        background: rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
         padding: 20px;
         margin-bottom: 20px;
+        box-shadow: 0 4px 30px rgba(0,0,0,0.1);
         transition: transform 0.2s ease-in-out;
     }
     .task-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: 0 8px 40px rgba(0,0,0,0.15);
     }
     .task-title {
-        font-size: 1.1em;
+        font-size: 1.2em;
         font-weight: bold;
         margin-bottom: 10px;
+        color: #fff;
+        text-shadow: 0 0 5px rgba(0,0,0,0.3);
     }
     .task-info {
-        font-size: 0.9em;
+        font-size: 0.95em;
+        color: #eee;
         margin-bottom: 5px;
+        text-shadow: 0 0 3px rgba(0,0,0,0.2);
     }
     .overdue {
-        border-left: 5px solid #ff4d4d;
+        border-left: 5px solid #FF6B6B;
     }
     .due-soon {
-        border-left: 5px solid #FFD700;
+        border-left: 5px solid #FFD93D;
     }
     .completed {
         border-left: 5px solid #4CAF50;
