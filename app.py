@@ -521,6 +521,7 @@ def load_itss_data():
             df['Date'] = df['Date'].replace('', None)
 
             # Try to parse dates that are not None
+            # We'll try specific format first, then default parsing
             mask = df['Date'].notna()
             if mask.any():
                 try:
@@ -531,8 +532,11 @@ def load_itss_data():
                     except:
                         st.error("Failed to parse dates")
 
-            # For rows where Date is None or invalid, use current date
-            df.loc[df['Date'].isna(), 'Date'] = pd.Timestamp.now().floor('D')
+            # Now ensure that Date is a proper datetime and handle any leftover strings
+            df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+
+            # For rows where Date is NaT, use current date
+            df['Date'].fillna(pd.Timestamp.now().floor('D'), inplace=True)
 
         # Convert numeric columns and handle '-' values
         numeric_columns = ['61-90', '91-120', '121-180', '181-360', '361-720', 'More than 2 Yr']
