@@ -1895,7 +1895,7 @@ def show_task_cards(df_page):
         font-size: 1.2em;
         font-weight: bold;
         margin-bottom: 10px;
-        color: #000000;
+        color: #C5AEF2;
         text-shadow: 0 0 5px rgba(197, 174, 242, 1);
     }
     .task-info {
