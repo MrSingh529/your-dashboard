@@ -197,6 +197,27 @@ st.markdown("""
         box-shadow: 0 4px 16px rgba(0,0,0,0.1);
     }
 
+    /* Glass styling for text inputs */
+    .stTextInput > div > div > input {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 8px;
+        padding: 10px;
+        color: #333;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .stTextInput > div > div > input:hover,
+    .stTextInput > div > div > input:focus {
+        outline: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        border: 1px solid rgba(0, 173, 239, 0.4);
+        transform: translateY(-2px);
+    }
+
     .stButton > button {
         background: rgba(255, 255, 255, 0.25); /* semi-transparent white for glass effect */
         backdrop-filter: blur(8px);
