@@ -946,21 +946,8 @@ def add_breadcrumb_navigation(department, report):
     """, unsafe_allow_html=True)
 
 def display_custom_metric(title, value, delta=None, delta_type="normal"):
-    """
-    Display a custom metric card with enhanced styling, animations, and consistency.
-
-    Args:
-    - title (str): The title of the metric.
-    - value (str): The value to be displayed.
-    - delta (str, optional): Change value with indicators. Defaults to None.
-    - delta_type (str, optional): Type of delta ('normal' for increase, 'inverse' for decrease). Defaults to 'normal'.
-    """
-    # Set delta properties: color and icon
-    delta_arrow = "↑" if delta_type == "normal" else "↓"
-    delta_color = "#E74C3C" if delta_type == "normal" else "#27AE60"  # Red for increase, Green for decrease
-
-    # Inject CSS for the card styles
-    st.markdown(f"""
+    # Ensure all CSS is inside a string
+    st.markdown("""
         <style>
             .metric-card {
                 background: rgba(255, 255, 255, 0.25);
@@ -980,7 +967,7 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
                 cursor: pointer;
                 color: #333;
                 box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                border: 1px solid rgba(255,255,255,0.2); /* Subtle border for definition */
+                border: 1px solid rgba(255,255,255,0.2);
             }
 
             .metric-card:hover {
