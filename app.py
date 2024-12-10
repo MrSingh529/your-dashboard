@@ -131,32 +131,32 @@ st.markdown("""
 # Additional styling for other components
 st.markdown("""
     <style>
-    .metric-card {
-        background: rgba(255, 255, 255, 0.25);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        border-radius: 15px;
-        padding: 20px;
-        margin: 15px;
-        height: 180px; /* Uniform height */
-        width: 220px;  /* Uniform width */
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        transition: all 0.5s ease-in-out;
-        cursor: pointer;
-        color: #333;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        border: 1px solid rgba(255,255,255,0.2); /* Subtle border for definition */
-    }
+        .metric-card {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px;
+            width: 230px;
+            height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: all 0.5s ease-in-out;
+            cursor: pointer;
+            color: #333;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
 
-    .metric-card:hover {
-        transform: translateY(-5px) scale(1.05);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-        border: 1px solid rgba(0, 173, 239, 0.4);
-    }
+        .metric-card:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            border: 1px solid rgba(0, 173, 239, 0.4);
+        }
 
     .filter-container {
         background-color: #f9e8d6; /* Light cream to complement the sunset colors */
@@ -998,7 +998,6 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
     </div>
     """
 
-    st.markdown(card_html, unsafe_allow_html=True)
     st.markdown(card_html, unsafe_allow_html=True)
 
 # Enhanced dashboard display
