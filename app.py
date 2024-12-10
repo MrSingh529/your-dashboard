@@ -946,18 +946,26 @@ def add_breadcrumb_navigation(department, report):
     """, unsafe_allow_html=True)
 
 def display_custom_metric(title, value, delta=None, delta_type="normal"):
-    # Ensure all CSS is inside a string
+    """
+    Display a custom metric card with a glass blur effect, hover animation, and consistent styling.
+    """
+
+    # Determine delta arrow and color
+    delta_arrow = "↑" if delta_type == "normal" else "↓"
+    delta_color = "#E74C3C" if delta_type == "normal" else "#27AE60"
+
+    # Inject CSS for the glass blur metric card
     st.markdown("""
         <style>
             .metric-card {
-                background: rgba(255, 255, 255, 0.25);
+                background: rgba(255, 255, 255, 0.25); /* Semi-transparent white for glass effect */
                 backdrop-filter: blur(8px);
                 -webkit-backdrop-filter: blur(8px);
                 border-radius: 15px;
                 padding: 20px;
                 margin: 15px;
-                height: 180px; /* Uniform height */
-                width: 220px;  /* Uniform width */
+                width: 230px;  /* Fixed width */
+                height: 160px; /* Fixed height */
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
@@ -965,7 +973,7 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
                 text-align: center;
                 transition: all 0.5s ease-in-out;
                 cursor: pointer;
-                color: #333;
+                color: #333; /* Dark text for contrast */
                 box-shadow: 0 4px 8px rgba(0,0,0,0.1);
                 border: 1px solid rgba(255,255,255,0.2);
             }
@@ -977,6 +985,21 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
             }
         </style>
     """, unsafe_allow_html=True)
+
+    # Delta HTML if applicable
+    delta_html = f"""<div style="font-size: 16px; color: {delta_color}; font-weight: 600;">{delta_arrow} {delta}</div>""" if delta else ""
+
+    # Card HTML
+    card_html = f"""
+    <div class="metric-card">
+        <div style="font-size: 16px; font-weight: 500; color: #333333; margin-bottom: 10px;">{title}</div>
+        <div style="font-size: 22px; font-weight: bold; color: #333333; margin-bottom: 10px;">{value}</div>
+        {delta_html}
+    </div>
+    """
+
+    st.markdown(card_html, unsafe_allow_html=True)
+    st.markdown(card_html, unsafe_allow_html=True)
 
 # Enhanced dashboard display
 def show_collections_dashboard():
