@@ -5,8 +5,6 @@ import plotly.graph_objects as go
 from datetime import datetime
 import numpy as np
 import io
-import smtplib
-from email.mime.text import MIMEText
 import re
 import streamlit.components.v1 as components
 from google.oauth2 import service_account
@@ -1876,65 +1874,13 @@ def load_task_status_data():
         st.error(f"Error loading task status data: {str(e)}")
         return None
 
-def send_email_notification(subject, body):
-    """Send an email using SMTP credentials from st.secrets."""
-    try:
-        st.write("Preparing to send email...")
-        username = st.secrets["email"]["username"]
-        password = st.secrets["email"]["password"]
-        smtp_host = st.secrets["email"]["host"]
-        smtp_port = st.secrets["email"]["port"]
-        from_email = st.secrets["email"]["from_email"]
-        to_email = st.secrets["email"]["to_email"]
-
-        msg = MIMEText(body)
-        msg['Subject'] = subject
-        msg['From'] = from_email
-        msg['To'] = to_email
-
-        st.write("Connecting to SMTP server...")
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
-            server.starttls()
-            server.login(username, password)
-            st.write("Sending email...")
-            server.send_message(msg)
-        st.success("Email sent successfully!")
-    except Exception as e:
-        st.error(f"Failed to send email: {str(e)}")
-
-def send_reminder_notification(task_description, due_date):
-    """Send an email reminder for a task using SMTP credentials."""
-    subject = f"Task Reminder: {task_description} Due Soon"
-    body = f"Reminder: Task '{task_description}' is due on {due_date.strftime('%Y-%m-%d')}. Please review and take action."
-    send_email_notification(subject, body)
-
 def show_task_cards(df_page):
-    # Add CSS for cards and modal + quick actions
+    # Define CSS for the glass/blur material design cards with expanders
     st.markdown("""
     <style>
-    .modal-overlay {
-        position: fixed; 
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(0,0,0,0.5);
-        z-index: 999;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    .modal-container {
-        background: #fff;
-        border-radius: 10px;
-        padding: 30px;
-        width: 400px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    .task-card-container {
         position: relative;
-    }
-    .modal-close {
-        position: absolute;
-        top: 10px; right: 10px;
-        font-size: 16px;
-        cursor: pointer;
+        margin-bottom: 20px;
     }
 
     .task-card {
@@ -1949,10 +1895,12 @@ def show_task_cards(df_page):
         overflow: hidden;
         position: relative;
     }
+
     .task-card:hover {
         box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         transform: translateY(-5px);
     }
+
     .task-title {
         font-size: 1.2em;
         font-weight: bold;
@@ -1960,6 +1908,7 @@ def show_task_cards(df_page):
         position: relative;
         margin-bottom: 10px;
     }
+
     .task-title::after {
         content: "";
         display: block;
@@ -1969,11 +1918,18 @@ def show_task_cards(df_page):
         margin-top: 5px;
         border-radius: 2px;
     }
+
     .task-quickinfo {
         font-size: 0.9em;
         color: #333;
         margin-bottom: 5px;
     }
+
+    .task-expander {
+        margin-top: 10px;
+    }
+
+    /* Status-based colored border */
     .overdue {
         border-left: 4px solid #F44336;
         padding-left: 16px;
@@ -1986,30 +1942,22 @@ def show_task_cards(df_page):
         border-left: 4px solid #4CAF50;
         padding-left: 16px;
     }
-    .action-buttons {
-        display: flex;
-        gap: 5px;
-        margin-top: 10px;
+
+    /* Hover overlay for expander hint */
+    .task-card:hover .expander-hint {
+        opacity: 1;
     }
-    .action-button {
-        background: #eee;
-        border-radius: 5px;
-        padding: 5px 10px;
-        cursor: pointer;
+
+    .expander-hint {
+        position: absolute;
+        bottom: 10px;
+        right: 15px;
         font-size: 0.8em;
-        transition: background 0.2s;
+        color: #555;
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
-    .action-button:hover {
-        background: #ddd;
-    }
-    .deadline-alert {
-        font-size: 0.8em;
-        color: #fff;
-        background: #e53935;
-        padding: 2px 6px;
-        border-radius: 3px;
-        margin-left: 5px;
-    }
+
     </style>
     """, unsafe_allow_html=True)
 
@@ -2022,22 +1970,22 @@ def show_task_cards(df_page):
             task_index = row_idx * cards_per_row + col_idx
             if task_index < len(df_page):
                 row = df_page.iloc[task_index]
-                status = row.get("Status", "Not Started")
+
+                # Determine card class based on status and due date
+                card_class = "task-card"
                 due_date = row.get("Due Date", None)
+                status = row.get("Status", "Not Started")
                 is_completed = (status == "Completed")
                 is_overdue = False
                 is_due_soon = False
-                deadline_badge = ""
 
                 if not is_completed and pd.notnull(due_date):
                     days_left = (due_date - pd.Timestamp.now()).days
                     if days_left < 0:
                         is_overdue = True
-                    elif days_left <= 1:
+                    elif days_left <= 2:
                         is_due_soon = True
-                        deadline_badge = f"<span class='deadline-alert'>Due in {days_left+1} day!</span>"
 
-                card_class = "task-card"
                 if is_completed:
                     card_class += " completed"
                 elif is_overdue:
@@ -2045,56 +1993,75 @@ def show_task_cards(df_page):
                 elif is_due_soon:
                     card_class += " due-soon"
 
-                task_desc = row['Task Description']
+                assigned_to = row.get("Assigned To", "N/A")
+                assigned_on = row.get("Assigned on", "N/A")
+                comments = row.get("Comments", "N/A")
+                if pd.isna(assigned_on):
+                    assigned_on = "N/A"
+                if pd.isna(comments):
+                    comments = "N/A"
                 due_date_str = due_date.strftime('%Y-%m-%d') if pd.notnull(due_date) else "None"
 
                 with cols[col_idx]:
+                    # Create the card HTML
+                    # Basic visible info: Title, Status, Due Date
+                    # More details inside an expander
                     st.markdown(f"""
-                    <div class="{card_class}">
-                        <div class="task-title">{task_desc} {deadline_badge}</div>
-                        <div class="task-quickinfo"><strong>Status:</strong> {status}</div>
-                        <div class="task-quickinfo"><strong>Due Date:</strong> {due_date_str}</div>
-                        <div class="action-buttons">
-                            <div class="action-button" onClick="window.location.href='?complete_task={task_desc}'">Mark Completed</div>
-                            <div class="action-button" onClick="window.location.href='?edit_task={task_desc}'">Edit</div>
-                            <div class="action-button" onClick="window.location.href='?delete_task={task_desc}'">Delete</div>
-                        </div>
-                    </div>
+                    <div class="task-card-container">
+                        <div class="{card_class}">
+                            <div class="task-title">{row['Task Description']}</div>
+                            <div class="task-quickinfo"><strong>Status:</strong> {status}</div>
+                            <div class="task-quickinfo"><strong>Due Date:</strong> {due_date_str}</div>
+                            <div class="expander-hint">Hover & Expand for more</div>
                     """, unsafe_allow_html=True)
 
+                    # Using Streamlit expander for additional info
+                    with st.expander("Show more details", expanded=False):
+                        st.write(f"**Assigned To:** {assigned_to}")
+                        st.write(f"**Assigned On:** {assigned_on}")
+                        st.write(f"**Comments:** {comments}")
+
+                    # Close the div
+                    st.markdown("</div></div>", unsafe_allow_html=True)
+
 def show_task_status_dashboard():
+    """Display the Task Status Dashboard with enhancements."""
     df = load_task_status_data()
     if df is None:
         return
 
-    st.title("Task Dashboard")
+    st.title("Task Status Dashboard")
 
-    # Filter and search
+    # Add filtering options in the sidebar
     st.sidebar.header("Filters")
     status_filter = st.sidebar.selectbox("Filter by Status", options=["All", "Not Started", "In Progress", "Completed"])
     assigned_to_options = ["All"] + sorted(df["Assigned To"].dropna().unique().tolist())
     assigned_filter = st.sidebar.selectbox("Filter by Assigned To", options=assigned_to_options)
     search_query = st.sidebar.text_input("Search by Task Description (partial match)")
 
+    # Apply filters
     filtered_df = df.copy()
 
     if status_filter != "All":
         filtered_df = filtered_df[filtered_df["Status"] == status_filter]
+
     if assigned_filter != "All":
         filtered_df = filtered_df[filtered_df["Assigned To"] == assigned_filter]
+
     if search_query:
         mask = filtered_df["Task Description"].str.contains(search_query, case=False, na=False)
         filtered_df = filtered_df[mask]
 
-    # Sorting
+    # Sorting controls
     st.sidebar.header("Sorting")
     sort_column = st.sidebar.selectbox("Sort By", options=["None"] + list(filtered_df.columns))
     sort_order = st.sidebar.radio("Order", options=["Ascending", "Descending"], index=0)
+
     if sort_column != "None":
-        ascending = (sort_order == "Ascending")
+        ascending = True if sort_order == "Ascending" else False
         filtered_df = filtered_df.sort_values(by=sort_column, ascending=ascending)
 
-    # Pagination
+    # Pagination controls
     st.sidebar.header("Pagination")
     page_size = st.sidebar.number_input("Tasks per page", min_value=5, max_value=50, value=10)
     total_tasks = len(filtered_df)
@@ -2104,99 +2071,124 @@ def show_task_status_dashboard():
     end_idx = start_idx + page_size
     df_page = filtered_df.iloc[start_idx:end_idx]
 
-    # Send reminders for tasks due soon
-    soon_tasks = filtered_df[filtered_df['Due Date'].notna() & (filtered_df['Status'] != 'Completed')]
-    for idx, t in soon_tasks.iterrows():
-        days_left = (t['Due Date'] - pd.Timestamp.now()).days
-        if 0 <= days_left <= 1:
-            send_reminder_notification(t['Task Description'], t['Due Date'])
+    # Metrics (Total, Completed, Overdue)
+    total_tasks_all = len(df)
+    completed_tasks = len(df[df["Status"] == "Completed"])
+    overdue_tasks = len(df[(df["Status"] != "Completed") & (df["Due Date"] < pd.Timestamp.now())])
 
-    # Modal for adding new tasks
-    if 'show_modal' not in st.session_state:
-        st.session_state['show_modal'] = False
+    col_a, col_b, col_c = st.columns(3)
+    col_a.metric("Total Tasks", total_tasks_all)
+    col_b.metric("Completed Tasks", completed_tasks)
+    overdue_delta = overdue_tasks - len(df[(df["Status"] != "Completed") & (df["Due Date"] < (pd.Timestamp.now() - pd.Timedelta(days=1)))])
+    col_c.metric("Overdue Tasks", overdue_tasks, f"{overdue_delta:+}")
 
-    if st.button("Add New Task"):
-        st.session_state['show_modal'] = True
+    # Buttons for Add/Update
+    if "show_form" not in st.session_state:
+        st.session_state.show_form = False
+    if "show_update" not in st.session_state:
+        st.session_state.show_update = False
 
-    # Show Add Task Modal
-    if st.session_state['show_modal']:
-        st.markdown("""
-        <div class="modal-overlay">
-            <div class="modal-container">
-                <div class="modal-close" onClick="window.location.href='?close_modal=true'">✖</div>
-                <h3>Add a New Task</h3>
-        """, unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([6, 1, 1])
+    with col1:
+        st.markdown("### Task Overview")
+    with col2:
+        if st.button("➕ Add New Task"):
+            st.session_state.show_form = not st.session_state.show_form
+            st.session_state.show_update = False
+    with col3:
+        if st.button("🔄 Update Tasks"):
+            st.session_state.show_update = not st.session_state.show_update
+            st.session_state.show_form = False
 
-        task_description = st.text_input("Task Description")
-        assigned_to = st.text_input("Assigned To")
-        assigned_on = st.date_input("Assigned On", value=datetime.now().date())
-        due_date = st.date_input("Due Date", value=(datetime.now().date() + timedelta(days=7)))
-        status = st.selectbox("Status", ["Not Started", "In Progress", "Completed"])
-        comments = st.text_area("Comments")
+    # Add Task Form
+    if st.session_state.show_form:
+        st.markdown("### Add a New Task")
+        with st.form("Add Task Form"):
+            task_description = st.text_input("Task Description")
+            assigned_to = st.selectbox("Assign To", options=sorted(df["Assigned To"].dropna().unique().tolist()))
+            assigned_on = st.date_input("Assigned On", value=pd.Timestamp.now().date())
+            due_date = st.date_input("Due Date", value=pd.Timestamp.now().date() + pd.Timedelta(days=7))
+            status = st.selectbox("Status", options=["Not Started", "In Progress", "Completed"])
+            comments = st.text_area("Comments")
+            submitted = st.form_submit_button("Add Task")
 
-        add_submitted = st.button("Add Task")
-        if add_submitted:
-            if due_date < assigned_on:
-                st.error("Due Date cannot be before Assigned On")
-            elif task_description.strip() == "":
-                st.error("Task Description cannot be empty.")
-            else:
-                new_task = {
-                    "Task Description": task_description,
-                    "Assigned To": assigned_to,
-                    "Assigned on": assigned_on,
-                    "Due Date": due_date,
-                    "Status": status,
-                    "Completion Date": None if status != "Completed" else pd.Timestamp.now(),
-                    "Comments": comments
-                }
-                df = pd.concat([df, pd.DataFrame([new_task])], ignore_index=True)
-                save_to_google_sheet(df)
-                st.success("Task added successfully!")
-                st.session_state['show_modal'] = False
-                st.experimental_rerun()
+            # Basic validation: due_date should not be before assigned_on
+            if submitted:
+                if due_date < assigned_on:
+                    st.error("Due Date cannot be before Assigned On date.")
+                elif task_description.strip() == "":
+                    st.error("Task Description cannot be empty.")
+                else:
+                    new_task = {
+                        "Task Description": task_description,
+                        "Assigned To": assigned_to,
+                        "Assigned on": assigned_on,
+                        "Due Date": due_date,
+                        "Status": status,
+                        "Completion Date": None if status != "Completed" else pd.Timestamp.now(),
+                        "Comments": comments
+                    }
+                    df = pd.concat([df, pd.DataFrame([new_task])], ignore_index=True)
+                    st.success("Task added successfully!")
+                    save_to_google_sheet(df)
+                    st.session_state.show_form = False
+                    st.experimental_rerun()
 
-        st.markdown("</div></div>", unsafe_allow_html=True)
+    # Update Task Form
+    if st.session_state.show_update:
+        st.markdown("### Update Tasks")
+        if len(df) > 0:
+            task_to_update = st.selectbox("Select a Task to Update", options=df["Task Description"].tolist())
+            selected_task = df[df["Task Description"] == task_to_update]
 
-    # Close modal handling
-    if "close_modal" in st.experimental_get_query_params():
-        st.session_state['show_modal'] = False
-        st.experimental_set_query_params()
-        st.experimental_rerun()
+            if not selected_task.empty:
+                task_row = selected_task.iloc[0]
+                with st.form("Update Task Form"):
+                    updated_status = st.selectbox(
+                        "Update Status",
+                        options=["Not Started", "In Progress", "Completed"],
+                        index=["Not Started", "In Progress", "Completed"].index(task_row["Status"])
+                    )
+                    updated_completion_date = st.date_input(
+                        "Completion Date",
+                        value=task_row["Completion Date"] if pd.notnull(task_row["Completion Date"]) else pd.Timestamp.now().date()
+                    )
+                    update_comments = st.text_area("Update Comments", value=task_row["Comments"] if pd.notnull(task_row["Comments"]) else "")
+                    submitted_update = st.form_submit_button("Update Task")
 
-    # Display tasks
+                    if submitted_update:
+                        # Validate dates if needed
+                        if updated_status == "Completed" and pd.isna(updated_completion_date):
+                            updated_completion_date = pd.Timestamp.now().date()
+                        df.loc[df["Task Description"] == task_to_update, "Status"] = updated_status
+                        df.loc[df["Task Description"] == task_to_update, "Completion Date"] = updated_completion_date if updated_status == "Completed" else None
+                        df.loc[df["Task Description"] == task_to_update, "Comments"] = update_comments
+                        save_to_google_sheet(df)
+                        st.success("Task updated successfully!")
+                        st.experimental_rerun()
+
+    # Highlighted Task Table with improved status highlighting
+    st.markdown("### Tasks List")
+
+    def style_table(row):
+        # Overdue: Red
+        if row['Status'] != "Completed" and row['Due Date'] < pd.Timestamp.now():
+            return ['background-color: #FFCCCC; color: #900'] * len(row)
+        # Due Soon (within 2 days): Yellow
+        elif row['Status'] != "Completed" and (row['Due Date'] - pd.Timestamp.now()).days <= 2:
+            return ['background-color: #FFFACD; color: #000'] * len(row)
+        # Completed: Light Green
+        elif row['Status'] == "Completed":
+            return ['background-color: #D3F9D8; color: #000'] * len(row)
+        # Not Started / In Progress: No special background
+        else:
+            return [''] * len(row)
+
     if df_page.empty:
         st.info("No tasks found for the given filters and search criteria.")
     else:
+        st.markdown("### Tasks List")
         show_task_cards(df_page)
-
-    # Handle quick actions from query params
-    params = st.experimental_get_query_params()
-
-    # Mark Completed
-    if "complete_task" in params:
-        task_to_complete = params["complete_task"][0]
-        if task_to_complete in df['Task Description'].values:
-            df.loc[df['Task Description'] == task_to_complete, 'Status'] = 'Completed'
-            df.loc[df['Task Description'] == task_to_complete, 'Completion Date'] = pd.Timestamp.now()
-            save_to_google_sheet(df)
-        st.experimental_set_query_params()
-        st.experimental_rerun()
-
-    # Edit (Placeholder)
-    if "edit_task" in params:
-        # You would implement an edit modal similar to add.
-        # This is a placeholder.
-        st.experimental_set_query_params()
-        # Implement edit logic here if needed.
-
-    # Delete Task
-    if "delete_task" in params:
-        task_to_delete = params["delete_task"][0]
-        df = df[df['Task Description'] != task_to_delete]
-        save_to_google_sheet(df)
-        st.experimental_set_query_params()
-        st.experimental_rerun()
 
 # Define menu structure
 DEPARTMENT_REPORTS = {
