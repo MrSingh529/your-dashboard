@@ -2190,33 +2190,6 @@ def show_task_status_dashboard():
         st.markdown("### Tasks List")
         show_task_cards(df_page)
 
-    # Enhanced Visualizations and Insights
-    st.markdown("### Insights")
-    col1, col2 = st.columns(2)
-
-    with col1:
-        status_chart = px.pie(
-            filtered_df,
-            names="Status",
-            title="Filtered Tasks by Status",
-            hole=0.3
-        )
-        st.plotly_chart(status_chart, use_container_width=True)
-
-    with col2:
-        # Show tasks by assigned to and their due dates
-        # Here we can count tasks per user for a given status as a bar chart,
-        # or keep the original chart but now filtered.
-        overdue_chart = px.bar(
-            filtered_df,
-            x="Assigned To",
-            y="Due Date",
-            color="Status",
-            title="Filtered Tasks by Assigned To and Due Date",
-            barmode="stack"
-        )
-        st.plotly_chart(overdue_chart, use_container_width=True)
-
 # Define menu structure
 DEPARTMENT_REPORTS = {
     "CSD": {
