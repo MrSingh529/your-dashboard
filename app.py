@@ -978,19 +978,6 @@ def display_custom_metric(title, value, delta=None, delta_type="normal"):
         </style>
     """, unsafe_allow_html=True)
 
-    # Create HTML for the metric card
-    delta_html = f"""<div style="font-size: 16px; color: {delta_color}; font-weight: 600;">{delta_arrow} {delta}</div>""" if delta else ""
-
-    card_html = f"""
-    <div class="metric-card">
-        <div style="font-size: 16px; font-weight: 500; color: #333333; margin-bottom: 10px;">{title}</div>
-        <div style="font-size: 22px; font-weight: bold; color: #333333; margin-bottom: 10px;">{value}</div>
-        {delta_html}
-    </div>
-    """
-
-    st.markdown(card_html, unsafe_allow_html=True)
-
 # Enhanced dashboard display
 def show_collections_dashboard():
     # Load data from Google Drive
