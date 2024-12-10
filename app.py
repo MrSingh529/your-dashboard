@@ -132,7 +132,7 @@ st.markdown("""
 st.markdown("""
     <style>
     .metric-card {
-        background: rgba(255, 255, 255, 0.25); /* Semi-transparent white for glass effect */
+        background: rgba(255, 255, 255, 0.25);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
         border-radius: 15px;
