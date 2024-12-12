@@ -1909,7 +1909,20 @@ def load_task_status_data():
     except Exception as e:
         st.error(f"Error loading task status data: {str(e)}")
         return None
-        
+
+# Utility function to test SMTP connection
+def test_smtp_connection():
+    try:
+        import smtplib
+        with smtplib.SMTP(st.secrets["smtp"]["server"], st.secrets["smtp"]["port"], timeout=30) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(st.secrets["smtp"]["username"], st.secrets["smtp"]["password"])
+        st.success("SMTP connection successful!")
+    except Exception as e:
+        st.error(f"SMTP connection failed: {e}")
+
 # Function to send pending tasks email
 def send_pending_tasks_email(pending_tasks_df, recipient_email):
     if pending_tasks_df.empty:
@@ -1936,7 +1949,7 @@ def send_pending_tasks_email(pending_tasks_df, recipient_email):
         context = ssl.create_default_context()
 
         # Use SMTP with a longer timeout
-        with smtplib.SMTP(st.secrets["smtp"]["server"], st.secrets["smtp"]["port"], timeout=30) as server:
+        with smtplib.SMTP_SSL(st.secrets["smtp"]["server"], st.secrets["smtp"]["port"], timeout=30) as server:
             server.set_debuglevel(1)  # Enable debugging output
             server.ehlo()
             server.starttls(context=context)
@@ -2127,8 +2140,13 @@ def show_task_status_dashboard():
 
     # Admin-only actions
     if 'username' in st.session_state and st.session_state.username == "admin":
-        st.markdown("### Admin Actions")
-        # For example, send mail to "Sujoy"
+    st.markdown("### Admin Actions")
+    
+        # Test SMTP Connection
+        if st.button("Test SMTP Connection"):
+            test_smtp_connection()
+        
+        # Example: Send mail to "Sujoy"
         pending_tasks_sujoy = df[(df["Assigned To"] == "Sujoy") & (df["Status"] != "Completed")]
         if st.button("Send Pending Tasks Email to Sujoy"):
             recipient_email = st.secrets["smtp"]["to_email_sujoy"]
