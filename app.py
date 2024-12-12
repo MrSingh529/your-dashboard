@@ -1929,42 +1929,50 @@ def test_smtp_connection():
 test_smtp_connection()
 
 # Function to send pending tasks email
-def send_pending_tasks_email(pending_tasks_df, recipient_email):
+def send_email_rvsolutions(pending_tasks_df, recipient_email, recipient_name=""):
     if pending_tasks_df.empty:
-        return "No pending tasks to send."
+        return "You have no pending tasks."
 
-    # Debug SMTP secrets
-    st.write("SMTP Config:", st.secrets["smtp"])
-
-    task_list = ""
+    # Compose the email content
+    email_content = (
+        f"Hello {recipient_name},\n\n"
+        "This is Harpinder Singh. Vandana Ma'am has assigned the following tasks to you:\n\n"
+    )
     for _, row in pending_tasks_df.iterrows():
-        due = row['Due Date'].strftime('%Y-%m-%d') if pd.notnull(row['Due Date']) else 'N/A'
-        task_list += f"- {row['Task Description']} (Due: {due})\n"
+        task = row.get('Task Description', 'N/A')
+        due_date = row.get('Due Date', None)
+        due_date = due_date.strftime('%Y-%m-%d') if pd.notnull(due_date) else 'N/A'
+        email_content += f"Task: {task}\nDue Date: {due_date}\n\n"
 
-    msg_body = f"Hello,\n\nYou have the following pending tasks:\n\n{task_list}\nPlease complete them at the earliest.\n\nRegards,\nAdmin Dashboard"
-    msg = MIMEText(msg_body)
-    msg['Subject'] = "Pending Tasks Reminder"
-    msg['From'] = st.secrets["smtp"]["from_email"]
-    msg['To'] = recipient_email
+    email_content += (
+        "Prioritize tasks with closer deadlines, and don’t hesitate to reach out if you need any clarification or support. "
+        "For tasks that don’t have a target date, please send updates about their progress.\n\n"
+        "Keep up the great work!\n\n"
+        "Best regards,\nHarpinder Singh"
+    )
+
+    # SMTP configuration
+    smtp_server = "mail.rvsolutions.in"
+    smtp_port = 587  # Try 465 if 587 doesn’t work
+    smtp_user = "your-email@rvsolutions.in"
+    smtp_password = "your-password"
+
+    # Create email
+    message = MIMEMultipart()
+    message["From"] = smtp_user
+    message["To"] = recipient_email
+    message["Subject"] = "Task Reminder"
+    message.attach(MIMEText(email_content, "plain"))
 
     try:
-        import smtplib, ssl
-
-        # Create secure SSL/TLS context
-        context = ssl.create_default_context()
-
-        # Use SMTP with a longer timeout
-        with smtplib.SMTP_SSL(st.secrets["smtp"]["server"], st.secrets["smtp"]["port"], timeout=30) as server:
-            server.set_debuglevel(1)  # Enable debugging output
-            server.ehlo()
-            server.starttls(context=context)
-            server.ehlo()
-            server.login(st.secrets["smtp"]["username"], st.secrets["smtp"]["password"])
-            server.send_message(msg)
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()  # Use SSL/TLS encryption
+        server.login(smtp_user, smtp_password)
+        server.sendmail(smtp_user, recipient_email, message.as_string())
+        server.quit()
         return "Email sent successfully!"
     except Exception as e:
-        st.error(f"Email sending failed: {str(e)}")
-        raise
+        return f"Failed to send email: {e}"
 
 def show_task_cards(df_page):
     # Define CSS for the glass/blur material design cards with expanders
@@ -2154,16 +2162,15 @@ def show_task_status_dashboard():
         # Example: Send mail to "Sujoy"
         pending_tasks_sujoy = df[(df["Assigned To"] == "Sujoy") & (df["Status"] != "Completed")]
         if st.button("Send Pending Tasks Email to Sujoy"):
-            recipient_email = st.secrets["smtp"]["to_email_sujoy"]
-            result = send_pending_tasks_email(pending_tasks_sujoy, recipient_email)
+            recipient_email = "sujoy@rvsolutions.in"
+            result = send_email_rvsolutions(pending_tasks_sujoy, recipient_email, recipient_name="Sujoy")
             st.info(result)
 
-        # Another example: send mail to "Mehboob"
-        pending_tasks_mehboob = df[(df["Assigned To"] == "Mehboob") & (df["Status"] != "Completed")]
         if st.button("Send Pending Tasks Email to Mehboob"):
-            recipient_email = st.secrets["smtp"]["to_email_mehboob"]
-            result = send_pending_tasks_email(pending_tasks_mehboob, recipient_email)
+            recipient_email = "mehboob@rvsolutions.in"
+            result = send_email_rvsolutions(pending_tasks_mehboob, recipient_email, recipient_name="Mehboob")
             st.info(result)
+
 
     # Add/Update tasks (same as your code)
     if "show_form" not in st.session_state:
