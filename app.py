@@ -1927,10 +1927,14 @@ def send_pending_tasks_email(pending_tasks_df, recipient_email):
     msg['To'] = recipient_email
 
     try:
+        import smtplib, ssl
+
+        context = ssl.create_default_context()
         with smtplib.SMTP(st.secrets["smtp"]["server"], st.secrets["smtp"]["port"], timeout=10) as server:
-            server.set_debuglevel(1)
+            server.set_debuglevel(1)  # For debugging
             server.ehlo()
-            server.starttls()
+            server.starttls(context=context)
+            server.ehlo()
             server.login(st.secrets["smtp"]["username"], st.secrets["smtp"]["password"])
             server.send_message(msg)
         return "Email sent successfully!"
