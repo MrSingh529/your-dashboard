@@ -2140,7 +2140,7 @@ def show_task_status_dashboard():
 
     # Admin-only actions
     if 'username' in st.session_state and st.session_state.username == "admin":
-    st.markdown("### Admin Actions")
+        st.markdown("### Admin Actions")
     
         # Test SMTP Connection
         if st.button("Test SMTP Connection"):
