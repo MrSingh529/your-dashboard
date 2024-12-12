@@ -1930,15 +1930,20 @@ def send_whatsapp_message(to_number, message_body):
     except Exception as e:
         return f"Failed to send message: {str(e)}"
         
-def format_task_message_list(pending_tasks_df):
+def format_task_message_list(pending_tasks_df, recipient_name=""):
     if pending_tasks_df.empty:
         return "You have no pending tasks."
 
-    # Initialize the message
-    message = "*Here are your pending tasks:*\n\n"
+    # Add a greeting and introduction
+    message = (
+        f"Hi Mr. {recipient_name},\n\n"
+        "I hope this message finds you well! Vandana Ma'am has assigned some tasks for you. "
+        "Let’s stay on track and ensure timely completion.\n\n"
+        "*Here’s what’s on your list:*\n"
+    )
 
-    # Iterate through the DataFrame and add tasks
-    for _, row in pending_tasks_df.iterrows():
+    # Add tasks with formatting
+    for index, row in pending_tasks_df.iterrows():
         task = row.get('Task Description', 'N/A')
         due_date = row.get('Due Date', None)
         if pd.notnull(due_date):
@@ -1946,8 +1951,16 @@ def format_task_message_list(pending_tasks_df):
         else:
             due_date = 'N/A'
 
-        # Add the task to the message
-        message += f"Task: {task}\nDue Date: {due_date}\n\n"
+        # Add task details
+        message += f"{index + 1}. Task: {task}\n   - Due Date: {due_date}\n\n"
+
+    # Add a motivational closing
+    message += (
+        "Prioritize tasks with closer deadlines, and don’t hesitate to reach out if you need any clarification or support. "
+        "For tasks that don’t have a target date, please send updates about their progress.\n\n"
+        "Keep up the great work!\n\n"
+        "Best regards,\nHarpinder Singh"
+    )
 
     return message
 
@@ -2145,7 +2158,7 @@ def show_task_status_dashboard():
         pending_tasks_mehboob = df[(df["Assigned To"] == "Mehboob") & (df["Status"] != "Completed")]
         if st.button("Send Pending Tasks WhatsApp Message to Mehboob"):
             recipient_number = st.secrets["twilio"]["mehboob_phone"]
-            message_body = format_task_message(pending_tasks_mehboob)
+            message_body = format_task_message_list(pending_tasks_mehboob)
             result = send_whatsapp_message(recipient_number, message_body)
             st.info(result)
 
