@@ -2136,7 +2136,7 @@ def show_task_status_dashboard():
         pending_tasks_sujoy = df[(df["Assigned To"] == "Sujoy") & (df["Status"] != "Completed")]
         if st.button("Send Pending Tasks WhatsApp Message to Sujoy"):
             recipient_number = st.secrets["twilio"]["sujoy_phone"]
-            message_body = format_task_message_table(pending_tasks_sujoy)  # Use the updated function
+            message_body = format_task_message_list(pending_tasks_sujoy)  # Use the updated function
             result = send_whatsapp_message(recipient_number, message_body)
             st.info(result)
 
