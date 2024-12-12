@@ -1913,6 +1913,23 @@ def load_task_status_data():
         st.error(f"Error loading task status data: {str(e)}")
         return None
 
+def test_smtp_connection():
+    smtp_server = "mail.rvsolutions.in"
+    smtp_port = 587  # Try 465 for SSL if 587 doesn't work
+    smtp_user = "harpinder.singh@rvsolutions.in"
+    smtp_password = "@BaljeetKaur529"
+
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()  # For TLS encryption
+        server.login(smtp_user, smtp_password)
+        server.quit()
+        print("SMTP connection successful!")
+    except Exception as e:
+        print(f"Failed to connect to SMTP server: {e}")
+
+test_smtp_connection()
+
 # Function to send pending tasks email
 def send_email_with_sendgrid(pending_tasks_df, recipient_email, recipient_name=""):
     if pending_tasks_df.empty:
