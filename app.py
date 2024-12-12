@@ -6,9 +6,6 @@ from datetime import datetime
 import numpy as np
 import io
 import smtplib
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
-from twilio.rest import Client
 import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -1913,6 +1910,7 @@ def load_task_status_data():
         st.error(f"Error loading task status data: {str(e)}")
         return None
 
+# Utility function to test SMTP connection
 def test_smtp_connection():
     smtp_server = "mail.rvsolutions.in"
     smtp_port = 587  # Try 465 for SSL if 587 doesn't work
@@ -1931,51 +1929,42 @@ def test_smtp_connection():
 test_smtp_connection()
 
 # Function to send pending tasks email
-def send_email_with_sendgrid(pending_tasks_df, recipient_email, recipient_name=""):
+def send_pending_tasks_email(pending_tasks_df, recipient_email):
     if pending_tasks_df.empty:
-        return "You have no pending tasks."
+        return "No pending tasks to send."
 
-    # Add a personalized greeting and introduction
-    email_content = (
-        f"Hello {recipient_name},\n\n"
-        "This is Harpinder Singh. Vandana Ma'am has assigned the following tasks to you. "
-        "Let’s stay on track and ensure timely completion.\n\n"
-        "*Here’s what’s on your list:*\n\n"
-    )
+    # Debug SMTP secrets
+    st.write("SMTP Config:", st.secrets["smtp"])
 
-    # Add tasks to the email body
-    for index, row in pending_tasks_df.iterrows():
-        task = row.get('Task Description', 'N/A')
-        due_date = row.get('Due Date', None)
-        if pd.notnull(due_date):
-            due_date = due_date.strftime('%Y-%m-%d')
-        else:
-            due_date = 'N/A'
+    task_list = ""
+    for _, row in pending_tasks_df.iterrows():
+        due = row['Due Date'].strftime('%Y-%m-%d') if pd.notnull(row['Due Date']) else 'N/A'
+        task_list += f"- {row['Task Description']} (Due: {due})\n"
 
-        email_content += f"{index + 1}. Task: {task}\n   - Due Date: {due_date}\n\n"
-
-    # Add a closing statement
-    email_content += (
-        "Prioritize tasks with closer deadlines, and don’t hesitate to reach out if you need any clarification or support. "
-        "For tasks that don’t have a target date, please send updates about their progress.\n\n"
-        "Keep up the great work!\n\n"
-        "Best regards,\nHarpinder Singh"
-    )
-
-    # Create the email message
-    message = Mail(
-        from_email=st.secrets["sendgrid"]["from_email"],  # Use your verified sender email
-        to_emails=recipient_email,
-        subject="Pending Tasks Reminder",
-        plain_text_content=email_content
-    )
+    msg_body = f"Hello,\n\nYou have the following pending tasks:\n\n{task_list}\nPlease complete them at the earliest.\n\nRegards,\nAdmin Dashboard"
+    msg = MIMEText(msg_body)
+    msg['Subject'] = "Pending Tasks Reminder"
+    msg['From'] = st.secrets["smtp"]["from_email"]
+    msg['To'] = recipient_email
 
     try:
-        sg = SendGridAPIClient(st.secrets["sendgrid"]["api_key"])  # Retrieve API key securely
-        response = sg.send(message)
-        return f"Email sent successfully! Status Code: {response.status_code}"
+        import smtplib, ssl
+
+        # Create secure SSL/TLS context
+        context = ssl.create_default_context()
+
+        # Use SMTP with a longer timeout
+        with smtplib.SMTP_SSL(st.secrets["smtp"]["server"], st.secrets["smtp"]["port"], timeout=30) as server:
+            server.set_debuglevel(1)  # Enable debugging output
+            server.ehlo()
+            server.starttls(context=context)
+            server.ehlo()
+            server.login(st.secrets["smtp"]["username"], st.secrets["smtp"]["password"])
+            server.send_message(msg)
+        return "Email sent successfully!"
     except Exception as e:
-        return f"Error sending email: {str(e)}"
+        st.error(f"Email sending failed: {str(e)}")
+        raise
 
 def show_task_cards(df_page):
     # Define CSS for the glass/blur material design cards with expanders
@@ -2157,19 +2146,24 @@ def show_task_status_dashboard():
     # Admin-only actions
     if 'username' in st.session_state and st.session_state.username == "admin":
         st.markdown("### Admin Actions")
+    
+        # Test SMTP Connection
+        if st.button("Test SMTP Connection"):
+            test_smtp_connection()
         
         # Example: Send mail to "Sujoy"
         pending_tasks_sujoy = df[(df["Assigned To"] == "Sujoy") & (df["Status"] != "Completed")]
         if st.button("Send Pending Tasks Email to Sujoy"):
-            recipient_email = st.secrets["sendgrid"]["to_email_sujoy"]
-            result = send_email_with_sendgrid(pending_tasks_sujoy, recipient_email, recipient_name="Sujoy")
+            recipient_email = st.secrets["smtp"]["to_email_sujoy"]
+            result = send_pending_tasks_email(pending_tasks_sujoy, recipient_email)
             st.info(result)
 
+        # Another example: send mail to "Mehboob"
+        pending_tasks_mehboob = df[(df["Assigned To"] == "Mehboob") & (df["Status"] != "Completed")]
         if st.button("Send Pending Tasks Email to Mehboob"):
-            recipient_email = st.secrets["sendgrid"]["to_email_mehboob"]
-            result = send_email_with_sendgrid(pending_tasks_mehboob, recipient_email, recipient_name="Mehboob")
+            recipient_email = st.secrets["smtp"]["to_email_mehboob"]
+            result = send_pending_tasks_email(pending_tasks_mehboob, recipient_email)
             st.info(result)
-
 
     # Add/Update tasks (same as your code)
     if "show_form" not in st.session_state:
