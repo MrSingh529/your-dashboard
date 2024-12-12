@@ -1930,15 +1930,17 @@ def send_whatsapp_message(to_number, message_body):
     except Exception as e:
         return f"Failed to send message: {str(e)}"
         
-def format_task_message(pending_tasks_df):
+def format_task_message_table(pending_tasks_df):
     if pending_tasks_df.empty:
         return "You have no pending tasks."
 
-    message = "Hello! You have the following pending tasks:\n\n"
+    message = "Here are your pending tasks:\n\n"
+    message += f"{'Task Description':<30} | {'Due Date':<15}\n"
+    message += "-" * 50 + "\n"
     for _, row in pending_tasks_df.iterrows():
+        task = row['Task Description'][:27] + "..." if len(row['Task Description']) > 27 else row['Task Description']
         due = row['Due Date'].strftime('%Y-%m-%d') if pd.notnull(row['Due Date']) else 'N/A'
-        message += f"- {row['Task Description']} (Due: {due})\n"
-    message += "\nPlease complete them as soon as possible."
+        message += f"{task:<30} | {due:<15}\n"
     return message
 
 def show_task_cards(df_page):
