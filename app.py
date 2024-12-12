@@ -1917,39 +1917,65 @@ def send_email_with_sendgrid(pending_tasks_df, recipient_email, recipient_name="
     if pending_tasks_df.empty:
         return "You have no pending tasks."
 
-    # Add a personalized greeting and introduction
-    email_content = (
-        f"Hello {recipient_name},\n\n"
-        "This is Harpinder Singh. Vandana Ma'am has assigned the following tasks to you. "
-        "Let’s stay on track and ensure timely completion.\n\n"
-        "*Here’s what’s on your list:*\n\n"
-    )
+    # HTML email header and introduction
+    email_content = f"""
+    <html>
+    <body>
+        <p>Hello {recipient_name},</p>
+        <p>This is Harpinder Singh. Vandana Ma'am has assigned the following tasks to you. Let’s stay on track and ensure timely completion.</p>
+        <p><strong>Here’s what’s on your list:</strong></p>
+        <table style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 14px;">
+            <thead>
+                <tr>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">#</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Task Description</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Due Date</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Comments</th>
+                </tr>
+            </thead>
+            <tbody>
+    """
 
-    # Add tasks to the email body
+    # Add tasks to the table
     for index, row in pending_tasks_df.iterrows():
-        task = row.get('Task Description', 'N/A')
-        due_date = row.get('Due Date', None)
+        task = row.get("Task Description", "N/A")
+        due_date = row.get("Due Date", None)
+        comments = row.get("Comments", "No comments available")
+
         if pd.notnull(due_date):
-            due_date = due_date.strftime('%Y-%m-%d')
+            due_date = due_date.strftime("%Y-%m-%d")
         else:
-            due_date = 'N/A'
+            due_date = "N/A"
 
-        email_content += f"{index + 1}. Task: {task}\n   - Due Date: {due_date}\n\n"
+        email_content += f"""
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;">{index + 1}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">{task}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">{due_date}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">{comments}</td>
+            </tr>
+        """
 
-    # Add a closing statement
-    email_content += (
-        "Prioritize tasks with closer deadlines, and don’t hesitate to reach out if you need any clarification or support. "
-        "For tasks that don’t have a target date, please send updates about their progress.\n\n"
-        "Keep up the great work!\n\n"
-        "Best regards,\nHarpinder Singh"
-    )
+    # Close the HTML table and add the closing statement
+    email_content += """
+            </tbody>
+        </table>
+        <p>
+            Prioritize tasks with closer deadlines, and don’t hesitate to reach out if you need any clarification or support. 
+            For tasks that don’t have a target date, please send updates about their progress.
+        </p>
+        <p>Keep up the great work!</p>
+        <p>Best regards,<br>Harpinder Singh</p>
+    </body>
+    </html>
+    """
 
     # Create the email message
     message = Mail(
         from_email=st.secrets["sendgrid"]["from_email"],  # Use your verified sender email
         to_emails=recipient_email,
         subject="Pending Tasks Reminder",
-        plain_text_content=email_content
+        html_content=email_content  # Use HTML content here
     )
 
     try:
