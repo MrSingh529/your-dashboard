@@ -6,7 +6,9 @@ from datetime import datetime
 import numpy as np
 import io
 import smtplib
+import ssl
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import re
 import streamlit.components.v1 as components
 from google.oauth2 import service_account
