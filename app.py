@@ -5,6 +5,8 @@ import plotly.graph_objects as go
 from datetime import datetime
 import numpy as np
 import io
+import smtplib
+from email.mime.text import MIMEText
 import re
 import streamlit.components.v1 as components
 from google.oauth2 import service_account
@@ -198,27 +200,24 @@ st.markdown("""
     }
 
     /* Glass styling for text inputs */
-    div[data-testid="stTextInput"] input[type="text"],
-    div[data-testid="stTextInput"] input[type="password"] {
-        background: rgba(255, 255, 255, 0.25) !important;
-        backdrop-filter: blur(8px) !important;
-        -webkit-backdrop-filter: blur(8px) !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-        border-radius: 8px !important;
-        padding: 10px !important;
-        color: #333 !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+    .stTextInput > div > div > input {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 8px;
+        padding: 10px;
+        color: #333;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
-    div[data-testid="stTextInput"] input[type="text"]:hover,
-    div[data-testid="stTextInput"] input[type="text"]:focus,
-    div[data-testid="stTextInput"] input[type="password"]:hover,
-    div[data-testid="stTextInput"] input[type="password"]:focus {
-        outline: none !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
-        border: 1px solid rgba(0, 173, 239, 0.4) !important;
-        transform: translateY(-2px) !important;
+    .stTextInput > div > div > input:hover,
+    .stTextInput > div > div > input:focus {
+        outline: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        border: 1px solid rgba(0, 173, 239, 0.4);
+        transform: translateY(-2px);
     }
 
     .stButton > button {
@@ -1908,16 +1907,41 @@ def load_task_status_data():
     except Exception as e:
         st.error(f"Error loading task status data: {str(e)}")
         return None
+        
+# Function to send pending tasks email
+def send_pending_tasks_email(pending_tasks_df, recipient_email):
+    if pending_tasks_df.empty:
+        return "No pending tasks to send."
+
+    task_list = ""
+    for _, row in pending_tasks_df.iterrows():
+        due = row['Due Date'].strftime('%Y-%m-%d') if pd.notnull(row['Due Date']) else 'N/A'
+        task_list += f"- {row['Task Description']} (Due: {due})\n"
+
+    msg_body = f"Hello,\n\nYou have the following pending tasks:\n\n{task_list}\nPlease complete them at the earliest.\n\nRegards,\nAdmin Dashboard"
+    msg = MIMEText(msg_body)
+    msg['Subject'] = "Pending Tasks Reminder"
+    msg['From'] = st.secrets["smtp"]["from_email"]
+    msg['To'] = recipient_email
+
+    try:
+        with smtplib.SMTP_SSL(st.secrets["smtp"]["server"], st.secrets["smtp"]["port"]) as server:
+            server.login(st.secrets["smtp"]["username"], st.secrets["smtp"]["password"])
+            server.send_message(msg)
+        return "Email sent successfully!"
+    except Exception as e:
+        return f"Failed to send email: {str(e)}"
 
 def show_task_cards(df_page):
     # Define CSS for the glass/blur material design cards with expanders
+    cards_per_row = 3
+    rows_needed = (len(df_page) + cards_per_row - 1) // cards_per_row
     st.markdown("""
     <style>
     .task-card-container {
         position: relative;
         margin-bottom: 20px;
     }
-
     .task-card {
         background: rgba(255, 255, 255, 0.25);
         backdrop-filter: blur(8px);
@@ -1930,12 +1954,10 @@ def show_task_cards(df_page):
         overflow: hidden;
         position: relative;
     }
-
     .task-card:hover {
         box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         transform: translateY(-5px);
     }
-
     .task-title {
         font-size: 1.2em;
         font-weight: bold;
@@ -1943,7 +1965,6 @@ def show_task_cards(df_page):
         position: relative;
         margin-bottom: 10px;
     }
-
     .task-title::after {
         content: "";
         display: block;
@@ -1953,36 +1974,11 @@ def show_task_cards(df_page):
         margin-top: 5px;
         border-radius: 2px;
     }
-
     .task-quickinfo {
         font-size: 0.9em;
         color: #333;
         margin-bottom: 5px;
     }
-
-    .task-expander {
-        margin-top: 10px;
-    }
-
-    /* Status-based colored border */
-    .overdue {
-        border-left: 4px solid #F44336;
-        padding-left: 16px;
-    }
-    .due-soon {
-        border-left: 4px solid #FFC107;
-        padding-left: 16px;
-    }
-    .completed {
-        border-left: 4px solid #4CAF50;
-        padding-left: 16px;
-    }
-
-    /* Hover overlay for expander hint */
-    .task-card:hover .expander-hint {
-        opacity: 1;
-    }
-
     .expander-hint {
         position: absolute;
         bottom: 10px;
@@ -1992,12 +1988,14 @@ def show_task_cards(df_page):
         opacity: 0;
         transition: opacity 0.3s ease;
     }
-
+    .task-card:hover .expander-hint {
+        opacity: 1;
+    }
+    .overdue {border-left: 4px solid #F44336; padding-left: 16px;}
+    .due-soon {border-left: 4px solid #FFC107; padding-left: 16px;}
+    .completed {border-left: 4px solid #4CAF50; padding-left: 16px;}
     </style>
     """, unsafe_allow_html=True)
-
-    cards_per_row = 3
-    rows_needed = (len(df_page) + cards_per_row - 1) // cards_per_row
 
     for row_idx in range(rows_needed):
         cols = st.columns(cards_per_row)
@@ -2060,43 +2058,37 @@ def show_task_cards(df_page):
                     st.markdown("</div></div>", unsafe_allow_html=True)
 
 def show_task_status_dashboard():
-    """Display the Task Status Dashboard with enhancements."""
     df = load_task_status_data()
     if df is None:
         return
 
     st.title("Task Status Dashboard")
 
-    # Add filtering options in the sidebar
+    # Filters
     st.sidebar.header("Filters")
     status_filter = st.sidebar.selectbox("Filter by Status", options=["All", "Not Started", "In Progress", "Completed"])
     assigned_to_options = ["All"] + sorted(df["Assigned To"].dropna().unique().tolist())
     assigned_filter = st.sidebar.selectbox("Filter by Assigned To", options=assigned_to_options)
     search_query = st.sidebar.text_input("Search by Task Description (partial match)")
 
-    # Apply filters
     filtered_df = df.copy()
-
     if status_filter != "All":
         filtered_df = filtered_df[filtered_df["Status"] == status_filter]
-
     if assigned_filter != "All":
         filtered_df = filtered_df[filtered_df["Assigned To"] == assigned_filter]
-
     if search_query:
         mask = filtered_df["Task Description"].str.contains(search_query, case=False, na=False)
         filtered_df = filtered_df[mask]
 
-    # Sorting controls
+    # Sorting
     st.sidebar.header("Sorting")
     sort_column = st.sidebar.selectbox("Sort By", options=["None"] + list(filtered_df.columns))
     sort_order = st.sidebar.radio("Order", options=["Ascending", "Descending"], index=0)
-
     if sort_column != "None":
-        ascending = True if sort_order == "Ascending" else False
+        ascending = (sort_order == "Ascending")
         filtered_df = filtered_df.sort_values(by=sort_column, ascending=ascending)
 
-    # Pagination controls
+    # Pagination
     st.sidebar.header("Pagination")
     page_size = st.sidebar.number_input("Tasks per page", min_value=5, max_value=50, value=10)
     total_tasks = len(filtered_df)
@@ -2106,7 +2098,7 @@ def show_task_status_dashboard():
     end_idx = start_idx + page_size
     df_page = filtered_df.iloc[start_idx:end_idx]
 
-    # Metrics (Total, Completed, Overdue)
+    # Metrics
     total_tasks_all = len(df)
     completed_tasks = len(df[df["Status"] == "Completed"])
     overdue_tasks = len(df[(df["Status"] != "Completed") & (df["Due Date"] < pd.Timestamp.now())])
@@ -2117,7 +2109,24 @@ def show_task_status_dashboard():
     overdue_delta = overdue_tasks - len(df[(df["Status"] != "Completed") & (df["Due Date"] < (pd.Timestamp.now() - pd.Timedelta(days=1)))])
     col_c.metric("Overdue Tasks", overdue_tasks, f"{overdue_delta:+}")
 
-    # Buttons for Add/Update
+    # Admin-only actions
+    if 'username' in st.session_state and st.session_state.username == "admin":
+        st.markdown("### Admin Actions")
+        # For example, send mail to "Sujoy"
+        pending_tasks_sujoy = df[(df["Assigned To"] == "Sujoy") & (df["Status"] != "Completed")]
+        if st.button("Send Pending Tasks Email to Sujoy"):
+            recipient_email = st.secrets["smtp"]["to_email_sujoy"]
+            result = send_pending_tasks_email(pending_tasks_sujoy, recipient_email)
+            st.info(result)
+
+        # Another example: send mail to "Mehboob"
+        pending_tasks_mehboob = df[(df["Assigned To"] == "Mehboob") & (df["Status"] != "Completed")]
+        if st.button("Send Pending Tasks Email to Mehboob"):
+            recipient_email = st.secrets["smtp"]["to_email_mehboob"]
+            result = send_pending_tasks_email(pending_tasks_mehboob, recipient_email)
+            st.info(result)
+
+    # Add/Update tasks (same as your code)
     if "show_form" not in st.session_state:
         st.session_state.show_form = False
     if "show_update" not in st.session_state:
@@ -2135,7 +2144,6 @@ def show_task_status_dashboard():
             st.session_state.show_update = not st.session_state.show_update
             st.session_state.show_form = False
 
-    # Add Task Form
     if st.session_state.show_form:
         st.markdown("### Add a New Task")
         with st.form("Add Task Form"):
@@ -2147,10 +2155,9 @@ def show_task_status_dashboard():
             comments = st.text_area("Comments")
             submitted = st.form_submit_button("Add Task")
 
-            # Basic validation: due_date should not be before assigned_on
             if submitted:
                 if due_date < assigned_on:
-                    st.error("Due Date cannot be before Assigned On date.")
+                    st.error("Due Date cannot be before Assigned On.")
                 elif task_description.strip() == "":
                     st.error("Task Description cannot be empty.")
                 else:
@@ -2163,13 +2170,12 @@ def show_task_status_dashboard():
                         "Completion Date": None if status != "Completed" else pd.Timestamp.now(),
                         "Comments": comments
                     }
-                    df = pd.concat([df, pd.DataFrame([new_task])], ignore_index=True)
+                    updated_df = pd.concat([df, pd.DataFrame([new_task])], ignore_index=True)
+                    save_to_google_sheet(updated_df)
                     st.success("Task added successfully!")
-                    save_to_google_sheet(df)
                     st.session_state.show_form = False
                     st.experimental_rerun()
 
-    # Update Task Form
     if st.session_state.show_update:
         st.markdown("### Update Tasks")
         if len(df) > 0:
@@ -2192,7 +2198,6 @@ def show_task_status_dashboard():
                     submitted_update = st.form_submit_button("Update Task")
 
                     if submitted_update:
-                        # Validate dates if needed
                         if updated_status == "Completed" and pd.isna(updated_completion_date):
                             updated_completion_date = pd.Timestamp.now().date()
                         df.loc[df["Task Description"] == task_to_update, "Status"] = updated_status
@@ -2202,27 +2207,11 @@ def show_task_status_dashboard():
                         st.success("Task updated successfully!")
                         st.experimental_rerun()
 
-    # Highlighted Task Table with improved status highlighting
     st.markdown("### Tasks List")
 
-    def style_table(row):
-        # Overdue: Red
-        if row['Status'] != "Completed" and row['Due Date'] < pd.Timestamp.now():
-            return ['background-color: #FFCCCC; color: #900'] * len(row)
-        # Due Soon (within 2 days): Yellow
-        elif row['Status'] != "Completed" and (row['Due Date'] - pd.Timestamp.now()).days <= 2:
-            return ['background-color: #FFFACD; color: #000'] * len(row)
-        # Completed: Light Green
-        elif row['Status'] == "Completed":
-            return ['background-color: #D3F9D8; color: #000'] * len(row)
-        # Not Started / In Progress: No special background
-        else:
-            return [''] * len(row)
-
     if df_page.empty:
-        st.info("No tasks found for the given filters and search criteria.")
+        st.info("No tasks found for given filters.")
     else:
-        st.markdown("### Tasks List")
         show_task_cards(df_page)
 
 # Define menu structure
