@@ -1915,6 +1915,9 @@ def send_pending_tasks_email(pending_tasks_df, recipient_email):
     if pending_tasks_df.empty:
         return "No pending tasks to send."
 
+    # Debug SMTP secrets
+    st.write("SMTP Config:", st.secrets["smtp"])
+
     task_list = ""
     for _, row in pending_tasks_df.iterrows():
         due = row['Due Date'].strftime('%Y-%m-%d') if pd.notnull(row['Due Date']) else 'N/A'
@@ -1934,16 +1937,16 @@ def send_pending_tasks_email(pending_tasks_df, recipient_email):
 
         # Use SMTP with a longer timeout
         with smtplib.SMTP(st.secrets["smtp"]["server"], st.secrets["smtp"]["port"], timeout=30) as server:
-            server.set_debuglevel(1)  # Enable debug logs
+            server.set_debuglevel(1)  # Enable debugging output
             server.ehlo()
-            server.starttls(context=context)  # Start TLS encryption
+            server.starttls(context=context)
             server.ehlo()
             server.login(st.secrets["smtp"]["username"], st.secrets["smtp"]["password"])
             server.send_message(msg)
         return "Email sent successfully!"
-
     except Exception as e:
-        return f"Failed to send email: {str(e)}"
+        st.error(f"Email sending failed: {str(e)}")
+        raise
 
 def show_task_cards(df_page):
     # Define CSS for the glass/blur material design cards with expanders
