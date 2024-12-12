@@ -1917,14 +1917,16 @@ def send_whatsapp_message(to_number, message_body):
     try:
         # Initialize Twilio client
         client = Client(st.secrets["twilio"]["account_sid"], st.secrets["twilio"]["auth_token"])
-        
-        # Send the WhatsApp message
-        message = client.messages.create(
-            from_=st.secrets["twilio"]["whatsapp_from"],
-            to=to_number,
-            body=message_body
-        )
-        return f"Message sent successfully! SID: {message.sid}"
+
+        # Split the message into chunks of up to 1,600 characters
+        chunks = [message_body[i:i + 1600] for i in range(0, len(message_body), 1600)]
+        for chunk in chunks:
+            message = client.messages.create(
+                from_=st.secrets["twilio"]["whatsapp_from"],
+                to=to_number,
+                body=chunk
+            )
+        return "Message sent successfully!"
     except Exception as e:
         return f"Failed to send message: {str(e)}"
         
