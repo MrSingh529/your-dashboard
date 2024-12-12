@@ -1913,36 +1913,20 @@ def load_task_status_data():
         st.error(f"Error loading task status data: {str(e)}")
         return None
 
-def send_whatsapp_message(to_number, message_body):
-    try:
-        # Initialize Twilio client
-        client = Client(st.secrets["twilio"]["account_sid"], st.secrets["twilio"]["auth_token"])
-
-        # Split the message into chunks of up to 1,600 characters
-        chunks = [message_body[i:i + 1600] for i in range(0, len(message_body), 1600)]
-        for chunk in chunks:
-            message = client.messages.create(
-                from_=st.secrets["twilio"]["whatsapp_from"],
-                to=to_number,
-                body=chunk
-            )
-        return "Message sent successfully!"
-    except Exception as e:
-        return f"Failed to send message: {str(e)}"
-        
-def format_task_message_list(pending_tasks_df, recipient_name=""):
+# Function to send pending tasks email
+def send_email_with_sendgrid(pending_tasks_df, recipient_email, recipient_name=""):
     if pending_tasks_df.empty:
         return "You have no pending tasks."
 
-    # Add a greeting and introduction
-    message = (
-        f"Hi Mr. {recipient_name},\n\n"
-        "I hope this message finds you well! Vandana Ma'am has assigned some tasks for you. "
+    # Add a personalized greeting and introduction
+    email_content = (
+        f"Hello {recipient_name},\n\n"
+        "This is Harpinder Singh. Vandana Ma'am has assigned the following tasks to you. "
         "Let’s stay on track and ensure timely completion.\n\n"
-        "*Here’s what’s on your list:*\n"
+        "*Here’s what’s on your list:*\n\n"
     )
 
-    # Add tasks with formatting
+    # Add tasks to the email body
     for index, row in pending_tasks_df.iterrows():
         task = row.get('Task Description', 'N/A')
         due_date = row.get('Due Date', None)
@@ -1951,18 +1935,30 @@ def format_task_message_list(pending_tasks_df, recipient_name=""):
         else:
             due_date = 'N/A'
 
-        # Add task details
-        message += f"{index + 1}. Task: {task}\n   - Due Date: {due_date}\n\n"
+        email_content += f"{index + 1}. Task: {task}\n   - Due Date: {due_date}\n\n"
 
-    # Add a motivational closing
-    message += (
+    # Add a closing statement
+    email_content += (
         "Prioritize tasks with closer deadlines, and don’t hesitate to reach out if you need any clarification or support. "
         "For tasks that don’t have a target date, please send updates about their progress.\n\n"
         "Keep up the great work!\n\n"
         "Best regards,\nHarpinder Singh"
     )
 
-    return message
+    # Create the email message
+    message = Mail(
+        from_email=st.secrets["sendgrid"]["from_email"],  # Use your verified sender email
+        to_emails=recipient_email,
+        subject="Pending Tasks Reminder",
+        plain_text_content=email_content
+    )
+
+    try:
+        sg = SendGridAPIClient(st.secrets["sendgrid"]["api_key"])  # Retrieve API key securely
+        response = sg.send(message)
+        return f"Email sent successfully! Status Code: {response.status_code}"
+    except Exception as e:
+        return f"Error sending email: {str(e)}"
 
 def show_task_cards(df_page):
     # Define CSS for the glass/blur material design cards with expanders
@@ -2145,22 +2141,18 @@ def show_task_status_dashboard():
     if 'username' in st.session_state and st.session_state.username == "admin":
         st.markdown("### Admin Actions")
         
-        # Send WhatsApp message to Sujoy
+        # Example: Send mail to "Sujoy"
         pending_tasks_sujoy = df[(df["Assigned To"] == "Sujoy") & (df["Status"] != "Completed")]
-        if st.button("Send Pending Tasks WhatsApp Message to Sujoy"):
-            recipient_number = st.secrets["twilio"]["sujoy_phone"]
-            message_body = format_task_message_list(pending_tasks_sujoy)  # Use the updated function
-            result = send_whatsapp_message(recipient_number, message_body)
+        if st.button("Send Pending Tasks Email to Sujoy"):
+            recipient_email = st.secrets["sendgrid"]["to_email_sujoy"]
+            result = send_email_with_sendgrid(pending_tasks_sujoy, recipient_email, recipient_name="Sujoy")
             st.info(result)
 
-
-        # Send WhatsApp message to Mehboob
-        pending_tasks_mehboob = df[(df["Assigned To"] == "Mehboob") & (df["Status"] != "Completed")]
-        if st.button("Send Pending Tasks WhatsApp Message to Mehboob"):
-            recipient_number = st.secrets["twilio"]["mehboob_phone"]
-            message_body = format_task_message_list(pending_tasks_mehboob)
-            result = send_whatsapp_message(recipient_number, message_body)
+        if st.button("Send Pending Tasks Email to Mehboob"):
+            recipient_email = st.secrets["sendgrid"]["to_email_mehboob"]
+            result = send_email_with_sendgrid(pending_tasks_mehboob, recipient_email, recipient_name="Mehboob")
             st.info(result)
+
 
     # Add/Update tasks (same as your code)
     if "show_form" not in st.session_state:
