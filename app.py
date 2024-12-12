@@ -1931,16 +1931,32 @@ def send_whatsapp_message(to_number, message_body):
         return f"Failed to send message: {str(e)}"
         
 def format_task_message_table(pending_tasks_df):
+    # Check if the dataframe is empty
     if pending_tasks_df.empty:
         return "You have no pending tasks."
 
+    # Initialize the message with headers
     message = "Here are your pending tasks:\n\n"
     message += f"{'Task Description':<30} | {'Due Date':<15}\n"
     message += "-" * 50 + "\n"
+
+    # Iterate through each task and format the message
     for _, row in pending_tasks_df.iterrows():
-        task = row['Task Description'][:27] + "..." if len(row['Task Description']) > 27 else row['Task Description']
-        due = row['Due Date'].strftime('%Y-%m-%d') if pd.notnull(row['Due Date']) else 'N/A'
-        message += f"{task:<30} | {due:<15}\n"
+        # Safely extract task description
+        task = row.get('Task Description', 'N/A')
+        if isinstance(task, str) and len(task) > 27:
+            task = task[:27] + "..."  # Truncate if too long
+
+        # Safely extract due date
+        due_date = row.get('Due Date', None)
+        if pd.notnull(due_date):
+            due_date = due_date.strftime('%Y-%m-%d')
+        else:
+            due_date = 'N/A'
+
+        # Append the task and due date to the message
+        message += f"{task:<30} | {due_date:<15}\n"
+
     return message
 
 def show_task_cards(df_page):
@@ -2128,9 +2144,10 @@ def show_task_status_dashboard():
         pending_tasks_sujoy = df[(df["Assigned To"] == "Sujoy") & (df["Status"] != "Completed")]
         if st.button("Send Pending Tasks WhatsApp Message to Sujoy"):
             recipient_number = st.secrets["twilio"]["sujoy_phone"]
-            message_body = format_task_message(pending_tasks_sujoy)
+            message_body = format_task_message_table(pending_tasks_sujoy)  # Use the updated function
             result = send_whatsapp_message(recipient_number, message_body)
             st.info(result)
+
 
         # Send WhatsApp message to Mehboob
         pending_tasks_mehboob = df[(df["Assigned To"] == "Mehboob") & (df["Status"] != "Completed")]
