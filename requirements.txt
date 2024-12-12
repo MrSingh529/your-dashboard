@@ -10,7 +10,7 @@ pydrive
 streamlit_lottie
 scikit-learn
 statsmodels
-sendgrid==6.11.1
+sendgrid
 jinja2
 pyopenssl
 sendgrid
