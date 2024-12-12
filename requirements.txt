@@ -13,3 +13,5 @@ statsmodels
 sendgrid==6.11.1
 jinja2
 pyopenssl
+sendgrid
+Pillow
