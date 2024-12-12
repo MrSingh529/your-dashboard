@@ -1949,7 +1949,8 @@ def send_pending_tasks_email(pending_tasks_df, recipient_email):
         context = ssl.create_default_context()
 
         # Use SMTP with a longer timeout
-        with smtplib.SMTP_SSL(st.secrets["smtp"]["server"], st.secrets["smtp"]["port"], timeout=30) as server:
+        smtp_server_ip = "103.25.130.132"  # Replace with the resolved IP
+        with smtplib.SMTP(smtp_server_ip, st.secrets["smtp"]["port"], timeout=30) as server:
             server.set_debuglevel(1)  # Enable debugging output
             server.ehlo()
             server.starttls(context=context)
