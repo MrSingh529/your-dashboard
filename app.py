@@ -1930,32 +1930,24 @@ def send_whatsapp_message(to_number, message_body):
     except Exception as e:
         return f"Failed to send message: {str(e)}"
         
-def format_task_message_table(pending_tasks_df):
-    # Check if the dataframe is empty
+def format_task_message_list(pending_tasks_df):
     if pending_tasks_df.empty:
         return "You have no pending tasks."
 
-    # Initialize the message with headers
-    message = "Here are your pending tasks:\n\n"
-    message += f"{'Task Description':<30} | {'Due Date':<15}\n"
-    message += "-" * 50 + "\n"
+    # Initialize the message
+    message = "*Here are your pending tasks:*\n\n"
 
-    # Iterate through each task and format the message
+    # Iterate through the DataFrame and add tasks
     for _, row in pending_tasks_df.iterrows():
-        # Safely extract task description
         task = row.get('Task Description', 'N/A')
-        if isinstance(task, str) and len(task) > 27:
-            task = task[:27] + "..."  # Truncate if too long
-
-        # Safely extract due date
         due_date = row.get('Due Date', None)
         if pd.notnull(due_date):
             due_date = due_date.strftime('%Y-%m-%d')
         else:
             due_date = 'N/A'
 
-        # Append the task and due date to the message
-        message += f"{task:<30} | {due_date:<15}\n"
+        # Add the task to the message
+        message += f"Task: {task}\nDue Date: {due_date}\n\n"
 
     return message
 
