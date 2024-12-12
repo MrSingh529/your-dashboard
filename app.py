@@ -1913,10 +1913,13 @@ def load_task_status_data():
 # Utility function to test SMTP connection
 def test_smtp_connection():
     try:
-        import smtplib
-        with smtplib.SMTP(st.secrets["smtp"]["server"], st.secrets["smtp"]["port"], timeout=30) as server:
+        import smtplib, ssl
+
+        smtp_server_ip = "103.25.130.132"  # Use the resolved IP address
+        context = ssl.create_default_context()
+        with smtplib.SMTP(smtp_server_ip, st.secrets["smtp"]["port"], timeout=30) as server:
             server.ehlo()
-            server.starttls()
+            server.starttls(context=context)
             server.ehlo()
             server.login(st.secrets["smtp"]["username"], st.secrets["smtp"]["password"])
         st.success("SMTP connection successful!")
@@ -1927,9 +1930,6 @@ def test_smtp_connection():
 def send_pending_tasks_email(pending_tasks_df, recipient_email):
     if pending_tasks_df.empty:
         return "No pending tasks to send."
-
-    # Debug SMTP secrets
-    st.write("SMTP Config:", st.secrets["smtp"])
 
     task_list = ""
     for _, row in pending_tasks_df.iterrows():
@@ -1945,11 +1945,8 @@ def send_pending_tasks_email(pending_tasks_df, recipient_email):
     try:
         import smtplib, ssl
 
-        # Create secure SSL/TLS context
         context = ssl.create_default_context()
-
-        # Use SMTP with a longer timeout
-        smtp_server_ip = "103.25.130.132"  # Replace with the resolved IP
+        smtp_server_ip = "103.25.130.132"  # Use the resolved IP address
         with smtplib.SMTP(smtp_server_ip, st.secrets["smtp"]["port"], timeout=30) as server:
             server.set_debuglevel(1)  # Enable debugging output
             server.ehlo()
@@ -1959,8 +1956,7 @@ def send_pending_tasks_email(pending_tasks_df, recipient_email):
             server.send_message(msg)
         return "Email sent successfully!"
     except Exception as e:
-        st.error(f"Email sending failed: {str(e)}")
-        raise
+        return f"Failed to send email: {str(e)}"
 
 def show_task_cards(df_page):
     # Define CSS for the glass/blur material design cards with expanders
