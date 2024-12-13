@@ -1970,33 +1970,36 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
     </html>
     """
 
+    # SMTP configuration
+    smtp_server = st.secrets["smtp"]["server"]
+    smtp_port = st.secrets["smtp"]["port"]
+    smtp_username = st.secrets["smtp"]["username"]
+    smtp_password = st.secrets["smtp"]["password"]
+    from_email = smtp_username  # Use the same as the username
+
     # Set up the email message
-    message = MIMEMultipart("alternative")
-    message["From"] = st.secrets["smtp"]["from_email"]
+    message = MIMEMultipart()
+    message["From"] = from_email
     message["To"] = recipient_email
     message["Subject"] = "Pending Tasks Reminder"
     message.attach(MIMEText(email_content, "html"))
 
     try:
-        # Connect to SMTP server and send email
+        # Create an SSL context
         context = ssl.create_default_context()
-        with smtplib.SMTP(st.secrets["smtp"]["server"], st.secrets["smtp"]["port"]) as server:
-            server.ehlo()
-            server.starttls(context=context)
-            server.ehlo()
-            server.login(st.secrets["smtp"]["username"], st.secrets["smtp"]["password"])
-            server.sendmail(
-                st.secrets["smtp"]["from_email"],
-                recipient_email,
-                message.as_string()
-            )
+
+        # Connect to SMTP server and send email
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.ehlo()  # Identify yourself to the server
+            server.starttls(context=context)  # Upgrade the connection to a secure one using TLS
+            server.ehlo()  # Re-identify as encrypted
+            server.login(smtp_username, smtp_password)
+            server.sendmail(from_email, recipient_email, message.as_string())
+
         return "Email sent successfully!"
-    except smtplib.SMTPAuthenticationError:
-        return "Error: SMTP Authentication failed. Check username/password."
-    except smtplib.SMTPConnectError:
-        return "Error: Unable to connect to the SMTP server. Check server and port."
+
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"Error sending email: {str(e)}"
 
 def show_task_cards(df_page):
     # Define CSS for the glass/blur material design cards with expanders
@@ -2182,12 +2185,12 @@ def show_task_status_dashboard():
         # Example: Send mail to "Sujoy"
         pending_tasks_sujoy = df[(df["Assigned To"] == "Sujoy") & (df["Status"] != "Completed")]
         if st.button("Send Pending Tasks Email to Sujoy"):
-            recipient_email = st.secrets["recipients"]["sujoy"]  # Retrieve Sujoy's email from secrets
+            recipient_email = st.secrets["emails"]["sujoy"]
             result = send_email_with_smtp(pending_tasks_sujoy, recipient_email, recipient_name="Sujoy")
             st.info(result)
 
         if st.button("Send Pending Tasks Email to Mehboob"):
-            recipient_email = st.secrets["recipients"]["mehboob"]  # Retrieve Mehboob's email from secrets
+            recipient_email = st.secrets["emails"]["mehboob"]
             result = send_email_with_smtp(pending_tasks_mehboob, recipient_email, recipient_name="Mehboob")
             st.info(result)
 
