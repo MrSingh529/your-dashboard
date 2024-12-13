@@ -1913,7 +1913,7 @@ def load_task_status_data():
         return None
 
 # Function to send pending tasks email
-def send_email_with_sendgrid(pending_tasks_df, recipient_email, recipient_name=""):
+def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
     if pending_tasks_df.empty:
         return "You have no pending tasks."
 
@@ -1970,20 +1970,33 @@ def send_email_with_sendgrid(pending_tasks_df, recipient_email, recipient_name="
     </html>
     """
 
-    # Create the email message
-    message = Mail(
-        from_email=st.secrets["sendgrid"]["from_email"],  # Use your verified sender email
-        to_emails=recipient_email,
-        subject="Pending Tasks Reminder",
-        html_content=email_content  # Use HTML content here
-    )
+    # Set up the email message
+    message = MIMEMultipart("alternative")
+    message["From"] = st.secrets["smtp"]["from_email"]
+    message["To"] = recipient_email
+    message["Subject"] = "Pending Tasks Reminder"
+    message.attach(MIMEText(email_content, "html"))
 
     try:
-        sg = SendGridAPIClient(st.secrets["sendgrid"]["api_key"])  # Retrieve API key securely
-        response = sg.send(message)
-        return f"Email sent successfully! Status Code: {response.status_code}"
+        # Connect to SMTP server and send email
+        context = ssl.create_default_context()
+        with smtplib.SMTP(st.secrets["smtp"]["server"], st.secrets["smtp"]["port"]) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.ehlo()
+            server.login(st.secrets["smtp"]["username"], st.secrets["smtp"]["password"])
+            server.sendmail(
+                st.secrets["smtp"]["from_email"],
+                recipient_email,
+                message.as_string()
+            )
+        return "Email sent successfully!"
+    except smtplib.SMTPAuthenticationError:
+        return "Error: SMTP Authentication failed. Check username/password."
+    except smtplib.SMTPConnectError:
+        return "Error: Unable to connect to the SMTP server. Check server and port."
     except Exception as e:
-        return f"Error sending email: {str(e)}"
+        return f"Error: {str(e)}"
 
 def show_task_cards(df_page):
     # Define CSS for the glass/blur material design cards with expanders
@@ -2169,13 +2182,13 @@ def show_task_status_dashboard():
         # Example: Send mail to "Sujoy"
         pending_tasks_sujoy = df[(df["Assigned To"] == "Sujoy") & (df["Status"] != "Completed")]
         if st.button("Send Pending Tasks Email to Sujoy"):
-            recipient_email = st.secrets["sendgrid"]["to_email_sujoy"]
-            result = send_email_with_sendgrid(pending_tasks_sujoy, recipient_email, recipient_name="Sujoy")
+            recipient_email = st.secrets["recipients"]["sujoy"]  # Retrieve Sujoy's email from secrets
+            result = send_email_with_smtp(pending_tasks_sujoy, recipient_email, recipient_name="Sujoy")
             st.info(result)
 
         if st.button("Send Pending Tasks Email to Mehboob"):
-            recipient_email = st.secrets["sendgrid"]["to_email_mehboob"]
-            result = send_email_with_sendgrid(pending_tasks_mehboob, recipient_email, recipient_name="Mehboob")
+            recipient_email = st.secrets["recipients"]["mehboob"]  # Retrieve Mehboob's email from secrets
+            result = send_email_with_smtp(pending_tasks_mehboob, recipient_email, recipient_name="Mehboob")
             st.info(result)
 
 
