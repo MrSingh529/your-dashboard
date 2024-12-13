@@ -1985,15 +1985,9 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
     message.attach(MIMEText(email_content, "html"))
 
     try:
-        # Create an SSL context
-        context = ssl.create_default_context()
-
-        # Connect to SMTP server and send email
-        with smtplib.SMTP(smtp_server, smtp_port, timeout=60) as server:
+        # Connect to SMTP server using SSL
+        with smtplib.SMTP_SSL(smtp_server, smtp_port, context=ssl.create_default_context(), timeout=60) as server:
             server.set_debuglevel(1)  # Enables detailed debugging output
-            server.ehlo()
-            server.starttls(context=context)
-            server.ehlo()
             server.login(smtp_username, smtp_password)
             server.sendmail(from_email, recipient_email, message.as_string())
 
