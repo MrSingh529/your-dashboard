@@ -1989,10 +1989,11 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
         context = ssl.create_default_context()
 
         # Connect to SMTP server and send email
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.ehlo()  # Identify yourself to the server
-            server.starttls(context=context)  # Upgrade the connection to a secure one using TLS
-            server.ehlo()  # Re-identify as encrypted
+        with smtplib.SMTP(smtp_server, smtp_port, timeout=60) as server:
+            server.set_debuglevel(1)  # Enables detailed debugging output
+            server.ehlo()
+            server.starttls(context=context)
+            server.ehlo()
             server.login(smtp_username, smtp_password)
             server.sendmail(from_email, recipient_email, message.as_string())
 
