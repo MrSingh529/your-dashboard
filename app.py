@@ -1965,7 +1965,7 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
     """
 
     smtp_server = st.secrets["smtp"]["server"]
-    smtp_port = st.secrets["smtp"]["port"]
+    smtp_port = 587  # Port for STARTTLS
     smtp_username = st.secrets["smtp"]["username"]
     smtp_password = st.secrets["smtp"]["password"]
     from_email = smtp_username
@@ -1977,10 +1977,12 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
     message.attach(MIMEText(email_content, "html"))
 
     try:
-        context = ssl.create_default_context()
-        with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
-            server.set_debuglevel(1)
-            server.set_debuglevel(2)  # Use level 2 for verbose debug output
+        # Start a connection with STARTTLS
+        with smtplib.SMTP(smtp_server, smtp_port, timeout=120) as server:
+            server.set_debuglevel(2)
+            server.ehlo()  # Identify yourself to the server
+            server.starttls()  # Upgrade connection to secure
+            server.ehlo()  # Re-identify after STARTTLS
             server.login(smtp_username, smtp_password)
             server.sendmail(from_email, recipient_email, message.as_string())
         return "Email sent successfully!"
