@@ -1980,6 +1980,7 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
             server.set_debuglevel(1)
+            server.set_debuglevel(2)  # Use level 2 for verbose debug output
             server.login(smtp_username, smtp_password)
             server.sendmail(from_email, recipient_email, message.as_string())
         return "Email sent successfully!"
