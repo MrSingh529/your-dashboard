@@ -6,6 +6,7 @@ from datetime import datetime
 import numpy as np
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+import requests
 import io
 import smtplib
 import ssl
