@@ -1977,14 +1977,19 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
     message.attach(MIMEText(email_content, "html"))
 
     try:
-        # Start a connection with STARTTLS
-        with smtplib.SMTP(smtp_server, smtp_port, timeout=120) as server:
-            server.set_debuglevel(2)
-            server.ehlo()  # Identify yourself to the server
-            server.starttls()  # Upgrade connection to secure
-            server.ehlo()  # Re-identify after STARTTLS
-            server.login(smtp_username, smtp_password)
-            server.sendmail(from_email, recipient_email, message.as_string())
+        print("Connecting to server...")
+        server = smtplib.SMTP(smtp_server, smtp_port, timeout=120)
+        print("Connected to server. Sending EHLO...")
+        server.ehlo()
+        print("Initiating STARTTLS...")
+        server.starttls()
+        print("Re-identifying server after STARTTLS...")
+        server.ehlo()
+        print("Logging in...")
+        server.login(smtp_username, smtp_password)
+        print("Sending email...")
+        server.sendmail(from_email, recipient_email, message.as_string())
+        server.quit()
         return "Email sent successfully!"
 
     except smtplib.SMTPException as smtp_err:
