@@ -6,7 +6,6 @@ from datetime import datetime
 import numpy as np
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-import requests
 import io
 import smtplib
 import ssl
@@ -1914,11 +1913,10 @@ def load_task_status_data():
         return None
 
 # Function to send pending tasks email
-def send_email_with_sendgrid(pending_tasks_df, recipient_email, recipient_name=""):
+def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
     if pending_tasks_df.empty:
         return "You have no pending tasks."
 
-    # HTML email header and introduction
     email_content = f"""
     <html>
     <body>
@@ -1937,7 +1935,6 @@ def send_email_with_sendgrid(pending_tasks_df, recipient_email, recipient_name="
             <tbody>
     """
 
-    # Add tasks to the table
     for index, row in pending_tasks_df.iterrows():
         task = row.get("Task Description", "N/A")
         due_date = row.get("Due Date", None)
@@ -1957,50 +1954,39 @@ def send_email_with_sendgrid(pending_tasks_df, recipient_email, recipient_name="
             </tr>
         """
 
-    # Close the HTML table and add the closing statement
     email_content += """
             </tbody>
         </table>
-        <p>
-            Prioritize tasks with closer deadlines, and don’t hesitate to reach out if you need any clarification or support. 
-            For tasks that don’t have a target date, please send updates about their progress.
-        </p>
+        <p>Prioritize tasks with closer deadlines, and don’t hesitate to reach out if you need any clarification or support. For tasks that don’t have a target date, please send updates about their progress.</p>
         <p>Keep up the great work!</p>
         <p>Best regards,<br>Harpinder Singh</p>
     </body>
     </html>
     """
 
-    # SendGrid configuration
-    sendgrid_api_key = st.secrets["sendgrid"]["api_key"]
-    from_email = st.secrets["sendgrid"]["from_email"]
+    smtp_server = st.secrets["smtp"]["server"]
+    smtp_port = st.secrets["smtp"]["port"]
+    smtp_username = st.secrets["smtp"]["username"]
+    smtp_password = st.secrets["smtp"]["password"]
+    from_email = smtp_username
 
-    # Prepare payload for SendGrid API
-    payload = {
-        "personalizations": [
-            {
-                "to": [{"email": recipient_email}],
-                "subject": "Pending Tasks Reminder",
-            }
-        ],
-        "from": {"email": from_email},
-        "content": [{"type": "text/html", "value": email_content}],
-    }
+    message = MIMEMultipart()
+    message["From"] = from_email
+    message["To"] = recipient_email
+    message["Subject"] = "Pending Tasks Reminder"
+    message.attach(MIMEText(email_content, "html"))
 
     try:
-        # Send email using SendGrid API
-        response = requests.post(
-            "https://api.sendgrid.com/v3/mail/send",
-            headers={"Authorization": f"Bearer {sendgrid_api_key}", "Content-Type": "application/json"},
-            json=payload,
-        )
-        if response.status_code == 202:
-            return "Email sent successfully!"
-        else:
-            st.error(f"SendGrid API error: {response.status_code} - {response.text}")
-            return f"Error sending email: {response.status_code} - {response.text}"
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
+            server.set_debuglevel(1)
+            server.login(smtp_username, smtp_password)
+            server.sendmail(from_email, recipient_email, message.as_string())
+        return "Email sent successfully!"
+
+    except smtplib.SMTPException as smtp_err:
+        return f"SMTP error occurred: {smtp_err}"
     except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
         return f"Error sending email: {str(e)}"
 
 def show_task_cards(df_page):
@@ -2188,12 +2174,12 @@ def show_task_status_dashboard():
         pending_tasks_sujoy = df[(df["Assigned To"] == "Sujoy") & (df["Status"] != "Completed")]
         if st.button("Send Pending Tasks Email to Sujoy"):
             recipient_email = st.secrets["emails"]["sujoy"]
-            result = send_email_with_sendgrid(pending_tasks_sujoy, recipient_email, recipient_name="Sujoy")
+            result = send_email_with_smtp(pending_tasks_sujoy, recipient_email, recipient_name="Sujoy")
             st.info(result)
 
         if st.button("Send Pending Tasks Email to Mehboob"):
             recipient_email = st.secrets["emails"]["mehboob"]
-            result = send_email_with_sendgrid(pending_tasks_mehboob, recipient_email, recipient_name="Mehboob")
+            result = send_email_with_smtp(pending_tasks_mehboob, recipient_email, recipient_name="Mehboob")
             st.info(result)
 
 
