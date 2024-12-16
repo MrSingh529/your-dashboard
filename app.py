@@ -1975,9 +1975,8 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
     smtp_port = st.secrets["smtp"]["port"]
     smtp_username = st.secrets["smtp"]["username"]
     smtp_password = st.secrets["smtp"]["password"]
-    from_email = smtp_username  # Use the same as the username
+    from_email = smtp_username
 
-    # Set up the email message
     message = MIMEMultipart()
     message["From"] = from_email
     message["To"] = recipient_email
@@ -1985,15 +1984,18 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
     message.attach(MIMEText(email_content, "html"))
 
     try:
-        # Connect to SMTP server using SSL
-        with smtplib.SMTP_SSL(smtp_server, smtp_port, context=ssl.create_default_context(), timeout=60) as server:
-            server.set_debuglevel(1)  # Enables detailed debugging output
+        with smtplib.SMTP_SSL(smtp_server, smtp_port, context=ssl.create_default_context(), timeout=120) as server:
+            server.set_debuglevel(1)
             server.login(smtp_username, smtp_password)
             server.sendmail(from_email, recipient_email, message.as_string())
-
         return "Email sent successfully!"
-
+    
+    except smtplib.SMTPException as e:
+        st.error(f"SMTP error occurred: {str(e)}")
+        return f"Error sending email: {str(e)}"
+    
     except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
         return f"Error sending email: {str(e)}"
 
 def show_task_cards(df_page):
