@@ -1965,7 +1965,6 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
     """
 
     smtp_server = st.secrets["smtp"]["server"]
-    smtp_port = 587  # Port for STARTTLS
     smtp_username = st.secrets["smtp"]["username"]
     smtp_password = st.secrets["smtp"]["password"]
     from_email = smtp_username
@@ -1977,13 +1976,11 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
     message.attach(MIMEText(email_content, "html"))
 
     try:
-        st.write("Connecting to SMTP server...")
-        server = smtplib.SMTP(smtp_server, smtp_port, timeout=120)
-        st.write("Connected to server. Sending EHLO...")
+        st.write("Connecting to SMTP server on port 587...")
+        server = smtplib.SMTP(smtp_server, 587, timeout=120)
         server.ehlo()
         st.write("Initiating STARTTLS...")
         server.starttls()
-        st.write("Re-identifying server after STARTTLS...")
         server.ehlo()
         st.write("Logging in...")
         server.login(smtp_username, smtp_password)
@@ -1993,12 +1990,22 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
         st.success("Email sent successfully!")
         return "Email sent successfully!"
 
-    except smtplib.SMTPException as smtp_err:
-        st.error(f"SMTP error occurred: {smtp_err}")
-        return f"SMTP error occurred: {smtp_err}"
     except Exception as e:
-        st.error(f"Error sending email: {str(e)}")
-        return f"Error sending email: {str(e)}"
+        st.error(f"Error on port 587: {str(e)}")
+        st.write("Attempting to connect using SSL on port 465...")
+        try:
+            context = ssl.create_default_context()
+            with smtplib.SMTP_SSL(smtp_server, 465, context=context, timeout=120) as server:
+                server.ehlo()
+                st.write("Logging in with SSL...")
+                server.login(smtp_username, smtp_password)
+                st.write("Sending email...")
+                server.sendmail(from_email, recipient_email, message.as_string())
+            st.success("Email sent successfully over SSL!")
+            return "Email sent successfully over SSL!"
+        except Exception as ssl_error:
+            st.error(f"Error on port 465: {str(ssl_error)}")
+            return f"Error sending email: {str(ssl_error)}"
 
 def show_task_cards(df_page):
     # Define CSS for the glass/blur material design cards with expanders
