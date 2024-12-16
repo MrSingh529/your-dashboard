@@ -1977,24 +1977,27 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
     message.attach(MIMEText(email_content, "html"))
 
     try:
-        print("Connecting to server...")
+        st.write("Connecting to SMTP server...")
         server = smtplib.SMTP(smtp_server, smtp_port, timeout=120)
-        print("Connected to server. Sending EHLO...")
+        st.write("Connected to server. Sending EHLO...")
         server.ehlo()
-        print("Initiating STARTTLS...")
+        st.write("Initiating STARTTLS...")
         server.starttls()
-        print("Re-identifying server after STARTTLS...")
+        st.write("Re-identifying server after STARTTLS...")
         server.ehlo()
-        print("Logging in...")
+        st.write("Logging in...")
         server.login(smtp_username, smtp_password)
-        print("Sending email...")
+        st.write("Sending email...")
         server.sendmail(from_email, recipient_email, message.as_string())
         server.quit()
+        st.success("Email sent successfully!")
         return "Email sent successfully!"
 
     except smtplib.SMTPException as smtp_err:
+        st.error(f"SMTP error occurred: {smtp_err}")
         return f"SMTP error occurred: {smtp_err}"
     except Exception as e:
+        st.error(f"Error sending email: {str(e)}")
         return f"Error sending email: {str(e)}"
 
 def show_task_cards(df_page):
