@@ -1917,6 +1917,7 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
     if pending_tasks_df.empty:
         return "You have no pending tasks."
 
+    # Email content generation
     email_content = f"""
     <html>
     <body>
@@ -1926,10 +1927,10 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
         <table style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 14px;">
             <thead>
                 <tr>
-                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">#</th>
-                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Task Description</th>
-                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Due Date</th>
-                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Comments</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">#</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Task Description</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Due Date</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Comments</th>
                 </tr>
             </thead>
             <tbody>
@@ -1937,13 +1938,10 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
 
     for index, row in pending_tasks_df.iterrows():
         task = row.get("Task Description", "N/A")
-        due_date = row.get("Due Date", None)
+        due_date = row.get("Due Date", "N/A")
         comments = row.get("Comments", "No comments available")
 
-        if pd.notnull(due_date):
-            due_date = due_date.strftime("%Y-%m-%d")
-        else:
-            due_date = "N/A"
+        due_date = due_date.strftime("%Y-%m-%d") if pd.notnull(due_date) else "N/A"
 
         email_content += f"""
             <tr>
@@ -1957,55 +1955,58 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
     email_content += """
             </tbody>
         </table>
-        <p>Prioritize tasks with closer deadlines, and don’t hesitate to reach out if you need any clarification or support. For tasks that don’t have a target date, please send updates about their progress.</p>
+        <p>Prioritize tasks with closer deadlines, and don’t hesitate to reach out if you need any clarification or support.</p>
         <p>Keep up the great work!</p>
         <p>Best regards,<br>Harpinder Singh</p>
     </body>
     </html>
     """
 
+    # SMTP configuration
     smtp_server = st.secrets["smtp"]["server"]
     smtp_username = st.secrets["smtp"]["username"]
     smtp_password = st.secrets["smtp"]["password"]
     from_email = smtp_username
 
+    # Email Message Setup
     message = MIMEMultipart()
     message["From"] = from_email
     message["To"] = recipient_email
     message["Subject"] = "Pending Tasks Reminder"
     message.attach(MIMEText(email_content, "html"))
 
+    # Function to log and display errors
+    def log_error(port, error):
+        st.error(f"❌ Failed to send email on port {port}: {str(error)}")
+
+    # Try Port 587 (STARTTLS)
     try:
-        st.write("Connecting to SMTP server on port 587...")
-        server = smtplib.SMTP(smtp_server, 587, timeout=120)
+        st.write("🔄 Connecting to SMTP server on port 587 (STARTTLS)...")
+        server = smtplib.SMTP(smtp_server, 587, timeout=60)
         server.ehlo()
-        st.write("Initiating STARTTLS...")
         server.starttls()
-        server.ehlo()
-        st.write("Logging in...")
         server.login(smtp_username, smtp_password)
-        st.write("Sending email...")
+        st.write("✅ Successfully connected and logged in!")
         server.sendmail(from_email, recipient_email, message.as_string())
         server.quit()
-        st.success("Email sent successfully!")
+        st.success("📧 Email sent successfully via port 587!")
         return "Email sent successfully!"
-
     except Exception as e:
-        st.error(f"Error on port 587: {str(e)}")
-        st.write("Attempting to connect using SSL on port 465...")
-        try:
-            context = ssl.create_default_context()
-            with smtplib.SMTP_SSL(smtp_server, 465, context=context, timeout=120) as server:
-                server.ehlo()
-                st.write("Logging in with SSL...")
-                server.login(smtp_username, smtp_password)
-                st.write("Sending email...")
-                server.sendmail(from_email, recipient_email, message.as_string())
-            st.success("Email sent successfully over SSL!")
-            return "Email sent successfully over SSL!"
-        except Exception as ssl_error:
-            st.error(f"Error on port 465: {str(ssl_error)}")
-            return f"Error sending email: {str(ssl_error)}"
+        log_error(587, e)
+
+    # Try Port 465 (SSL) if 587 fails
+    try:
+        st.write("🔄 Retrying with SSL on port 465...")
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(smtp_server, 465, context=context, timeout=60) as server:
+            server.login(smtp_username, smtp_password)
+            st.write("✅ Successfully connected and logged in with SSL!")
+            server.sendmail(from_email, recipient_email, message.as_string())
+        st.success("📧 Email sent successfully via port 465!")
+        return "Email sent successfully!"
+    except Exception as ssl_error:
+        log_error(465, ssl_error)
+        return "Error: Email sending failed on both ports."
 
 def show_task_cards(df_page):
     # Define CSS for the glass/blur material design cards with expanders
