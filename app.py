@@ -1913,7 +1913,7 @@ def load_task_status_data():
         return None
 
 # Function to send pending tasks email
-def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
+def send_email_with_sendgrid(pending_tasks_df, recipient_email, recipient_name=""):
     if pending_tasks_df.empty:
         return "You have no pending tasks."
 
@@ -1935,14 +1935,11 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
             </thead>
             <tbody>
     """
-
     for index, row in pending_tasks_df.iterrows():
         task = row.get("Task Description", "N/A")
         due_date = row.get("Due Date", "N/A")
         comments = row.get("Comments", "No comments available")
-
         due_date = due_date.strftime("%Y-%m-%d") if pd.notnull(due_date) else "N/A"
-
         email_content += f"""
             <tr>
                 <td style="border: 1px solid #ddd; padding: 8px;">{index + 1}</td>
@@ -1951,7 +1948,6 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
                 <td style="border: 1px solid #ddd; padding: 8px;">{comments}</td>
             </tr>
         """
-
     email_content += """
             </tbody>
         </table>
@@ -1962,51 +1958,29 @@ def send_email_with_smtp(pending_tasks_df, recipient_email, recipient_name=""):
     </html>
     """
 
-    # SMTP configuration
-    smtp_server = st.secrets["smtp"]["server"]
-    smtp_username = st.secrets["smtp"]["username"]
-    smtp_password = st.secrets["smtp"]["password"]
-    from_email = smtp_username
+    # SendGrid API configuration
+    sendgrid_api_key = st.secrets["sendgrid"]["api_key"]
+    from_email = st.secrets["sendgrid"]["from_email"]
 
-    # Email Message Setup
-    message = MIMEMultipart()
-    message["From"] = from_email
-    message["To"] = recipient_email
-    message["Subject"] = "Pending Tasks Reminder"
-    message.attach(MIMEText(email_content, "html"))
+    message = Mail(
+        from_email=from_email,
+        to_emails=recipient_email,
+        subject="Pending Tasks Reminder",
+        html_content=email_content,
+    )
 
-    # Function to log and display errors
-    def log_error(port, error):
-        st.error(f"❌ Failed to send email on port {port}: {str(error)}")
-
-    # Try Port 587 (STARTTLS)
     try:
-        st.write("🔄 Connecting to SMTP server on port 587 (STARTTLS)...")
-        server = smtplib.SMTP(smtp_server, 587, timeout=60)
-        server.ehlo()
-        server.starttls()
-        server.login(smtp_username, smtp_password)
-        st.write("✅ Successfully connected and logged in!")
-        server.sendmail(from_email, recipient_email, message.as_string())
-        server.quit()
-        st.success("📧 Email sent successfully via port 587!")
-        return "Email sent successfully!"
+        sg = SendGridAPIClient(sendgrid_api_key)
+        response = sg.send(message)
+        if response.status_code in [200, 202]:
+            st.success("📧 Email sent successfully!")
+            return "Email sent successfully!"
+        else:
+            st.error(f"Failed to send email. Status code: {response.status_code}")
+            return "Error: Email sending failed."
     except Exception as e:
-        log_error(587, e)
-
-    # Try Port 465 (SSL) if 587 fails
-    try:
-        st.write("🔄 Retrying with SSL on port 465...")
-        context = ssl.create_default_context()
-        with smtplib.SMTP_SSL(smtp_server, 465, context=context, timeout=60) as server:
-            server.login(smtp_username, smtp_password)
-            st.write("✅ Successfully connected and logged in with SSL!")
-            server.sendmail(from_email, recipient_email, message.as_string())
-        st.success("📧 Email sent successfully via port 465!")
-        return "Email sent successfully!"
-    except Exception as ssl_error:
-        log_error(465, ssl_error)
-        return "Error: Email sending failed on both ports."
+        st.error(f"Error sending email: {str(e)}")
+        return "Error: Email sending failed."
 
 def show_task_cards(df_page):
     # Define CSS for the glass/blur material design cards with expanders
@@ -2193,12 +2167,12 @@ def show_task_status_dashboard():
         pending_tasks_sujoy = df[(df["Assigned To"] == "Sujoy") & (df["Status"] != "Completed")]
         if st.button("Send Pending Tasks Email to Sujoy"):
             recipient_email = st.secrets["emails"]["sujoy"]
-            result = send_email_with_smtp(pending_tasks_sujoy, recipient_email, recipient_name="Sujoy")
+            result = send_email_with_sendgrid(pending_tasks_sujoy, recipient_email, recipient_name="Sujoy")
             st.info(result)
 
         if st.button("Send Pending Tasks Email to Mehboob"):
             recipient_email = st.secrets["emails"]["mehboob"]
-            result = send_email_with_smtp(pending_tasks_mehboob, recipient_email, recipient_name="Mehboob")
+            result = send_email_with_sendgrid(pending_tasks_mehboob, recipient_email, recipient_name="Mehboob")
             st.info(result)
 
 
