@@ -16,3 +16,6 @@ pyopenssl
 Pillow
 twilio
 watchdog
+prophet
+pyod
+scikit-learn
