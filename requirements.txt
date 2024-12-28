@@ -16,3 +16,4 @@ pyopenssl
 sendgrid
 Pillow
 twilio
+watchdog
