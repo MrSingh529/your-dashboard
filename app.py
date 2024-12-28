@@ -13,8 +13,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import re
 import streamlit.components.v1 as components
-import google.generativeai as gemini
-import google.generativeai as genai
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
@@ -403,37 +401,6 @@ FILE_IDS = {
     'tsg_trend': st.secrets["google_drive"]["tsg_trend"],
     'task_status': st.secrets["google_drive"]["task_status"]
 }
-
-# Configure Gemini API using the API key from secrets
-gemini_api_key = st.secrets["gemini"]["api_key"]
-genai.configure(api_key=gemini_api_key)
-
-# Define a function to generate AI responses using Gemini
-def get_ai_response(prompt):
-    try:
-        # Use the appropriate method for generating responses
-        response = genai.chat(
-            model="models/chat-bison-001",  # Replace with the appropriate model
-            messages=[{"content": prompt}]
-        )
-        return response["content"]  # Extract content from the response
-    except Exception as e:
-        return f"Error generating AI response: {str(e)}"
-
-# Add a new section to the Streamlit dashboard for AI chatbot
-st.sidebar.markdown("## AI Chatbot")
-st.sidebar.info("Interact with the AI chatbot powered by Gemini API.")
-
-# Chatbot interface
-st.markdown("### AI Chatbot")
-user_input = st.text_input("Ask something:", placeholder="Type your query here...")
-if st.button("Send"):
-    if user_input:
-        with st.spinner("Thinking..."):
-            ai_response = get_ai_response(user_input)
-        st.markdown(f"**AI:** {ai_response}")
-    else:
-        st.warning("Please enter a message to get a response.")
 
 @st.cache_resource(ttl=3600)  # Cache authentication for 1 hour
 def authenticate_drive():
@@ -2180,6 +2147,9 @@ def show_task_status_dashboard():
 
     st.title("Task Status Dashboard")
 
+    # **Show Task Alerts**
+    show_task_alerts(df)  # Call the task alerts function
+
     # Filters
     st.sidebar.header("Filters")
     status_filter = st.sidebar.selectbox("Filter by Status", options=["All", "Not Started", "In Progress", "Completed"])
@@ -2329,6 +2299,28 @@ def show_task_status_dashboard():
         st.info("No tasks found for given filters.")
     else:
         show_task_cards(df_page)
+
+def show_task_alerts(df):
+    """
+    Function to display alerts based on task status.
+    """
+    overdue_tasks = df[(df["Status"] != "Completed") & (df["Due Date"] < pd.Timestamp.now())]
+    due_soon_tasks = df[(df["Status"] != "Completed") & (df["Due Date"] >= pd.Timestamp.now()) & 
+                        (df["Due Date"] <= pd.Timestamp.now() + pd.Timedelta(days=2))]
+
+    st.sidebar.markdown("### Alerts")
+    if not overdue_tasks.empty:
+        st.sidebar.error(f"🚨 Overdue Tasks: {len(overdue_tasks)}")
+        for idx, row in overdue_tasks.iterrows():
+            st.sidebar.write(f"- {row['Task Description']} (Due: {row['Due Date'].strftime('%Y-%m-%d')})")
+
+    if not due_soon_tasks.empty:
+        st.sidebar.warning(f"⚠️ Tasks Due Soon: {len(due_soon_tasks)}")
+        for idx, row in due_soon_tasks.iterrows():
+            st.sidebar.write(f"- {row['Task Description']} (Due: {row['Due Date'].strftime('%Y-%m-%d')})")
+
+    if overdue_tasks.empty and due_soon_tasks.empty:
+        st.sidebar.success("✅ All tasks are on track!")
 
 # Define menu structure
 DEPARTMENT_REPORTS = {
