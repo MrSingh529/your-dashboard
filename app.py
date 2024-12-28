@@ -22,9 +22,6 @@ import pytz
 from difflib import get_close_matches
 import hashlib
 
-# Disable the file watcher
-st.set_option("server.fileWatcherType", "none")
-
 # Configure page settings
 st.set_page_config(
     page_title="TSG Payment Receivables Dashboard",
