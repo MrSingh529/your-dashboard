@@ -1917,6 +1917,10 @@ def send_email_with_sendgrid(pending_tasks_df, recipient_email, recipient_name="
     if pending_tasks_df.empty:
         return "You have no pending tasks."
 
+    # Filter tasks with and without due dates
+    tasks_with_due_date = pending_tasks_df[pending_tasks_df["Due Date"].notna()].sort_values(by="Due Date")
+    tasks_without_due_date = pending_tasks_df[pending_tasks_df["Due Date"].isna()]
+
     # Email content generation
     email_content = f"""
     <html>
@@ -1924,6 +1928,12 @@ def send_email_with_sendgrid(pending_tasks_df, recipient_email, recipient_name="
         <p>Hello {recipient_name},</p>
         <p>This is Harpinder Singh. Vandana Ma'am has assigned the following tasks to you. Let’s stay on track and ensure timely completion.</p>
         <p><strong>Here’s what’s on your list:</strong></p>
+    """
+
+    # Add tasks with due dates
+    if not tasks_with_due_date.empty:
+        email_content += """
+        <h3 style="color: #2E86C1;">🗓️ Nearest Deadlines:</h3>
         <table style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 14px;">
             <thead>
                 <tr>
@@ -1934,23 +1944,39 @@ def send_email_with_sendgrid(pending_tasks_df, recipient_email, recipient_name="
                 </tr>
             </thead>
             <tbody>
-    """
-    for index, row in pending_tasks_df.iterrows():
-        task = row.get("Task Description", "N/A")
-        due_date = row.get("Due Date", "N/A")
-        comments = row.get("Comments", "No comments available")
-        due_date = due_date.strftime("%Y-%m-%d") if pd.notnull(due_date) else "N/A"
-        email_content += f"""
-            <tr>
-                <td style="border: 1px solid #ddd; padding: 8px;">{index + 1}</td>
-                <td style="border: 1px solid #ddd; padding: 8px;">{task}</td>
-                <td style="border: 1px solid #ddd; padding: 8px;">{due_date}</td>
-                <td style="border: 1px solid #ddd; padding: 8px;">{comments}</td>
-            </tr>
         """
-    email_content += """
+        for index, row in tasks_with_due_date.iterrows():
+            task = row.get("Task Description", "N/A")
+            due_date = row["Due Date"].strftime("%Y-%m-%d") if pd.notnull(row["Due Date"]) else "N/A"
+            comments = row.get("Comments", "No comments available")
+            email_content += f"""
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{index + 1}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{task}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{due_date}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{comments}</td>
+                </tr>
+            """
+        email_content += """
             </tbody>
         </table>
+        """
+
+    # Add tasks without due dates
+    if not tasks_without_due_date.empty:
+        email_content += """
+        <h3 style="color: #C0392B;">❗ Target Dates Not Available:</h3>
+        <ul style="font-family: Arial, sans-serif; font-size: 14px;">
+        """
+        for index, row in tasks_without_due_date.iterrows():
+            task = row.get("Task Description", "N/A")
+            comments = row.get("Comments", "No comments available")
+            email_content += f"<li>{task} – {comments}</li>"
+        email_content += """
+        </ul>
+        """
+
+    email_content += """
         <p>Prioritize tasks with closer deadlines, and don’t hesitate to reach out if you need any clarification or support.</p>
         <p>Keep up the great work!</p>
         <p>Best regards,<br>Harpinder Singh</p>
