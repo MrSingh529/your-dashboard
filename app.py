@@ -14,6 +14,7 @@ from email.mime.multipart import MIMEMultipart
 import re
 import streamlit.components.v1 as components
 import google.generativeai as gemini
+import google.generativeai as genai
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
@@ -405,13 +406,17 @@ FILE_IDS = {
 
 # Configure Gemini API using the API key from secrets
 gemini_api_key = st.secrets["gemini"]["api_key"]
-gemini.configure(api_key=gemini_api_key)
+genai.configure(api_key=gemini_api_key)
 
 # Define a function to generate AI responses using Gemini
 def get_ai_response(prompt):
     try:
-        response = gemini.generate_text(prompt=prompt)
-        return response.result
+        # Use the appropriate method for generating responses
+        response = genai.chat(
+            model="models/chat-bison-001",  # Replace with the appropriate model
+            messages=[{"content": prompt}]
+        )
+        return response["content"]  # Extract content from the response
     except Exception as e:
         return f"Error generating AI response: {str(e)}"
 
