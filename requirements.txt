@@ -13,6 +13,7 @@ statsmodels
 sendgrid
 jinja2
 pyopenssl
+google-generativeai
 Pillow
 twilio
 watchdog

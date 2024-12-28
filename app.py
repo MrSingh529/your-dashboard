@@ -7,13 +7,13 @@ import numpy as np
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 import io
-from prophet import Prophet
 import smtplib
 import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import re
 import streamlit.components.v1 as components
+import google.generativeai as gemini
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
@@ -22,7 +22,6 @@ import time
 import pytz
 from difflib import get_close_matches
 import hashlib
-from pyod.models.iforest import IForest
 
 # Configure page settings
 st.set_page_config(
@@ -403,6 +402,33 @@ FILE_IDS = {
     'tsg_trend': st.secrets["google_drive"]["tsg_trend"],
     'task_status': st.secrets["google_drive"]["task_status"]
 }
+
+# Configure Gemini API using the API key from secrets
+gemini_api_key = st.secrets["gemini_api_key"]
+gemini.configure(api_key=gemini_api_key)
+
+# Define a function to generate AI responses using Gemini
+def get_ai_response(prompt):
+    try:
+        response = gemini.generate_text(prompt=prompt)
+        return response.result
+    except Exception as e:
+        return f"Error generating AI response: {str(e)}"
+
+# Add a new section to the Streamlit dashboard for AI chatbot
+st.sidebar.markdown("## AI Chatbot")
+st.sidebar.info("Interact with the AI chatbot powered by Gemini API.")
+
+# Chatbot interface
+st.markdown("### AI Chatbot")
+user_input = st.text_input("Ask something:", placeholder="Type your query here...")
+if st.button("Send"):
+    if user_input:
+        with st.spinner("Thinking..."):
+            ai_response = get_ai_response(user_input)
+        st.markdown(f"**AI:** {ai_response}")
+    else:
+        st.warning("Please enter a message to get a response.")
 
 @st.cache_resource(ttl=3600)  # Cache authentication for 1 hour
 def authenticate_drive():
@@ -1413,25 +1439,7 @@ def show_sdr_dashboard():
             # Display Highlights Trend
             st.subheader("Highlights Trend")
             st.markdown("A detailed analysis of the changes over different periods, indicating improvements and deteriorations.")
-            # Anomaly detection
-            anomaly_detector = IForest(contamination=0.05)  # 5% anomalies
-            anomaly_df = df.copy()
-            for date_col in date_columns:
-                if date_col in df.columns:
-                    anomaly_detector.fit(df[[date_col]].dropna())
-                    anomaly_df[f"{date_col}_anomaly"] = anomaly_detector.predict(df[[date_col]].dropna())
-
-            # Highlight anomalies in the dataframe
-            highlighted_df = anomaly_df.copy()
-            for date_col in date_columns:
-                if f"{date_col}_anomaly" in anomaly_df.columns:
-                    highlighted_df[date_col] = highlighted_df.apply(
-                        lambda row: f"🔴 {row[date_col]}" if row[f"{date_col}_anomaly"] == 1 else row[date_col],
-                        axis=1
-                    )
-
-            # Display highlighted dataframe
-            styled_df = style_sdr_trend(highlighted_df)
+            styled_df = style_sdr_trend(df)
             st.dataframe(styled_df, height=400, use_container_width=True)
 
             # Display Summary Metrics
@@ -1651,18 +1659,6 @@ def show_itss_dashboard():
         
         # Summary metrics
         st.markdown("### Summary Metrics")
-
-        # AI-based recommendations
-        st.markdown("### Recommendations")
-        if total_outstanding > 1000:  # Example threshold for large outstanding amounts
-            st.warning("⚠️ High outstanding amounts detected! Focus on collections from accounts in the 'More than 2 Yr' category.")
-        else:
-            st.success("✅ Outstanding amounts are under control. Continue monitoring the '121-180' category for potential risks.")
-
-        if high_risk_percentage > 30:  # Example threshold for high risk
-            st.warning("⚠️ A significant portion of outstanding amounts is in the high-risk category (361-720, More than 2 Yr). Immediate action recommended.")
-        else:
-            st.success("✅ High-risk amounts are manageable. Focus on timely collections to prevent further aging.")
         
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -1855,7 +1851,7 @@ def show_tsg_dashboard():
             value_name='Amount'
         )
 
-        # Line chart for trends
+        # Line chart
         fig_line = px.line(
             trend_data,
             x='Date',
@@ -1865,29 +1861,6 @@ def show_tsg_dashboard():
         )
         fig_line.update_layout(yaxis_title="Amount (₹)")
         st.plotly_chart(fig_line, use_container_width=True)
-
-        # AI-based forecasting
-        st.markdown("### AI Forecasting for Receivables")
-        if 'Grand Total' in df['Ageing Category'].values:
-            trend_df = df[df['Ageing Category'] == 'Grand Total']
-            forecast_data = trend_df[['Date', date_cols[0]]].rename(columns={'Date': 'ds', date_cols[0]: 'y'}).dropna()
-            
-            if not forecast_data.empty:
-                model = Prophet()
-                model.fit(forecast_data)
-
-                future = model.make_future_dataframe(periods=6, freq='M')
-                forecast = model.predict(future)
-
-                # Plot the forecast
-                fig_forecast = px.line(
-                    forecast, 
-                    x='ds', 
-                    y=['yhat', 'yhat_lower', 'yhat_upper'], 
-                    title="Receivables Forecast",
-                    labels={'ds': 'Date', 'value': 'Receivables (₹)'}
-                )
-                st.plotly_chart(fig_forecast, use_container_width=True)
 
         # Category Analysis
         st.markdown("### Category-wise Analysis")
