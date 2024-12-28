@@ -1914,6 +1914,13 @@ def load_task_status_data():
 
 # Function to send pending tasks email
 def send_email_with_sendgrid(pending_tasks_df, recipient_email, recipient_name=""):
+    # Filter tasks based on status and completion date
+    pending_tasks_df = pending_tasks_df[
+        (pending_tasks_df['Status'] != 'Closed') &  # Exclude tasks marked as 'Closed'
+        ((pending_tasks_df['Completion Date'].isnull()) |  # Include tasks without a completion date
+         (pd.to_datetime(pending_tasks_df['Completion Date']) > pd.Timestamp.now()))  # Or tasks with future completion dates
+    ]
+
     if pending_tasks_df.empty:
         return "You have no pending tasks."
 
