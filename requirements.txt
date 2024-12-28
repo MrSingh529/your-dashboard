@@ -13,7 +13,6 @@ statsmodels
 sendgrid
 jinja2
 pyopenssl
-sendgrid
 Pillow
 twilio
 watchdog
