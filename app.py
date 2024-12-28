@@ -404,7 +404,7 @@ FILE_IDS = {
 }
 
 # Configure Gemini API using the API key from secrets
-gemini_api_key = st.secrets["gemini_api_key"]
+gemini_api_key = st.secrets["gemini"]["api_key"]
 gemini.configure(api_key=gemini_api_key)
 
 # Define a function to generate AI responses using Gemini
