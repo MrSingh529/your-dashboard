@@ -134,6 +134,30 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
+# Login Page Structure
+st.markdown("""
+<div class="login-container">
+    <div class="login-left">
+        <h2>Sign In</h2>
+        <div class="social-buttons">
+            <button>G+</button>
+            <button>f</button>
+            <button><b>in</b></button>
+        </div>
+        <p>or use your email password</p>
+        <input type="text" placeholder="Email">
+        <input type="password" placeholder="Password">
+        <a href="#" style="color: #007acc; text-decoration: none;">Forgot Your Password?</a>
+        <button class="login-button">SIGN IN</button>
+    </div>
+    <div class="login-right">
+        <h2>Hello, Friend!</h2>
+        <p>Register with your personal details to use all of our features.</p>
+        <button>SIGN UP</button>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
 # Additional styling for other components
 st.markdown("""
     <style>
@@ -195,12 +219,109 @@ st.markdown("""
     }
 
     .login-container {
-        max-width: 400px;
-        margin: auto;
-        padding: 25px;
-        background-color: #ffffff;
-        border-radius: 10px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        max-width: 800px;
+        margin: 5% auto;
+        display: flex;
+        justify-content: space-between;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+    }
+
+    .login-left, .login-right {
+        width: 50%;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login-left {
+        background: #f5f8fa;
+    }
+
+    .login-left h2 {
+        font-size: 2em;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .login-left input {
+        width: 100%;
+        margin: 15px 0;
+        padding: 10px;
+        font-size: 1em;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-left .social-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0;
+    }
+
+    .login-left .social-buttons button {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 1em;
+        padding: 10px 15px;
+        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+    }
+
+    .login-left button:hover {
+        background: #f0f0f0;
+    }
+
+    .login-left .login-button {
+        width: 100%;
+        background: #0099ff;
+        color: white;
+        padding: 15px;
+        font-size: 1em;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        box-shadow: 0px 4px 10px rgba(0, 153, 255, 0.4);
+        transition: all 0.3s;
+    }
+
+    .login-left .login-button:hover {
+        background: #007acc;
+        transform: translateY(-3px);
+    }
+
+    .login-right {
+        background: linear-gradient(135deg, #0099ff, #00c6ff);
+        color: white;
+    }
+
+    .login-right h2 {
+        font-size: 2em;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+
+    .login-right button {
+        background: white;
+        color: #007acc;
+        font-size: 1em;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 5px;
+        box-shadow: 0px 3px 10px rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .login-right button:hover {
+        transform: scale(1.05);
     }
 
     /* Glass styling for text inputs */
@@ -469,92 +590,6 @@ def deduplicate_columns(columns):
 
     return new_columns
 
-def show_custom_login():
-    login_html = """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Login Screen</title>
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-                font-family: 'Montserrat', sans-serif;
-            }
-            body {
-                background-color: #c9d6ff;
-                background: linear-gradient(to right, #e2e2e2, #c9d6ff);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-            }
-            .container {
-                background-color: #fff;
-                border-radius: 30px;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
-                padding: 30px;
-                width: 100%;
-                max-width: 400px;
-                text-align: center;
-            }
-            .container h1 {
-                margin-bottom: 20px;
-                font-size: 24px;
-                color: #333;
-            }
-            .container input {
-                width: calc(100% - 20px);
-                padding: 10px;
-                margin: 10px 0;
-                border: none;
-                border-radius: 8px;
-                background-color: #eee;
-                font-size: 14px;
-            }
-            .container button {
-                width: 100%;
-                padding: 10px;
-                margin-top: 10px;
-                background-color: #2da0a8;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: 14px;
-                font-weight: bold;
-                cursor: pointer;
-                transition: 0.3s;
-            }
-            .container button:hover {
-                background-color: #218c91;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Login</h1>
-            <form action="" onsubmit="return handleLogin(event)">
-                <input type="text" id="username" placeholder="Username" required>
-                <input type="password" id="password" placeholder="Password" required>
-                <button type="submit">Sign In</button>
-            </form>
-        </div>
-        <script>
-            function handleLogin(event) {
-                event.preventDefault();
-                const username = document.getElementById('username').value;
-                const password = document.getElementById('password').value;
-                window.parent.postMessage({ type: 'login', username, password }, '*');
-            }
-        </script>
-    </body>
-    </html>
-    """
-    components.html(login_html, height=600, scrolling=False)
-
 # Enhanced authentication
 def check_password():
     if 'authenticated' not in st.session_state:
@@ -562,17 +597,46 @@ def check_password():
         st.session_state.login_attempts = 0
 
     if not st.session_state.authenticated:
-        show_custom_login()
-        if 'login_data' in st.session_state:
-            username = st.session_state.login_data.get('username', "").lower()
-            password = st.session_state.login_data.get('password', "")
-            if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
-                st.session_state.authenticated = True
-                st.session_state.username = username
-                st.experimental_rerun()
-            else:
-                st.session_state.login_attempts += 1
-                st.error("Invalid credentials. Please try again.")
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown(
+                """
+                <style>
+                .logo-container {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    margin-bottom: 20px;
+                }
+                </style>
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown(
+                """
+                <div class="logo-container">
+                    <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Reports Dashboard Login</h2>", unsafe_allow_html=True)
+            username = st.text_input("Username").lower()
+            password = st.text_input("Password", type="password")
+
+            if st.button("Login"):
+                if st.session_state.login_attempts >= 3:
+                    st.error("Too many failed attempts. Please try again later.")
+                    time.sleep(5)
+                    return False
+
+                if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
+                    st.session_state.authenticated = True
+                    st.session_state.username = username
+                    st.rerun()
+                else:
+                    st.session_state.login_attempts += 1
+                    st.error("Invalid credentials")
         return False
     return True
         
