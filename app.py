@@ -469,6 +469,92 @@ def deduplicate_columns(columns):
 
     return new_columns
 
+def show_custom_login():
+    login_html = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login Screen</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+                font-family: 'Montserrat', sans-serif;
+            }
+            body {
+                background-color: #c9d6ff;
+                background: linear-gradient(to right, #e2e2e2, #c9d6ff);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+            }
+            .container {
+                background-color: #fff;
+                border-radius: 30px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+                padding: 30px;
+                width: 100%;
+                max-width: 400px;
+                text-align: center;
+            }
+            .container h1 {
+                margin-bottom: 20px;
+                font-size: 24px;
+                color: #333;
+            }
+            .container input {
+                width: calc(100% - 20px);
+                padding: 10px;
+                margin: 10px 0;
+                border: none;
+                border-radius: 8px;
+                background-color: #eee;
+                font-size: 14px;
+            }
+            .container button {
+                width: 100%;
+                padding: 10px;
+                margin-top: 10px;
+                background-color: #2da0a8;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: 0.3s;
+            }
+            .container button:hover {
+                background-color: #218c91;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Login</h1>
+            <form action="" onsubmit="return handleLogin(event)">
+                <input type="text" id="username" placeholder="Username" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <button type="submit">Sign In</button>
+            </form>
+        </div>
+        <script>
+            function handleLogin(event) {
+                event.preventDefault();
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                window.parent.postMessage({ type: 'login', username, password }, '*');
+            }
+        </script>
+    </body>
+    </html>
+    """
+    components.html(login_html, height=600, scrolling=False)
+
 # Enhanced authentication
 def check_password():
     if 'authenticated' not in st.session_state:
@@ -476,46 +562,17 @@ def check_password():
         st.session_state.login_attempts = 0
 
     if not st.session_state.authenticated:
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown(
-                """
-                <style>
-                .logo-container {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    margin-bottom: 20px;
-                }
-                </style>
-                """,
-                unsafe_allow_html=True
-            )
-            st.markdown(
-                """
-                <div class="logo-container">
-                    <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Reports Dashboard Login</h2>", unsafe_allow_html=True)
-            username = st.text_input("Username").lower()
-            password = st.text_input("Password", type="password")
-
-            if st.button("Login"):
-                if st.session_state.login_attempts >= 3:
-                    st.error("Too many failed attempts. Please try again later.")
-                    time.sleep(5)
-                    return False
-
-                if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
-                    st.session_state.authenticated = True
-                    st.session_state.username = username
-                    st.rerun()
-                else:
-                    st.session_state.login_attempts += 1
-                    st.error("Invalid credentials")
+        show_custom_login()
+        if 'login_data' in st.session_state:
+            username = st.session_state.login_data.get('username', "").lower()
+            password = st.session_state.login_data.get('password', "")
+            if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
+                st.session_state.authenticated = True
+                st.session_state.username = username
+                st.experimental_rerun()
+            else:
+                st.session_state.login_attempts += 1
+                st.error("Invalid credentials. Please try again.")
         return False
     return True
         
