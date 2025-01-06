@@ -476,17 +476,19 @@ def check_password():
         st.session_state.login_attempts = 0
 
     if not st.session_state.authenticated:
-        # Add the new styled login screen
+        # Add CSS for proper alignment and styling
         st.markdown(
             """
             <style>
             @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap');
+
             * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
                 font-family: 'Poppins', sans-serif;
             }
+
             body {
                 display: flex;
                 align-items: center;
@@ -497,29 +499,35 @@ def check_password():
                 background-position: center;
                 background-size: cover;
             }
-            section {
-                position: relative;
-                max-width: 400px;
-                background-color: transparent;
-                border: 2px solid rgba(255, 255, 255, 0.5);
-                border-radius: 20px;
-                backdrop-filter: blur(55px);
+
+            .login-container {
                 display: flex;
                 flex-direction: column;
+                justify-content: center;
                 align-items: center;
-                padding: 2rem 3rem;
+                width: 100%;
+                max-width: 400px;
+                padding: 2rem;
+                border-radius: 20px;
+                background: rgba(255, 255, 255, 0.1);
+                border: 2px solid rgba(255, 255, 255, 0.5);
+                backdrop-filter: blur(20px);
+                box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
             }
-            h1 {
+
+            .login-container h1 {
                 font-size: 2rem;
                 color: #fff;
-                text-align: center;
+                margin-bottom: 1rem;
             }
+
             .inputbox {
-                position: relative;
-                margin: 30px 0;
                 width: 100%;
+                position: relative;
+                margin: 1rem 0;
                 border-bottom: 2px solid #fff;
             }
+
             .inputbox label {
                 position: absolute;
                 top: 50%;
@@ -530,89 +538,85 @@ def check_password():
                 pointer-events: none;
                 transition: all 0.5s ease-in-out;
             }
-            input:focus ~ label, input:valid ~ label {
-                top: -5px;
+
+            .inputbox input:focus ~ label,
+            .inputbox input:not(:placeholder-shown) ~ label {
+                top: -10px;
+                font-size: 0.85rem;
+                color: #ffcc00;
             }
+
             .inputbox input {
                 width: 100%;
                 height: 40px;
                 background: transparent;
                 border: none;
                 outline: none;
+                color: #fff;
                 font-size: 1rem;
                 padding: 0 5px;
-                color: #fff;
             }
-            .forget {
-                margin: 15px 0;
-                font-size: 0.85rem;
-                color: #fff;
-                display: flex;
-                justify-content: space-between;
-                width: 100%;
-            }
-            .forget label {
-                display: flex;
-                align-items: center;
-            }
-            .forget label input {
-                margin-right: 3px;
-            }
-            .forget a {
-                color: #fff;
-                text-decoration: none;
-                font-weight: 600;
-            }
-            .forget a:hover {
-                text-decoration: underline;
-            }
-            button {
+
+            .login-container button {
                 width: 100%;
                 height: 40px;
-                border-radius: 40px;
-                background-color: rgb(255, 255, 255, 1);
+                margin-top: 1rem;
                 border: none;
-                outline: none;
-                cursor: pointer;
+                border-radius: 20px;
+                background-color: rgba(255, 255, 255, 0.8);
+                color: #333;
                 font-size: 1rem;
-                font-weight: 600;
-                transition: all 0.4s ease;
+                font-weight: bold;
+                cursor: pointer;
+                transition: 0.3s;
             }
-            button:hover {
-                background-color: rgb(255, 255, 255, 0.7);
+
+            .login-container button:hover {
+                background-color: rgba(255, 255, 255, 1);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             }
+
             </style>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
-        # Use Streamlit for interactivity within the styled form
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown(
-                """
-                <section>
-                    <h1>Login</h1>
-                </section>
-                """,
-                unsafe_allow_html=True
-            )
-            username = st.text_input("Username", placeholder="Enter your username").lower()
-            password = st.text_input("Password", placeholder="Enter your password", type="password")
+        # HTML for login container
+        st.markdown(
+            """
+            <div class="login-container">
+                <h1>Login</h1>
+                <div class="inputbox">
+                    <input id="username" placeholder=" " required>
+                    <label for="username">Username</label>
+                </div>
+                <div class="inputbox">
+                    <input id="password" type="password" placeholder=" " required>
+                    <label for="password">Password</label>
+                </div>
+                <button id="login-button">Log In</button>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-            if st.button("Login"):
-                if st.session_state.login_attempts >= 3:
-                    st.error("Too many failed attempts. Please try again later.")
-                    time.sleep(5)
-                    return False
+        # Handle Login Logic
+        username = st.text_input("Username", placeholder="Enter your username").lower()
+        password = st.text_input("Password", placeholder="Enter your password", type="password")
 
-                if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
-                    st.session_state.authenticated = True
-                    st.session_state.username = username
-                    st.experimental_rerun()
-                else:
-                    st.session_state.login_attempts += 1
-                    st.error("Invalid credentials")
+        if st.button("Login"):
+            if st.session_state.login_attempts >= 3:
+                st.error("Too many failed attempts. Please try again later.")
+                time.sleep(5)
+                return False
+
+            if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
+                st.session_state.authenticated = True
+                st.session_state.username = username
+                st.experimental_rerun()
+            else:
+                st.session_state.login_attempts += 1
+                st.error("Invalid credentials")
         return False
     return True
         
