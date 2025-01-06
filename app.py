@@ -476,7 +476,7 @@ def check_password():
         st.session_state.login_attempts = 0
 
     if not st.session_state.authenticated:
-        # CSS for styling
+        # CSS for proper alignment and styling
         st.markdown(
             """
             <style>
@@ -510,20 +510,21 @@ def check_password():
                 border: 2px solid rgba(255, 255, 255, 0.2);
                 backdrop-filter: blur(20px);
                 box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+                color: white;
+                text-align: center;
             }
 
             .login-container h1 {
                 font-size: 2rem;
                 color: white;
                 margin-bottom: 1.5rem;
-                text-align: center;
             }
 
             .inputbox {
                 width: 100%;
                 position: relative;
                 margin: 1rem 0;
-                border-bottom: 2px solid #fff;
+                border-bottom: 2px solid white;
             }
 
             .inputbox label {
@@ -573,17 +574,21 @@ def check_password():
                 background-color: rgba(255, 255, 255, 1);
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             }
+
             </style>
             """,
             unsafe_allow_html=True,
         )
 
-        # Streamlit widgets for the login form
+        # Login container
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
         st.markdown('<h1>Login</h1>', unsafe_allow_html=True)
 
-        username = st.text_input("Username", key="username", placeholder="Enter your username").lower()
-        password = st.text_input("Password", key="password", placeholder="Enter your password", type="password")
+        # Username and password input fields
+        username = st.text_input("Username", placeholder="Enter your username", key="username").lower()
+        password = st.text_input("Password", placeholder="Enter your password", type="password", key="password")
+        
+        # Login button
         login_button = st.button("Log In")
 
         st.markdown('</div>', unsafe_allow_html=True)
