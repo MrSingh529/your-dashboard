@@ -507,9 +507,13 @@ def deduplicate_columns(columns):
 
 # Enhanced authentication
 def check_password():
+    # Initialize session state variables if they don't exist
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
+    if 'login_attempts' not in st.session_state:
         st.session_state.login_attempts = 0
+    if 'username' not in st.session_state:
+        st.session_state.username = ""
 
     if not st.session_state.authenticated:
         # Create three columns for centering
@@ -529,18 +533,20 @@ def check_password():
             """, unsafe_allow_html=True)
             
             # Streamlit form elements with custom classes
-            username = st.text_input("", 
+            username_input = st.text_input("", 
                                    placeholder="Username",
-                                   key="username",
+                                   key="username_input",
                                    help="Enter your username")
             
-            password = st.text_input("", 
+            password_input = st.text_input("", 
                                    placeholder="Password",
                                    type="password",
-                                   key="password",
+                                   key="password_input",
                                    help="Enter your password")
 
-            if st.button("Login", key="login_button"):
+            login_pressed = st.button("Login", key="login_button")
+
+            if login_pressed:
                 if st.session_state.login_attempts >= 3:
                     st.markdown("""
                         <div class="login-error">
@@ -550,10 +556,10 @@ def check_password():
                     time.sleep(5)
                     return False
 
-                if username.lower() in CREDENTIALS and CREDENTIALS[username.lower()] == hash_password(password):
+                if username_input.lower() in CREDENTIALS and CREDENTIALS[username_input.lower()] == hash_password(password_input):
                     st.session_state.authenticated = True
-                    st.session_state.username = username.lower()
-                    st.rerun()
+                    st.session_state.username = username_input.lower()
+                    st.experimental_rerun()
                 else:
                     st.session_state.login_attempts += 1
                     st.markdown("""
