@@ -476,137 +476,46 @@ def check_password():
         st.session_state.login_attempts = 0
 
     if not st.session_state.authenticated:
-        # CSS for proper alignment and styling
-        st.markdown(
-            """
-            <style>
-            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap');
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown(
+                """
+                <style>
+                .logo-container {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    margin-bottom: 20px;
+                }
+                </style>
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown(
+                """
+                <div class="logo-container">
+                    <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Reports Dashboard Login</h2>", unsafe_allow_html=True)
+            username = st.text_input("Username").lower()
+            password = st.text_input("Password", type="password")
 
-            body {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-                font-family: 'Poppins', sans-serif;
-                background-image: url('https://user-images.githubusercontent.com/13468728/233847739-219cb494-c265-4554-820a-bd3424c59065.jpg');
-                background-size: cover;
-                background-repeat: no-repeat;
-                background-position: center;
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
+            if st.button("Login"):
+                if st.session_state.login_attempts >= 3:
+                    st.error("Too many failed attempts. Please try again later.")
+                    time.sleep(5)
+                    return False
 
-            .login-container {
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                width: 100%;
-                max-width: 400px;
-                padding: 2rem;
-                border-radius: 20px;
-                background: rgba(255, 255, 255, 0.1);
-                border: 2px solid rgba(255, 255, 255, 0.2);
-                backdrop-filter: blur(20px);
-                box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-                color: white;
-                text-align: center;
-            }
-
-            .login-container h1 {
-                font-size: 2rem;
-                color: white;
-                margin-bottom: 1.5rem;
-            }
-
-            .inputbox {
-                width: 100%;
-                position: relative;
-                margin: 1rem 0;
-                border-bottom: 2px solid white;
-            }
-
-            .inputbox label {
-                position: absolute;
-                top: 50%;
-                left: 5px;
-                transform: translateY(-50%);
-                color: white;
-                font-size: 1rem;
-                pointer-events: none;
-                transition: all 0.3s ease;
-            }
-
-            .inputbox input {
-                width: 100%;
-                height: 40px;
-                background: transparent;
-                border: none;
-                outline: none;
-                color: white;
-                font-size: 1rem;
-                padding: 0 5px;
-            }
-
-            .inputbox input:focus ~ label,
-            .inputbox input:not(:placeholder-shown) ~ label {
-                top: -10px;
-                font-size: 0.85rem;
-                color: #ffcc00;
-            }
-
-            .login-container button {
-                width: 100%;
-                height: 40px;
-                margin-top: 1rem;
-                border: none;
-                border-radius: 20px;
-                background-color: rgba(255, 255, 255, 0.8);
-                color: #333;
-                font-size: 1rem;
-                font-weight: bold;
-                cursor: pointer;
-                transition: 0.3s;
-            }
-
-            .login-container button:hover {
-                background-color: rgba(255, 255, 255, 1);
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            }
-
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        # Login container
-        st.markdown('<div class="login-container">', unsafe_allow_html=True)
-        st.markdown('<h1>Login</h1>', unsafe_allow_html=True)
-
-        # Username and password input fields
-        username = st.text_input("Username", placeholder="Enter your username", key="username").lower()
-        password = st.text_input("Password", placeholder="Enter your password", type="password", key="password")
-        
-        # Login button
-        login_button = st.button("Log In")
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # Handle login button click
-        if login_button:
-            if st.session_state.login_attempts >= 3:
-                st.error("Too many failed attempts. Please try again later.")
-                time.sleep(5)
-                return False
-
-            if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
-                st.session_state.authenticated = True
-                st.session_state.username = username
-                st.experimental_rerun()
-            else:
-                st.session_state.login_attempts += 1
-                st.error("Invalid credentials")
+                if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
+                    st.session_state.authenticated = True
+                    st.session_state.username = username
+                    st.rerun()
+                else:
+                    st.session_state.login_attempts += 1
+                    st.error("Invalid credentials")
         return False
     return True
         
