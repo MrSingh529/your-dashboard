@@ -476,7 +476,7 @@ def check_password():
         st.session_state.login_attempts = 0
 
     if not st.session_state.authenticated:
-        # Add CSS for the background and glass effect login form
+        # CSS for styling
         st.markdown(
             """
             <style>
@@ -578,32 +578,18 @@ def check_password():
             unsafe_allow_html=True,
         )
 
-        # HTML for login form
-        st.markdown(
-            """
-            <div class="login-container">
-                <h1>Login</h1>
-                <form action="" method="post">
-                    <div class="inputbox">
-                        <input id="username" name="username" placeholder=" " required>
-                        <label for="username">Username</label>
-                    </div>
-                    <div class="inputbox">
-                        <input id="password" name="password" type="password" placeholder=" " required>
-                        <label for="password">Password</label>
-                    </div>
-                    <button type="submit" id="login-button">Log In</button>
-                </form>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        # Streamlit widgets for the login form
+        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+        st.markdown('<h1>Login</h1>', unsafe_allow_html=True)
 
-        # Handle login logic
-        username = st.experimental_get_query_params().get("username", [""])[0]
-        password = st.experimental_get_query_params().get("password", [""])[0]
+        username = st.text_input("Username", key="username", placeholder="Enter your username").lower()
+        password = st.text_input("Password", key="password", placeholder="Enter your password", type="password")
+        login_button = st.button("Log In")
 
-        if username and password:
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # Handle login button click
+        if login_button:
             if st.session_state.login_attempts >= 3:
                 st.error("Too many failed attempts. Please try again later.")
                 time.sleep(5)
