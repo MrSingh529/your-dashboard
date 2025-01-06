@@ -195,55 +195,91 @@ st.markdown("""
     }
 
     .login-container {
+        position: relative;
+        width: 100%;
         max-width: 400px;
         margin: auto;
         padding: 25px;
-        background-color: #ffffff;
-        border-radius: 10px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-    }
-
-    /* Glass styling for text inputs */
-    .stTextInput > div > div > input {
         background: rgba(255, 255, 255, 0.25);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
-        border: 1px solid rgba(255,255,255,0.2);
-        border-radius: 8px;
-        padding: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .login-logo {
+        max-width: 150px;
+        margin: 0 auto 20px;
+        display: block;
+        transition: transform 0.3s ease;
+    }
+
+    .login-logo:hover {
+        transform: scale(1.1);
+    }
+
+    .login-title {
         color: #333;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-align: center;
     }
 
-    .stTextInput > div > div > input:hover,
-    .stTextInput > div > div > input:focus {
-        outline: none;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-        border: 1px solid rgba(0, 173, 239, 0.4);
-        transform: translateY(-2px);
-    }
-
-    .stButton > button {
-        background: rgba(255, 255, 255, 0.25); /* semi-transparent white for glass effect */
+    .login-input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 15px;
+        background: rgba(255, 255, 255, 0.25);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
-        color: #333; /* Dark text for contrast */
-        border: 1px solid rgba(255,255,255,0.2);
+        border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 8px;
-        padding: 10px;
-        width: 100%; /* If you want full-width buttons */
-        margin-top: 15px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: all 0.3s;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        color: #333;
+        transition: all 0.3s ease;
     }
 
-    .stButton > button:hover {
-        transform: translateY(-5px) scale(1.05);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-        border: 1px solid rgba(0, 173, 239, 0.4);
+    .login-input:hover,
+    .login-input:focus {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-color: rgba(0, 123, 255, 0.4);
+        outline: none;
+    }
+
+    .login-button {
+        width: 100%;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: #333;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 20px;
+    }
+
+    .login-button:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        border-color: rgba(0, 123, 255, 0.4);
+    }
+
+    .login-error {
+        color: #dc3545;
+        text-align: center;
+        margin-top: 15px;
+        font-size: 14px;
+        font-weight: 500;
     }
 
     /* Loading animation */
@@ -476,46 +512,59 @@ def check_password():
         st.session_state.login_attempts = 0
 
     if not st.session_state.authenticated:
+        # Create three columns for centering
         col1, col2, col3 = st.columns([1, 2, 1])
+        
         with col2:
-            st.markdown(
-                """
-                <style>
-                .logo-container {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    margin-bottom: 20px;
-                }
-                </style>
-                """,
-                unsafe_allow_html=True
-            )
-            st.markdown(
-                """
-                <div class="logo-container">
-                    <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Reports Dashboard Login</h2>", unsafe_allow_html=True)
-            username = st.text_input("Username").lower()
-            password = st.text_input("Password", type="password")
+            # Custom HTML for the login form
+            st.markdown("""
+                <div class="login-container">
+                    <div class="login-header">
+                        <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" 
+                             alt="Company Logo" 
+                             class="login-logo">
+                        <h2 class="login-title">Reports Dashboard Login</h2>
+                    </div>
+                    <div>
+            """, unsafe_allow_html=True)
+            
+            # Streamlit form elements with custom classes
+            username = st.text_input("", 
+                                   placeholder="Username",
+                                   key="username",
+                                   help="Enter your username")
+            
+            password = st.text_input("", 
+                                   placeholder="Password",
+                                   type="password",
+                                   key="password",
+                                   help="Enter your password")
 
-            if st.button("Login"):
+            if st.button("Login", key="login_button"):
                 if st.session_state.login_attempts >= 3:
-                    st.error("Too many failed attempts. Please try again later.")
+                    st.markdown("""
+                        <div class="login-error">
+                            Too many failed attempts. Please try again later.
+                        </div>
+                    """, unsafe_allow_html=True)
                     time.sleep(5)
                     return False
 
-                if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
+                if username.lower() in CREDENTIALS and CREDENTIALS[username.lower()] == hash_password(password):
                     st.session_state.authenticated = True
-                    st.session_state.username = username
+                    st.session_state.username = username.lower()
                     st.rerun()
                 else:
                     st.session_state.login_attempts += 1
-                    st.error("Invalid credentials")
+                    st.markdown("""
+                        <div class="login-error">
+                            Invalid credentials
+                        </div>
+                    """, unsafe_allow_html=True)
+            
+            # Close the container div
+            st.markdown("</div></div>", unsafe_allow_html=True)
+            
         return False
     return True
         
