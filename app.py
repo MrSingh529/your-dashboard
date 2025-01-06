@@ -575,36 +575,38 @@ def check_password():
                 background-color: rgba(255, 255, 255, 1);
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             }
-
             </style>
             """,
             unsafe_allow_html=True,
         )
 
         # HTML for login container
-        st.markdown(
+        components.html(
             """
             <div class="login-container">
                 <h1>Login</h1>
-                <div class="inputbox">
-                    <input id="username" placeholder=" " required>
-                    <label for="username">Username</label>
-                </div>
-                <div class="inputbox">
-                    <input id="password" type="password" placeholder=" " required>
-                    <label for="password">Password</label>
-                </div>
-                <button id="login-button">Log In</button>
+                <form method="post">
+                    <div class="inputbox">
+                        <input id="username" name="username" placeholder=" " required>
+                        <label for="username">Username</label>
+                    </div>
+                    <div class="inputbox">
+                        <input id="password" name="password" type="password" placeholder=" " required>
+                        <label for="password">Password</label>
+                    </div>
+                    <button type="submit" id="login-button">Log In</button>
+                </form>
             </div>
             """,
-            unsafe_allow_html=True,
+            height=400,
         )
 
         # Handle Login Logic
-        username = st.text_input("Username", placeholder="Enter your username").lower()
-        password = st.text_input("Password", placeholder="Enter your password", type="password")
+        form_data = st.experimental_get_query_params()  # To handle POST data submission
+        username = form_data.get("username", [""])[0]
+        password = form_data.get("password", [""])[0]
 
-        if st.button("Login"):
+        if username and password:
             if st.session_state.login_attempts >= 3:
                 st.error("Too many failed attempts. Please try again later.")
                 time.sleep(5)
