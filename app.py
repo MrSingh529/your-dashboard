@@ -476,28 +476,25 @@ def check_password():
         st.session_state.login_attempts = 0
 
     if not st.session_state.authenticated:
-        # Add CSS for proper alignment and styling
+        # Add CSS for the background and glass effect login form
         st.markdown(
             """
             <style>
             @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap');
 
-            * {
+            body {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
                 font-family: 'Poppins', sans-serif;
-            }
-
-            body {
+                background-image: url('https://user-images.githubusercontent.com/13468728/233847739-219cb494-c265-4554-820a-bd3424c59065.jpg');
+                background-size: cover;
+                background-repeat: no-repeat;
+                background-position: center;
+                min-height: 100vh;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                min-height: 100vh;
-                background-image: url('https://user-images.githubusercontent.com/13468728/233847739-219cb494-c265-4554-820a-bd3424c59065.jpg');
-                background-repeat: no-repeat;
-                background-position: center;
-                background-size: cover;
             }
 
             .login-container {
@@ -510,15 +507,16 @@ def check_password():
                 padding: 2rem;
                 border-radius: 20px;
                 background: rgba(255, 255, 255, 0.1);
-                border: 2px solid rgba(255, 255, 255, 0.5);
+                border: 2px solid rgba(255, 255, 255, 0.2);
                 backdrop-filter: blur(20px);
                 box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
             }
 
             .login-container h1 {
                 font-size: 2rem;
-                color: #fff;
-                margin-bottom: 1rem;
+                color: white;
+                margin-bottom: 1.5rem;
+                text-align: center;
             }
 
             .inputbox {
@@ -533,17 +531,10 @@ def check_password():
                 top: 50%;
                 left: 5px;
                 transform: translateY(-50%);
-                color: #fff;
+                color: white;
                 font-size: 1rem;
                 pointer-events: none;
-                transition: all 0.5s ease-in-out;
-            }
-
-            .inputbox input:focus ~ label,
-            .inputbox input:not(:placeholder-shown) ~ label {
-                top: -10px;
-                font-size: 0.85rem;
-                color: #ffcc00;
+                transition: all 0.3s ease;
             }
 
             .inputbox input {
@@ -552,9 +543,16 @@ def check_password():
                 background: transparent;
                 border: none;
                 outline: none;
-                color: #fff;
+                color: white;
                 font-size: 1rem;
                 padding: 0 5px;
+            }
+
+            .inputbox input:focus ~ label,
+            .inputbox input:not(:placeholder-shown) ~ label {
+                top: -10px;
+                font-size: 0.85rem;
+                color: #ffcc00;
             }
 
             .login-container button {
@@ -580,12 +578,12 @@ def check_password():
             unsafe_allow_html=True,
         )
 
-        # HTML for login container
-        components.html(
+        # HTML for login form
+        st.markdown(
             """
             <div class="login-container">
                 <h1>Login</h1>
-                <form method="post">
+                <form action="" method="post">
                     <div class="inputbox">
                         <input id="username" name="username" placeholder=" " required>
                         <label for="username">Username</label>
@@ -598,13 +596,12 @@ def check_password():
                 </form>
             </div>
             """,
-            height=400,
+            unsafe_allow_html=True,
         )
 
-        # Handle Login Logic
-        form_data = st.experimental_get_query_params()  # To handle POST data submission
-        username = form_data.get("username", [""])[0]
-        password = form_data.get("password", [""])[0]
+        # Handle login logic
+        username = st.experimental_get_query_params().get("username", [""])[0]
+        password = st.experimental_get_query_params().get("password", [""])[0]
 
         if username and password:
             if st.session_state.login_attempts >= 3:
