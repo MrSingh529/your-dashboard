@@ -134,30 +134,6 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Login Page Structure
-st.markdown("""
-<div class="login-container">
-    <div class="login-left">
-        <h2>Sign In</h2>
-        <div class="social-buttons">
-            <button>G+</button>
-            <button>f</button>
-            <button><b>in</b></button>
-        </div>
-        <p>or use your email password</p>
-        <input type="text" placeholder="Email">
-        <input type="password" placeholder="Password">
-        <a href="#" style="color: #007acc; text-decoration: none;">Forgot Your Password?</a>
-        <button class="login-button">SIGN IN</button>
-    </div>
-    <div class="login-right">
-        <h2>Hello, Friend!</h2>
-        <p>Register with your personal details to use all of our features.</p>
-        <button>SIGN UP</button>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
 # Additional styling for other components
 st.markdown("""
     <style>
@@ -219,109 +195,12 @@ st.markdown("""
     }
 
     .login-container {
-        max-width: 800px;
-        margin: 5% auto;
-        display: flex;
-        justify-content: space-between;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
-        overflow: hidden;
-    }
-
-    .login-left, .login-right {
-        width: 50%;
-        padding: 40px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .login-left {
-        background: #f5f8fa;
-    }
-
-    .login-left h2 {
-        font-size: 2em;
-        font-weight: bold;
-        color: #333;
-    }
-
-    .login-left input {
-        width: 100%;
-        margin: 15px 0;
-        padding: 10px;
-        font-size: 1em;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .login-left .social-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        margin: 20px 0;
-    }
-
-    .login-left .social-buttons button {
-        background: white;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        font-size: 1em;
-        padding: 10px 15px;
-        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-        cursor: pointer;
-    }
-
-    .login-left button:hover {
-        background: #f0f0f0;
-    }
-
-    .login-left .login-button {
-        width: 100%;
-        background: #0099ff;
-        color: white;
-        padding: 15px;
-        font-size: 1em;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        box-shadow: 0px 4px 10px rgba(0, 153, 255, 0.4);
-        transition: all 0.3s;
-    }
-
-    .login-left .login-button:hover {
-        background: #007acc;
-        transform: translateY(-3px);
-    }
-
-    .login-right {
-        background: linear-gradient(135deg, #0099ff, #00c6ff);
-        color: white;
-    }
-
-    .login-right h2 {
-        font-size: 2em;
-        font-weight: bold;
-        margin-bottom: 20px;
-    }
-
-    .login-right button {
-        background: white;
-        color: #007acc;
-        font-size: 1em;
-        border: none;
-        padding: 15px 30px;
-        border-radius: 5px;
-        box-shadow: 0px 3px 10px rgba(255, 255, 255, 0.5);
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-
-    .login-right button:hover {
-        transform: scale(1.05);
+        max-width: 400px;
+        margin: auto;
+        padding: 25px;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
     }
 
     /* Glass styling for text inputs */
@@ -597,32 +476,129 @@ def check_password():
         st.session_state.login_attempts = 0
 
     if not st.session_state.authenticated:
+        # Add the new styled login screen
+        st.markdown(
+            """
+            <style>
+            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap');
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+                font-family: 'Poppins', sans-serif;
+            }
+            body {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                background-image: url('https://user-images.githubusercontent.com/13468728/233847739-219cb494-c265-4554-820a-bd3424c59065.jpg');
+                background-repeat: no-repeat;
+                background-position: center;
+                background-size: cover;
+            }
+            section {
+                position: relative;
+                max-width: 400px;
+                background-color: transparent;
+                border: 2px solid rgba(255, 255, 255, 0.5);
+                border-radius: 20px;
+                backdrop-filter: blur(55px);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 2rem 3rem;
+            }
+            h1 {
+                font-size: 2rem;
+                color: #fff;
+                text-align: center;
+            }
+            .inputbox {
+                position: relative;
+                margin: 30px 0;
+                width: 100%;
+                border-bottom: 2px solid #fff;
+            }
+            .inputbox label {
+                position: absolute;
+                top: 50%;
+                left: 5px;
+                transform: translateY(-50%);
+                color: #fff;
+                font-size: 1rem;
+                pointer-events: none;
+                transition: all 0.5s ease-in-out;
+            }
+            input:focus ~ label, input:valid ~ label {
+                top: -5px;
+            }
+            .inputbox input {
+                width: 100%;
+                height: 40px;
+                background: transparent;
+                border: none;
+                outline: none;
+                font-size: 1rem;
+                padding: 0 5px;
+                color: #fff;
+            }
+            .forget {
+                margin: 15px 0;
+                font-size: 0.85rem;
+                color: #fff;
+                display: flex;
+                justify-content: space-between;
+                width: 100%;
+            }
+            .forget label {
+                display: flex;
+                align-items: center;
+            }
+            .forget label input {
+                margin-right: 3px;
+            }
+            .forget a {
+                color: #fff;
+                text-decoration: none;
+                font-weight: 600;
+            }
+            .forget a:hover {
+                text-decoration: underline;
+            }
+            button {
+                width: 100%;
+                height: 40px;
+                border-radius: 40px;
+                background-color: rgb(255, 255, 255, 1);
+                border: none;
+                outline: none;
+                cursor: pointer;
+                font-size: 1rem;
+                font-weight: 600;
+                transition: all 0.4s ease;
+            }
+            button:hover {
+                background-color: rgb(255, 255, 255, 0.7);
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # Use Streamlit for interactivity within the styled form
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.markdown(
                 """
-                <style>
-                .logo-container {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    margin-bottom: 20px;
-                }
-                </style>
+                <section>
+                    <h1>Login</h1>
+                </section>
                 """,
                 unsafe_allow_html=True
             )
-            st.markdown(
-                """
-                <div class="logo-container">
-                    <img src="https://raw.githubusercontent.com/MrSingh529/your-dashboard/main/assets/logo.png" alt="Company Logo" style="width: 150px;">
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Reports Dashboard Login</h2>", unsafe_allow_html=True)
-            username = st.text_input("Username").lower()
-            password = st.text_input("Password", type="password")
+            username = st.text_input("Username", placeholder="Enter your username").lower()
+            password = st.text_input("Password", placeholder="Enter your password", type="password")
 
             if st.button("Login"):
                 if st.session_state.login_attempts >= 3:
@@ -633,7 +609,7 @@ def check_password():
                 if username in CREDENTIALS and CREDENTIALS[username] == hash_password(password):
                     st.session_state.authenticated = True
                     st.session_state.username = username
-                    st.rerun()
+                    st.experimental_rerun()
                 else:
                     st.session_state.login_attempts += 1
                     st.error("Invalid credentials")
